@@ -154,6 +154,7 @@ export class FlatsService {
     const limit = Math.min(Math.max(params.limit || 20, 1), 100);
     const offset = Math.max(params.offset || 0, 0);
 
+    const mode = params.mode === 'rent' ? 'rent' : 'buy';
     const conditions = [eq(societies.city, city)];
 
     if (params.q) {
@@ -183,11 +184,11 @@ export class FlatsService {
       conditions.push(gte(societies.rating, params.minRating));
     }
 
-    if (params.minPrice) {
+    if (params.minPrice && mode === 'buy') {
       conditions.push(gte(societies.price_max, params.minPrice));
     }
 
-    if (params.maxPrice) {
+    if (params.maxPrice && mode === 'buy') {
       conditions.push(lte(societies.price_min, params.maxPrice));
     }
 
@@ -238,9 +239,20 @@ export class FlatsService {
     const filtered = allMatches.filter((s) => {
       const prices = bhkPricesBySoc.get(s.id) || {};
 
-      // BHK filter
+      // Mode filter: buy needs sale data, rent needs rental data
+      const hasMode = (p: { buy_median?: number | null; rent_median?: number | null }) =>
+        mode === 'rent' ? typeof p.rent_median === 'number' : typeof p.buy_median === 'number';
+      if (mode === 'rent') {
+        if (!Object.values(prices).some(hasMode)) return false;
+      } else if (!Object.values(prices).some(hasMode) && s.price_min == null) {
+        return false;
+      }
+
+      // BHK filter (must have data for the chosen mode where available)
       if (params.bhk && params.bhk.length > 0) {
-        const hasBhk = params.bhk.some((b) => prices[b] !== undefined);
+        const hasBhk = params.bhk.some((b) =>
+          prices[b] !== undefined && (mode === 'rent' ? hasMode(prices[b]) : true)
+        );
         if (!hasBhk) return false;
       }
 
@@ -345,6 +357,17 @@ export class FlatsService {
         distance_km,
       };
     });
+
+    // Mode-aware sorts
+    const medianFor = (c: CompactSocietyCard, key: 'buy_median' | 'rent_median') => {
+      const vals = Object.values(c.prices)
+        .map((p) => p[key])
+        .filter((v): v is number => typeof v === 'number');
+      return vals.length ? Math.min(...vals) : Infinity;
+    };
+    if (params.sort === 'rent' || (params.sort === 'price' && mode === 'rent')) {
+      withDist.sort((a, b) => medianFor(a, 'rent_median') - medianFor(b, 'rent_median'));
+    }
 
     // Distance sort if requested
     if (params.sort === 'distance' && params.lat !== undefined && params.lng !== undefined) {
