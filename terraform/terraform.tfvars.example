@@ -55,6 +55,7 @@ backend_container_image = ""
 deploy_database         = true
 db_instance_name        = "" # Leave empty for auto-generated realdha-postgres-<suffix>
 db_version              = "POSTGRES_16"
+db_edition              = "ENTERPRISE" # ENTERPRISE (supports db-f1-micro, db-custom-*) or ENTERPRISE_PLUS
 db_tier                 = "db-f1-micro" # db-f1-micro for dev/hackathon, db-custom-1-3840 for prod
 db_name                 = "realdha"
 db_user                 = "realdha"

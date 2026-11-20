@@ -178,6 +178,12 @@ variable "db_version" {
   default     = "POSTGRES_16"
 }
 
+variable "db_edition" {
+  description = "The edition of the Cloud SQL instance: ENTERPRISE (supports shared-core and standard tiers) or ENTERPRISE_PLUS (requires db-perf-optimized-* tiers)"
+  type        = string
+  default     = "ENTERPRISE"
+}
+
 variable "db_tier" {
   description = "The machine type for the Cloud SQL instance (e.g. db-f1-micro for dev/hackathon, db-custom-1-3840 for prod)"
   type        = string
