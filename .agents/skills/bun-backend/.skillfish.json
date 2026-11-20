@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "name": "bun-backend",
+  "owner": "0x4139",
+  "repo": "praxis",
+  "path": "skills/bun-backend",
+  "branch": "master",
+  "sha": "6058a5176ebbbe295a674029f190db832a873fa3",
+  "source": "manual"
+}
