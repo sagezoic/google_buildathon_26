@@ -6,6 +6,9 @@
 *.tfvars
 !*.tfvars.example
 
+# TypeScript
+*.tsbuildinfo
+
 # Node / Dependencies
 node_modules/
 dist/
