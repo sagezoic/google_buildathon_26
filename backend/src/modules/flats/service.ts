@@ -100,6 +100,8 @@ export interface CitySummary {
   slug: string;
   name: string;
   societies_count: number;
+  center: [number, number]; // [lng, lat]
+  zoom: number;
 }
 
 export interface LocalitySummary {
@@ -135,6 +137,8 @@ export class FlatsService {
         slug,
         name: conf.name,
         societies_count: countsMap.get(slug) || 0,
+        center: conf.center,
+        zoom: conf.zoom ?? 11,
       });
     }
 
