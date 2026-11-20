@@ -209,7 +209,31 @@ resource "google_cloud_run_v2_service" "backend" {
         for_each = var.deploy_database ? [1] : []
         content {
           name  = "DATABASE_URL"
+          value = "postgresql://${var.db_user}:${local.effective_db_password}@${try(google_sql_database_instance.postgres[0].public_ip_address, "localhost")}:5432/${var.db_name}"
+        }
+      }
+
+      dynamic "env" {
+        for_each = var.deploy_database ? [1] : []
+        content {
+          name  = "DATABASE_URL_DIRECT"
+          value = "postgresql://${var.db_user}:${local.effective_db_password}@${try(google_sql_database_instance.postgres[0].public_ip_address, "localhost")}:5432/${var.db_name}"
+        }
+      }
+
+      dynamic "env" {
+        for_each = var.deploy_database ? [1] : []
+        content {
+          name  = "DATABASE_URL_SOCKET"
           value = "postgresql://${var.db_user}:${local.effective_db_password}@localhost:5432/${var.db_name}?host=/cloudsql/${google_sql_database_instance.postgres[0].connection_name}"
+        }
+      }
+
+      dynamic "env" {
+        for_each = var.deploy_database ? [1] : []
+        content {
+          name  = "CLOUDSQL_CONNECTION_NAME"
+          value = google_sql_database_instance.postgres[0].connection_name
         }
       }
 
