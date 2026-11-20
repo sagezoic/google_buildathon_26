@@ -3,6 +3,7 @@ export interface EnvConfig {
   HOST: string;
   NODE_ENV: 'development' | 'production' | 'test';
   DATABASE_URL?: string;
+  DATABASE_URL_DIRECT?: string;
   SCRAPER_DELAY_MS: number;
   GCP_PROJECT_ID: string;
   GCS_BUCKET_NAME: string;
@@ -17,6 +18,7 @@ function parseEnv(): EnvConfig {
   const host = process.env.HOST || '0.0.0.0';
   const nodeEnv = (process.env.NODE_ENV || 'development') as EnvConfig['NODE_ENV'];
   const databaseUrl = process.env.DATABASE_URL;
+  const databaseUrlDirect = process.env.DATABASE_URL_DIRECT;
   const scraperDelayMs = parseInt(process.env.SCRAPER_DELAY_MS || '1000', 10);
   const gcpProjectId = process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || 'trusty-bearing-515217-f0';
   const gcsBucketName = process.env.GCS_BUCKET_NAME || 'realdha-storage-trusty-bearing-515217-f0';
@@ -30,6 +32,7 @@ function parseEnv(): EnvConfig {
     HOST: host,
     NODE_ENV: nodeEnv,
     DATABASE_URL: databaseUrl,
+    DATABASE_URL_DIRECT: databaseUrlDirect,
     SCRAPER_DELAY_MS: Number.isNaN(scraperDelayMs) ? 1000 : scraperDelayMs,
     GCP_PROJECT_ID: gcpProjectId,
     GCS_BUCKET_NAME: gcsBucketName,
