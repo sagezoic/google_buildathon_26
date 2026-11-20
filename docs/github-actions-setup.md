@@ -78,7 +78,8 @@ gcloud services enable \
   cloudresourcemanager.googleapis.com \
   iamcredentials.googleapis.com \
   run.googleapis.com \
-  artifactregistry.googleapis.com
+  artifactregistry.googleapis.com \
+  sqladmin.googleapis.com
 
 # 3. Create the deployment Service Account
 gcloud iam service-accounts create $SA_NAME \
@@ -93,7 +94,8 @@ for ROLE in \
   roles/iam.serviceAccountUser \
   roles/serviceusage.serviceUsageAdmin \
   roles/resourcemanager.projectIamAdmin \
-  roles/storage.admin
+  roles/storage.admin \
+  roles/cloudsql.admin
 do
   gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${SA_EMAIL}" \
