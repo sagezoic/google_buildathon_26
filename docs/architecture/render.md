@@ -27,3 +27,5 @@ Update: iconSize 96, idealEdgeLengthMultiplier 2.5, nodeSeparation 140; compact.
 Tighter: idealEdgeLengthMultiplier 2.3. finish.sh automates compaction (gap reduced to ~110 units), 22px/18px label CSS, postprocess and 16:9 export: finish.sh base.svg tag
 
 Chain Worker arrow shortened: compactx.py shifts worker and Ethereum left (gap 150 units) after the vertical compaction.
+
+build.py usage: python3 build.py <base-name> 26 20 0.86  (label px, group-title px, vertical row scale); needs vscale.py, compact.py, compactx.py, postprocess.js (/tmp/gen/fix.js).
