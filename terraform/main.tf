@@ -99,11 +99,6 @@ resource "google_cloud_run_v2_service" "backend" {
       }
 
       env {
-        name  = "PORT"
-        value = tostring(var.backend_container_port)
-      }
-
-      env {
         name  = "NODE_ENV"
         value = var.environment
       }
@@ -158,11 +153,6 @@ resource "google_cloud_run_v2_service" "ui" {
           cpu    = var.cpu
           memory = var.memory
         }
-      }
-
-      env {
-        name  = "PORT"
-        value = tostring(var.container_port)
       }
 
       dynamic "env" {
