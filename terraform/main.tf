@@ -154,7 +154,7 @@ resource "google_project_iam_member" "backend_cloudsql_client" {
 
 # Enterprise Document OCR processor: reads Marathi (Devanagari), Hindi and English documents
 resource "google_document_ai_processor" "ocr" {
-  count        = var.deploy_backend ? 1 : 0
+  count        = var.deploy_backend && var.create_docai_processor && var.docai_processor_id == "" ? 1 : 0
   project      = var.project_id
   location     = var.docai_location
   display_name = "realdha-document-ocr"
@@ -167,8 +167,9 @@ resource "google_document_ai_processor" "ocr" {
 
 locals {
   # `name` may be the full resource path or the bare id; keep the last path segment either way
-  docai_processor_parts = var.deploy_backend ? split("/", google_document_ai_processor.ocr[0].name) : []
-  docai_processor_id    = length(local.docai_processor_parts) > 0 ? element(local.docai_processor_parts, length(local.docai_processor_parts) - 1) : ""
+  docai_processor_parts        = length(google_document_ai_processor.ocr) > 0 ? split("/", google_document_ai_processor.ocr[0].name) : []
+  managed_docai_processor_id   = length(local.docai_processor_parts) > 0 ? element(local.docai_processor_parts, length(local.docai_processor_parts) - 1) : ""
+  effective_docai_processor_id = var.docai_processor_id != "" ? var.docai_processor_id : local.managed_docai_processor_id
 }
 
 # Backend may call Document AI online processing
@@ -302,7 +303,7 @@ resource "google_cloud_run_v2_service" "backend" {
 
       env {
         name  = "DOCAI_PROCESSOR_ID"
-        value = local.docai_processor_id
+        value = local.effective_docai_processor_id
       }
 
       env {

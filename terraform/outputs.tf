@@ -58,6 +58,11 @@ output "backend_service_url" {
   value       = try(google_cloud_run_v2_service.backend[0].uri, "")
 }
 
+output "docai_processor_id" {
+  description = "ID of the Document AI OCR processor"
+  value       = local.effective_docai_processor_id
+}
+
 output "docker_push_commands" {
   description = "Commands to build, tag, and push container images"
   value       = <<-EOT
