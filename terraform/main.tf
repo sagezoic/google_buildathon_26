@@ -149,6 +149,53 @@ resource "google_project_iam_member" "backend_cloudsql_client" {
 }
 
 # ==============================================================================
+# Document AI (OCR) and Cloud Translation for property documents
+# ==============================================================================
+
+# Enterprise Document OCR processor: reads Marathi (Devanagari), Hindi and English documents
+resource "google_document_ai_processor" "ocr" {
+  count        = var.deploy_backend ? 1 : 0
+  project      = var.project_id
+  location     = var.docai_location
+  display_name = "realdha-document-ocr"
+  type         = "OCR_PROCESSOR"
+
+  depends_on = [
+    google_project_service.services
+  ]
+}
+
+locals {
+  # `name` may be the full resource path or the bare id; keep the last path segment either way
+  docai_processor_parts = var.deploy_backend ? split("/", google_document_ai_processor.ocr[0].name) : []
+  docai_processor_id    = length(local.docai_processor_parts) > 0 ? element(local.docai_processor_parts, length(local.docai_processor_parts) - 1) : ""
+}
+
+# Backend may call Document AI online processing
+resource "google_project_iam_member" "backend_documentai_user" {
+  count   = var.deploy_backend ? 1 : 0
+  project = var.project_id
+  role    = "roles/documentai.apiUser"
+  member  = "serviceAccount:${google_service_account.backend[0].email}"
+}
+
+# Backend may call Cloud Translation (detect language, translate text)
+resource "google_project_iam_member" "backend_translate_user" {
+  count   = var.deploy_backend ? 1 : 0
+  project = var.project_id
+  role    = "roles/cloudtranslate.user"
+  member  = "serviceAccount:${google_service_account.backend[0].email}"
+}
+
+# Backend reads and writes uploaded documents, scoped to the one bucket (not project-wide)
+resource "google_storage_bucket_iam_member" "backend_documents" {
+  count  = var.deploy_backend && var.gcs_bucket_name != "" ? 1 : 0
+  bucket = var.gcs_bucket_name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:${google_service_account.backend[0].email}"
+}
+
+# ==============================================================================
 # Backend Cloud Run Service
 # ==============================================================================
 
@@ -250,6 +297,29 @@ resource "google_cloud_run_v2_service" "backend" {
         content {
           name  = "DB_USER"
           value = var.db_user
+        }
+      }
+
+      env {
+        name  = "DOCAI_PROCESSOR_ID"
+        value = local.docai_processor_id
+      }
+
+      env {
+        name  = "DOCAI_LOCATION"
+        value = var.docai_location
+      }
+
+      env {
+        name  = "GCP_PROJECT_ID"
+        value = var.project_id
+      }
+
+      dynamic "env" {
+        for_each = var.gcs_bucket_name != "" ? [1] : []
+        content {
+          name  = "GCS_BUCKET_NAME"
+          value = var.gcs_bucket_name
         }
       }
     }
