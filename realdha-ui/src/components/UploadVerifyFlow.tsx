@@ -219,12 +219,8 @@ export function UploadVerifyFlow({
         <div className="studio-header-inner">
           <h1 className="studio-title">
             Upload &amp; Verify Maharashtra Property Records
-            <span className="section-dv-sub dv">महाराष्ट्र महसूल कागदपत्र पडताळणी कक्ष</span>
           </h1>
-          <p className="studio-subtitle">
-            Multimodal OCR extraction for Marathi Devanagari &amp; Modi scripts, 30-year title reconciliation,
-            discrepancy detection, and Cloud KMS cryptographic ledger anchoring in seconds.
-          </p>
+         
         </div>
       </section>
 
