@@ -27,8 +27,12 @@ const routes = SCREENS.map((s) => {
   return { path: path(s.id), element: <Suspense fallback={null}><El /></Suspense> }
 })
 
+// API-backed marketplace (Flat Finder data). Lazy so its global stylesheet loads only when visited.
+const Marketplace = lazy(() => import('../components/App').then((m) => ({ default: m.App })))
+
 const router = createBrowserRouter([
   { path: '/', element: <Navigate to={path('GP-01')} replace /> },
+  { path: '/marketplace', element: <Suspense fallback={null}><Marketplace /></Suspense> },
   { path: '/dev/flows', element: <FlowIndex /> },
   ...routes,
   { path: '*', element: <NotBuilt id="X-04" title="Page not found" /> },

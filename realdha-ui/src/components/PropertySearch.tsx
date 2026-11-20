@@ -1,195 +1,170 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
-  SlidersHorizontal,
   ArrowUpDown,
-  LayoutGrid,
-  List,
-  Heart,
-  Banknote,
-  Home,
   Building2,
-  Palmtree,
-  Store,
-  UserCheck,
-  ShoppingBag,
-  ShieldCheck,
-  Users,
+  CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  Heart,
+  Home,
+  LayoutGrid,
+  List,
+  Map as MapIcon,
   Sparkles,
+  Star,
 } from 'lucide-react'
-import type { Scenario } from '../data/scenarios'
+import {
+  cardBadges,
+  fetchCities,
+  formatInr,
+  grossYield,
+  lowestRent,
+  type CitySummary,
+  type FlatMode,
+  type FlatSort,
+  type SocietyCard,
+} from '../lib/flats-api'
+import { useSocieties } from '../lib/useSocieties'
 
 interface PropertySearchProps {
-  scenarios: Scenario[]
-  activeScenario: Scenario
-  onSelectScenario: (s: Scenario) => void
-  onNavigate: (view: 'landing' | 'search' | 'passport' | 'upload') => void
+  searchQuery: string
+  onOpenSociety: (id: string) => void
   onOpenAssistant?: () => void
 }
 
-export function PropertySearch({
-  scenarios,
-  onSelectScenario,
-  onNavigate,
-  onOpenAssistant,
-}: PropertySearchProps) {
-  const [searchTerm, setSearchTerm] = useState('')
-  const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const [selectedMarket, setSelectedMarket] = useState<string>('all')
+const CATEGORIES = [
+  { id: 'all', label: 'All Homes', icon: LayoutGrid },
+  { id: 'apartment', label: 'Apartments', icon: Building2 },
+  { id: 'villa', label: 'Villas', icon: Home },
+  { id: 'builder floor', label: 'Builder Floors', icon: Building2 },
+  { id: 'plot', label: 'Plots', icon: MapIcon },
+  { id: 'ready', label: 'Ready to Move', icon: CheckCircle2 },
+  { id: 'favorites', label: 'Favorites', icon: Heart },
+] as const
+
+const SORTS: Array<{ id: FlatSort; label: string }> = [
+  { id: 'best', label: 'Best match' },
+  { id: 'price', label: 'Price' },
+  { id: 'rating', label: 'Rating' },
+]
+
+const PLACEHOLDER_IMG =
+  'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1000&q=80'
+
+export function PropertySearch({ searchQuery, onOpenSociety, onOpenAssistant }: PropertySearchProps) {
+  const [city, setCity] = useState('pune')
+  const [cities, setCities] = useState<CitySummary[]>([])
+  const [mode, setMode] = useState<FlatMode>('buy')
+  const [category, setCategory] = useState<(typeof CATEGORIES)[number]['id']>('all')
+  const [sortIdx, setSortIdx] = useState(0)
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [sortBy, setSortBy] = useState<string>('default')
   const [favorites, setFavorites] = useState<Record<string, boolean>>({})
-  const [activeImageIndices, setActiveImageIndices] = useState<Record<string, number>>({})
+  const [imageIdx, setImageIdx] = useState<Record<string, number>>({})
 
-  // Category navigation tabs with icons (matching Lofty Screenshot 2)
-  const categoryFilters = [
-    { id: 'all', label: 'All Assets', icon: LayoutGrid },
-    { id: 'cash-flowing', label: 'Cash Flowing', icon: Banknote },
-    { id: 'high-rise', label: 'Multi Family', icon: Building2 },
-    { id: 'single-family', label: 'Single Family', icon: Home },
-    { id: 'vacation', label: 'Vacation Rentals', icon: Palmtree },
-    { id: 'commercial', label: 'Commercial', icon: Store },
-    { id: 'owner-occupied', label: 'Owner Occupied', icon: UserCheck },
-    { id: 'seller-buyback', label: 'Seller Buyback', icon: ShoppingBag },
-    { id: 'no-mortgage', label: 'No Mortgage', icon: ShieldCheck },
-    { id: 'favorites', label: 'Favorites', icon: Heart },
-  ]
+  useEffect(() => {
+    const c = new AbortController()
+    fetchCities(c.signal)
+      .then((list) => setCities(list.filter((x) => x.societies_count > 0)))
+      .catch(() => {})
+    return () => c.abort()
+  }, [])
 
-  const markets = [
-    { id: 'all', label: 'All Markets' },
-    { id: 'pune', label: 'Pune, MH' },
-    { id: 'mumbai', label: 'Mumbai MMR, MH' },
-    { id: 'lonavala', label: 'Lonavala, MH' },
-    { id: 'thane', label: 'Thane / Bhiwandi, MH' },
-  ]
+  const sort = SORTS[sortIdx]
+  const kind = category !== 'all' && category !== 'ready' && category !== 'favorites' ? category : undefined
+  const { data, loading, error, retry } = useSocieties({
+    city,
+    q: searchQuery.trim() || undefined,
+    mode,
+    kind,
+    ready: category === 'ready',
+    sort: sort.id,
+    limit: 100,
+  })
+
+  const societies = useMemo(() => {
+    const all = data?.societies ?? []
+    return category === 'favorites' ? all.filter((s) => favorites[s.id]) : all
+  }, [data, category, favorites])
 
   const toggleFavorite = (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
     setFavorites((prev) => ({ ...prev, [id]: !prev[id] }))
   }
 
-  const handleNextImage = (id: string, imagesLength: number, e: React.MouseEvent) => {
+  const stepImage = (id: string, len: number, delta: number, e: React.MouseEvent) => {
     e.stopPropagation()
-    setActiveImageIndices((prev) => ({
-      ...prev,
-      [id]: ((prev[id] || 0) + 1) % imagesLength,
-    }))
+    setImageIdx((prev) => ({ ...prev, [id]: (((prev[id] || 0) + delta) % len + len) % len }))
   }
 
-  const handlePrevImage = (id: string, imagesLength: number, e: React.MouseEvent) => {
-    e.stopPropagation()
-    setActiveImageIndices((prev) => ({
-      ...prev,
-      [id]: ((prev[id] || 0) - 1 + imagesLength) % imagesLength,
-    }))
+  const resetFilters = () => {
+    setCategory('all')
+    setMode('buy')
   }
-
-  const handleOpenProperty = (s: Scenario) => {
-    onSelectScenario(s)
-    onNavigate('passport')
-  }
-
-  const filteredProperties = useMemo(() => {
-    return scenarios.filter((s) => {
-      // Search matching
-      const matchesSearch =
-        searchTerm === '' ||
-        (s.streetAddress && s.streetAddress.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (s.cityStateZip && s.cityStateZip.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        s.realdhaId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.project.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        s.location.toLowerCase().includes(searchTerm.toLowerCase())
-
-      // Market dropdown matching
-      let matchesMarket = true
-      if (selectedMarket === 'pune') matchesMarket = s.location.toLowerCase().includes('pune')
-      else if (selectedMarket === 'mumbai') matchesMarket = s.location.toLowerCase().includes('mumbai') || s.location.toLowerCase().includes('mmr')
-      else if (selectedMarket === 'lonavala') matchesMarket = s.location.toLowerCase().includes('lonavala')
-      else if (selectedMarket === 'thane') matchesMarket = s.location.toLowerCase().includes('thane') || s.location.toLowerCase().includes('bhiwandi')
-
-      // Category icon matching
-      let matchesCategory = true
-      if (selectedCategory === 'favorites') {
-        matchesCategory = !!favorites[s.id]
-      } else if (selectedCategory === 'cash-flowing') {
-        matchesCategory = !!s.categoryPills?.includes('Cash Flowing') || s.floorPlan.type === 'warehouse'
-      } else if (selectedCategory === 'high-rise') {
-        matchesCategory = s.floorPlan.type === 'highrise' || !!s.categoryPills?.includes('High-Rise')
-      } else if (selectedCategory === 'single-family') {
-        matchesCategory = !!s.categoryPills?.includes('Single Family')
-      } else if (selectedCategory === 'vacation') {
-        matchesCategory = !!s.categoryPills?.includes('Vacation Rental') || s.floorPlan.type === 'plot'
-      } else if (selectedCategory === 'commercial') {
-        matchesCategory = s.floorPlan.type === 'warehouse' || !!s.categoryPills?.includes('Commercial')
-      } else if (selectedCategory === 'owner-occupied') {
-        matchesCategory = !!s.categoryPills?.includes('Owner Occupied')
-      } else if (selectedCategory === 'seller-buyback') {
-        matchesCategory = !!s.categoryPills?.includes('Seller Buyback')
-      } else if (selectedCategory === 'no-mortgage') {
-        matchesCategory = s.stamp.type === 'clear' || !!s.categoryPills?.includes('No Mortgage')
-      }
-
-      return matchesSearch && matchesMarket && matchesCategory
-    })
-  }, [scenarios, searchTerm, selectedMarket, selectedCategory, favorites])
 
   return (
     <div className="lofty-marketplace-root">
-      {/* 1. Category Filter Navigation Bar (Screenshot 2 Reference) */}
+      {/* 1. Filter bar */}
       <div className="lofty-filter-header">
         <div className="lofty-filter-container">
           <div className="lofty-filter-top-row">
-            {/* Markets Dropdown */}
             <div className="lofty-dropdown-wrap">
               <select
                 className="lofty-pill-select"
-                value={selectedMarket}
-                onChange={(e) => setSelectedMarket(e.target.value)}
-                aria-label="Filter by market location"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                aria-label="Filter by city"
               >
-                {markets.map((m) => (
-                  <option key={m.id} value={m.id}>{m.label}</option>
+                {(cities.length ? cities : [{ slug: 'pune', name: 'Pune', societies_count: 0 }]).map((c) => (
+                  <option key={c.slug} value={c.slug}>{c.name}</option>
                 ))}
               </select>
             </div>
 
-            {/* Horizontal Category Icons List */}
             <div className="lofty-category-scroller">
-              {categoryFilters.map((cat) => {
-                const IconComponent = cat.icon
-                const isActive = selectedCategory === cat.id
+              {CATEGORIES.map((cat) => {
+                const Icon = cat.icon
                 return (
                   <button
                     key={cat.id}
                     type="button"
-                    className={`lofty-cat-pill ${isActive ? 'active' : ''}`}
-                    onClick={() => setSelectedCategory(cat.id)}
+                    className={`lofty-cat-pill ${category === cat.id ? 'active' : ''}`}
+                    onClick={() => setCategory(cat.id)}
                   >
-                    <IconComponent size={18} className="cat-icon" />
+                    <Icon size={18} className="cat-icon" />
                     <span className="cat-text">{cat.label}</span>
                   </button>
                 )
               })}
             </div>
 
-            {/* Right Control Bar */}
             <div className="lofty-filter-actions">
-              <button type="button" className="lofty-action-pill-btn">
-                <SlidersHorizontal size={14} />
-                <span>Filters</span>
-              </button>
+              <div className="lofty-view-toggle" role="group" aria-label="Buy or rent">
+                <button
+                  type="button"
+                  className={`view-toggle-btn ${mode === 'buy' ? 'active' : ''}`}
+                  onClick={() => setMode('buy')}
+                >
+                  <span>Buy</span>
+                </button>
+                <button
+                  type="button"
+                  className={`view-toggle-btn ${mode === 'rent' ? 'active' : ''}`}
+                  onClick={() => setMode('rent')}
+                >
+                  <span>Rent</span>
+                </button>
+              </div>
 
               <button
                 type="button"
                 className="lofty-action-pill-btn"
-                onClick={() => setSortBy(sortBy === 'default' ? 'yield' : 'default')}
+                onClick={() => setSortIdx((i) => (i + 1) % SORTS.length)}
+                aria-label={`Sort by ${sort.label}`}
               >
                 <ArrowUpDown size={14} />
-                <span>{sortBy === 'default' ? 'Default' : 'Yield'}</span>
+                <span>{sort.label}</span>
               </button>
 
-              {/* Grid / List View Toggle */}
               <div className="lofty-view-toggle">
                 <button
                   type="button"
@@ -215,175 +190,60 @@ export function PropertySearch({
         </div>
       </div>
 
-      {/* 2. Social Proof / Metrics Banner (Screenshot 2 Reference) */}
+      {/* 2. Summary bar */}
       <div className="lofty-social-proof-bar">
         <div className="social-proof-item">
-          <strong>₹240Cr+</strong>
-          <span>indexed</span>
+          <strong>{data ? data.total.toLocaleString('en-IN') : '–'}</strong>
+          <span>{mode === 'buy' ? 'homes for sale' : 'homes for rent'}</span>
         </div>
         <span className="proof-dot">·</span>
         <div className="social-proof-item">
-          <strong>₹36Cr+</strong>
-          <span>due diligence completed</span>
+          <span>Prices from scraped Magicbricks listings</span>
         </div>
-        <span className="proof-dot">·</span>
-        <div className="social-proof-item">
-          <strong>1,420+</strong>
-          <span>verified units</span>
-        </div>
-        <span className="proof-dot">·</span>
       </div>
 
-      {/* 3. Property Grid Section (Screenshot 2 Reference) */}
+      {/* 3. Grid */}
       <div className="lofty-grid-container">
-        {filteredProperties.length === 0 ? (
+        {error ? (
+          <div className="lofty-empty-state" role="alert">
+            <h3>Could not load homes</h3>
+            <p>{error}</p>
+            <button type="button" className="lofty-btn-primary" onClick={retry}>Try again</button>
+          </div>
+        ) : loading && !data ? (
+          <div className={`lofty-cards-grid ${viewMode}`} aria-busy="true">
+            {Array.from({ length: 10 }, (_, i) => (
+              <div key={i} className="lofty-card lofty-card-skeleton" />
+            ))}
+          </div>
+        ) : societies.length === 0 ? (
           <div className="lofty-empty-state">
-            <h3>No Properties Found</h3>
-            <p>No verified properties match your selected filters. Try choosing "All Assets" or clearing the search query.</p>
-            <button
-              type="button"
-              className="lofty-btn-primary"
-              onClick={() => {
-                setSelectedCategory('all')
-                setSelectedMarket('all')
-                setSearchTerm('')
-              }}
-            >
-              Reset Filters
-            </button>
+            <h3>No homes found</h3>
+            <p>
+              {category === 'favorites'
+                ? 'You have not saved any homes yet. Use the heart on a card to save one.'
+                : `No homes ${mode === 'rent' ? 'for rent' : 'for sale'} match these filters. Try another category or clear the search.`}
+            </p>
+            <button type="button" className="lofty-btn-primary" onClick={resetFilters}>Reset filters</button>
           </div>
         ) : (
-          <div className={`lofty-cards-grid ${viewMode}`}>
-            {filteredProperties.map((s) => {
-              const images = s.images || [
-                'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1000&q=80',
-              ]
-              const currentImgIdx = activeImageIndices[s.id] || 0
-              const isFav = !!favorites[s.id]
-              const address = s.streetAddress || s.unit
-              const cityZip = s.cityStateZip || `${s.project}, ${s.location}`
-              const tokenPrice = s.tokenPrice || '$50.00 /share'
-              const yieldVal = s.avgRentalYield || '5.1%'
-              const valuation = s.valuationDelta || (s.stamp.type === 'clear' ? 'Clean Title' : 'Flagged')
-              const investors = s.investorCount || 271
-
-              return (
-                <div
-                  key={s.id}
-                  className="lofty-card"
-                  onClick={() => handleOpenProperty(s)}
-                >
-                  {/* Image Carousel */}
-                  <div className="lofty-card-image-wrap">
-                    <img
-                      src={images[currentImgIdx]}
-                      alt={address}
-                      className="lofty-card-img"
-                      loading="lazy"
-                    />
-
-                    {/* Tag Pills Overlay (Top Left) */}
-                    <div className="lofty-card-tag-pills">
-                      {s.categoryPills && s.categoryPills.length > 0 ? (
-                        s.categoryPills.slice(0, 3).map((pill, i) => (
-                          <span
-                            key={i}
-                            className={`card-badge-pill ${
-                              pill === 'Commercial' ? 'badge-blue' :
-                              pill === 'Cash Flowing' ? 'badge-purple' :
-                              pill === 'No Mortgage' || pill === 'Verified Title' ? 'badge-emerald' :
-                              pill === 'Vacation Rental' ? 'badge-teal' :
-                              'badge-dark'
-                            }`}
-                          >
-                            {pill}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="card-badge-pill badge-emerald">Verified Title</span>
-                      )}
-                    </div>
-
-                    {/* Favorite Heart (Top Right) */}
-                    <button
-                      type="button"
-                      className={`lofty-card-fav-btn ${isFav ? 'favorited' : ''}`}
-                      onClick={(e) => toggleFavorite(s.id, e)}
-                      aria-label="Save property to favorites"
-                    >
-                      <Heart size={16} fill={isFav ? '#EF4444' : 'none'} color={isFav ? '#EF4444' : '#FFFFFF'} />
-                    </button>
-
-                    {/* Left/Right Carousel Controls (visible on hover) */}
-                    {images.length > 1 && (
-                      <div className="carousel-nav-arrows">
-                        <button
-                          type="button"
-                          className="caro-arrow left"
-                          onClick={(e) => handlePrevImage(s.id, images.length, e)}
-                          aria-label="Previous photo"
-                        >
-                          <ChevronLeft size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          className="caro-arrow right"
-                          onClick={(e) => handleNextImage(s.id, images.length, e)}
-                          aria-label="Next photo"
-                        >
-                          <ChevronRight size={16} />
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Pagination Dots (Bottom Center) */}
-                    {images.length > 1 && (
-                      <div className="lofty-card-dots">
-                        {images.map((_, dotIdx) => (
-                          <span
-                            key={dotIdx}
-                            className={`card-dot ${dotIdx === currentImgIdx ? 'active' : ''}`}
-                          />
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Property Details */}
-                  <div className="lofty-card-info">
-                    {/* Street Address */}
-                    <h3 className="lofty-card-title">{address}</h3>
-
-                    {/* City, State Zip */}
-                    <p className="lofty-card-location">{cityZip}</p>
-
-                    {/* Price & Yield Metrics Row */}
-                    <div className="lofty-card-metrics-row">
-                      <div className="metrics-left">
-                        <strong className="lofty-price n">{tokenPrice}</strong>
-                        <span className="bullet">·</span>
-                        <span className="lofty-yield n">{yieldVal} avg yield</span>
-                        <span className="bullet">·</span>
-                        <span className={`lofty-valuation ${valuation.includes('Undervalued') ? 'val-undervalued' : valuation.includes('Overvalued') ? 'val-overvalued' : 'val-clear'}`}>
-                          {valuation}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Investor / Views Count */}
-                    <div className="lofty-card-investors">
-                      <Users size={13} className="investors-icon" />
-                      <span className="n">{investors} investors</span>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
+          <div className={`lofty-cards-grid ${viewMode}`} aria-busy={loading}>
+            {societies.map((s) => (
+              <SocietyTile
+                key={s.id}
+                society={s}
+                mode={mode}
+                favorite={!!favorites[s.id]}
+                imageIndex={imageIdx[s.id] || 0}
+                onOpen={() => onOpenSociety(s.id)}
+                onFavorite={(e) => toggleFavorite(s.id, e)}
+                onStep={(delta, len, e) => stepImage(s.id, len, delta, e)}
+              />
+            ))}
           </div>
         )}
       </div>
 
-      {/* 4. Floating Action AI Assistant Trigger (Bottom Right Sparkle) */}
       <button
         type="button"
         className="lofty-floating-ai-fab"
@@ -393,6 +253,125 @@ export function PropertySearch({
       >
         <Sparkles size={22} />
       </button>
+    </div>
+  )
+}
+
+interface SocietyTileProps {
+  society: SocietyCard
+  mode: FlatMode
+  favorite: boolean
+  imageIndex: number
+  onOpen: () => void
+  onFavorite: (e: React.MouseEvent) => void
+  onStep: (delta: number, len: number, e: React.MouseEvent) => void
+}
+
+function SocietyTile({ society: s, mode, favorite, imageIndex, onOpen, onFavorite, onStep }: SocietyTileProps) {
+  const thumbs = (s.images ?? []).map((i) => i.thumb).filter(Boolean)
+  const images = thumbs.length ? thumbs : [PLACEHOLDER_IMG]
+  const badges = cardBadges(s)
+  const yieldPct = grossYield(s.prices)
+  const rent = lowestRent(s.prices)
+  const subtitle = [s.locality, s.pincode ? `Pune ${s.pincode}` : 'Pune'].filter(Boolean).join(', ')
+
+  const priceLine =
+    mode === 'rent'
+      ? rent != null ? `from ${formatInr(rent)}/mo` : 'Rent on request'
+      : s.price_min != null
+        ? s.price_max && s.price_max !== s.price_min
+          ? `${formatInr(s.price_min)} – ${formatInr(s.price_max)}`
+          : formatInr(s.price_min)
+        : 'Price on request'
+
+  return (
+    <div
+      className="lofty-card"
+      role="link"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(e) => { if (e.key === 'Enter') onOpen() }}
+    >
+      <div className="lofty-card-image-wrap">
+        <img src={images[imageIndex % images.length]} alt={s.name} className="lofty-card-img" loading="lazy" />
+
+        <div className="lofty-card-tag-pills">
+          {badges.map((b, i) => (
+            <span key={b} className={`card-badge-pill ${i === 0 ? 'badge-purple' : i === 1 && s.status?.toLowerCase().includes('ready') ? 'badge-emerald' : 'badge-dark'}`}>
+              {b}
+            </span>
+          ))}
+        </div>
+
+        <button
+          type="button"
+          className={`lofty-card-fav-btn ${favorite ? 'favorited' : ''}`}
+          onClick={onFavorite}
+          aria-label={favorite ? `Remove ${s.name} from favorites` : `Save ${s.name} to favorites`}
+          aria-pressed={favorite}
+        >
+          <Heart size={16} fill={favorite ? '#EF4444' : 'none'} color={favorite ? '#EF4444' : '#FFFFFF'} />
+        </button>
+
+        {images.length > 1 && (
+          <>
+            <div className="carousel-nav-arrows">
+              <button type="button" className="caro-arrow left" onClick={(e) => onStep(-1, images.length, e)} aria-label="Previous photo">
+                <ChevronLeft size={16} />
+              </button>
+              <button type="button" className="caro-arrow right" onClick={(e) => onStep(1, images.length, e)} aria-label="Next photo">
+                <ChevronRight size={16} />
+              </button>
+            </div>
+            <div className="lofty-card-dots">
+              {images.map((_, dot) => (
+                <span key={dot} className={`card-dot ${dot === imageIndex % images.length ? 'active' : ''}`} />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="lofty-card-info">
+        <h3 className="lofty-card-title">{s.name}</h3>
+        <p className="lofty-card-location">{subtitle}</p>
+
+        <div className="lofty-card-metrics-row">
+          <div className="metrics-left">
+            <strong className="lofty-price n">{priceLine}</strong>
+            {mode === 'buy' && s.psf_now != null && (
+              <>
+                <span className="bullet">·</span>
+                <span className="n">{formatInr(s.psf_now)}/sqft</span>
+              </>
+            )}
+            {yieldPct != null && (
+              <>
+                <span className="bullet">·</span>
+                <span className="lofty-yield n" title="Gross yield: annual median rent / median price">
+                  {yieldPct.toFixed(1)}% gross yield
+                </span>
+              </>
+            )}
+            {s.score != null && (
+              <>
+                <span className="bullet">·</span>
+                <span className="lofty-valuation val-clear n" title="Flat Finder score">
+                  {s.score.toFixed(1)}/10
+                </span>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="lofty-card-investors">
+          <Star size={13} className="investors-icon" />
+          <span className="n">
+            {s.rating != null ? `${s.rating.toFixed(1)} · ` : ''}
+            {s.review_count ?? 0} {s.review_count === 1 ? 'review' : 'reviews'}
+          </span>
+        </div>
+      </div>
     </div>
   )
 }

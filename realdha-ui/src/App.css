@@ -6381,3 +6381,64 @@
   transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
 }
+
+/* ============================================================
+   MARKETPLACE (API-backed): skeletons + society detail view
+   ============================================================ */
+.lofty-card-skeleton {
+  min-height: 330px;
+  cursor: default;
+  background: linear-gradient(100deg, #0E1426 30%, #161d36 50%, #0E1426 70%);
+  background-size: 200% 100%;
+  animation: lofty-shimmer 1.4s linear infinite;
+}
+@keyframes lofty-shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .lofty-card-skeleton { animation: none; } }
+.lofty-card:focus-visible { outline: 2px solid #6366F1; outline-offset: 2px; }
+
+.society-detail { max-width: 1200px; margin: 0 auto; padding: 24px 24px 64px; color: #FFFFFF; }
+.society-back-btn {
+  display: inline-flex; align-items: center; gap: 6px; margin-bottom: 16px;
+  background: none; border: none; color: #94A3B8; font: 600 13px var(--font-sans); cursor: pointer;
+}
+.society-back-btn:hover { color: #FFFFFF; }
+.society-skeleton { min-height: 420px; }
+.society-hero { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 28px; }
+@media (max-width: 900px) { .society-hero { grid-template-columns: 1fr; } }
+.society-gallery-main { width: 100%; aspect-ratio: 16 / 10; object-fit: cover; border-radius: 12px; display: block; }
+.society-gallery-empty {
+  display: grid; place-items: center; aspect-ratio: 16 / 10; border-radius: 12px;
+  background: #0E1426; color: #94A3B8; border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.society-gallery-thumbs { display: flex; gap: 8px; margin-top: 10px; overflow-x: auto; }
+.society-thumb { flex: none; width: 84px; height: 56px; padding: 0; border: 2px solid transparent; border-radius: 8px; overflow: hidden; cursor: pointer; background: none; }
+.society-thumb.active { border-color: #6366F1; }
+.society-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.society-title { font: 800 28px var(--font-sans); margin: 0 0 6px; }
+.society-sub { display: flex; align-items: center; gap: 6px; margin: 0 0 4px; color: #94A3B8; font: 400 14px var(--font-sans); }
+.society-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin: 18px 0; }
+.society-facts div { background: #0E1426; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 10px 12px; }
+.society-facts dt { color: #94A3B8; font: 500 12px var(--font-sans); }
+.society-facts dd { margin: 2px 0 0; font: 700 15px var(--font-sans); }
+.society-rating { display: flex; align-items: center; gap: 6px; color: #94A3B8; font: 500 13px var(--font-sans); }
+.society-section { margin-top: 32px; }
+.society-section h2 { font: 700 18px var(--font-sans); margin: 0 0 12px; }
+.society-section h3 { font: 600 14px var(--font-sans); color: #94A3B8; margin: 0 0 8px; }
+.society-table-wrap { overflow-x: auto; }
+.society-table { width: 100%; border-collapse: collapse; font: 400 14px var(--font-sans); }
+.society-table th, .society-table td { text-align: left; padding: 10px 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); white-space: nowrap; }
+.society-table th { color: #94A3B8; font-weight: 500; }
+.society-listings { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
+.society-listings ul, .society-nearby, .society-reviews, .society-chips { list-style: none; margin: 0; padding: 0; }
+.society-listings li { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.08); font-size: 14px; }
+.society-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.society-chips li { background: #0E1426; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 9999px; padding: 6px 12px; font-size: 13px; }
+.society-nearby { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+.society-nearby li { display: flex; flex-direction: column; gap: 2px; background: #0E1426; border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 10px; padding: 10px 12px; }
+.society-nearby span { color: #94A3B8; font-size: 12px; }
+.society-nearby small { color: #94A3B8; }
+.society-reviews li { padding: 12px 0; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+.society-review-head { display: flex; justify-content: space-between; gap: 12px; }
+.society-review-head span { display: inline-flex; align-items: center; gap: 4px; color: #94A3B8; }
+.society-reviews p { margin: 6px 0; color: #CBD5E1; font-size: 14px; line-height: 1.5; }
+.society-reviews small { color: #94A3B8; }
