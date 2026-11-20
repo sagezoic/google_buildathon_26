@@ -155,3 +155,94 @@ variable "backend_allow_unauthenticated" {
   type        = bool
   default     = true
 }
+
+# ------------------------------------------------------------------------------
+# Cloud SQL PostgreSQL Database Configuration
+# ------------------------------------------------------------------------------
+
+variable "deploy_database" {
+  description = "Whether to provision Cloud SQL PostgreSQL instance and database"
+  type        = bool
+  default     = true
+}
+
+variable "db_instance_name" {
+  description = "Name of the Cloud SQL instance. If empty, a random unique suffix is appended (realdha-postgres-<suffix>)."
+  type        = string
+  default     = ""
+}
+
+variable "db_version" {
+  description = "The PostgreSQL version to use for Cloud SQL"
+  type        = string
+  default     = "POSTGRES_16"
+}
+
+variable "db_tier" {
+  description = "The machine type for the Cloud SQL instance (e.g. db-f1-micro for dev/hackathon, db-custom-1-3840 for prod)"
+  type        = string
+  default     = "db-f1-micro"
+}
+
+variable "db_name" {
+  description = "Name of the default PostgreSQL database"
+  type        = string
+  default     = "realdha"
+}
+
+variable "db_user" {
+  description = "PostgreSQL database username"
+  type        = string
+  default     = "realdha"
+}
+
+variable "db_password" {
+  description = "PostgreSQL password for db_user. If left empty, a secure random password is generated automatically."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "db_disk_size" {
+  description = "The disk size in GB for the Cloud SQL instance"
+  type        = number
+  default     = 10
+}
+
+variable "db_disk_type" {
+  description = "The disk type for the Cloud SQL instance (PD_SSD or PD_HDD)"
+  type        = string
+  default     = "PD_SSD"
+}
+
+variable "db_availability_type" {
+  description = "The availability type for Cloud SQL: ZONAL (single zone, cost-effective) or REGIONAL (high availability failover)"
+  type        = string
+  default     = "ZONAL"
+}
+
+variable "db_deletion_protection" {
+  description = "Whether to enable deletion protection on the Cloud SQL instance"
+  type        = bool
+  default     = false
+}
+
+variable "db_backup_enabled" {
+  description = "Whether to enable automated daily backups for Cloud SQL"
+  type        = bool
+  default     = true
+}
+
+variable "db_authorized_networks" {
+  description = "List of authorized IPv4 CIDRs allowed to connect directly to the database instance over public IP (e.g. for local dev)"
+  type = list(object({
+    name = string
+    cidr = string
+  }))
+  default = [
+    {
+      name = "all"
+      cidr = "0.0.0.0/0"
+    }
+  ]
+}

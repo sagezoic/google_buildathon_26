@@ -132,6 +132,14 @@ backend_service_url = "https://realdha-backend-xxxxxxxxxx-uc.a.run.app"
 | `create_artifact_registry` | Manage Artifact Registry repos | `bool` | `true` |
 | `enable_apis` | Automatically enable GCP APIs | `bool` | `true` |
 | `environment` | Environment label (`dev`, `prod`) | `string` | `"prod"` |
+| `deploy_database` | Provision Cloud SQL PostgreSQL | `bool` | `true` |
+| `db_instance_name` | Instance name (empty for auto-suffix) | `string` | `""` |
+| `db_version` | PostgreSQL database version | `string` | `"POSTGRES_16"` |
+| `db_tier` | Cloud SQL machine tier | `string` | `"db-f1-micro"` |
+| `db_name` | Default PostgreSQL database name | `string` | `"realdha"` |
+| `db_user` | PostgreSQL database user | `string` | `"realdha"` |
+| `db_password` | Database password (empty = auto-generate) | `string` | `""` |
+| `db_authorized_networks` | CIDRs allowed direct access | `list(object)` | `0.0.0.0/0` |
 
 ---
 
@@ -146,6 +154,66 @@ backend_service_url = "https://realdha-backend-xxxxxxxxxx-uc.a.run.app"
 | `docker_push_commands` | Ready-to-run bash commands to build & push images |
 | `service_account_email` | Frontend runtime service account identity |
 | `backend_service_account_email` | Backend runtime service account identity |
+| `db_instance_name` | Cloud SQL PostgreSQL instance name |
+| `db_connection_name` | Cloud SQL instance connection name |
+| `db_host` | Public IPv4 address for Cloud SQL instance |
+| `db_port` | PostgreSQL port (5432) |
+| `db_name` | PostgreSQL database name |
+| `db_user` | PostgreSQL database user |
+| `db_password` | Generated/configured database password (sensitive) |
+| `database_url` | Direct PostgreSQL connection string for local dev (sensitive) |
+| `database_url_proxy` | Localhost proxy connection string (sensitive) |
+
+---
+
+## Using Cloud SQL Locally
+
+After running `terraform apply`, retrieve the database connection string and credentials:
+
+### Quick Setup for Backend `.env`
+
+**PowerShell (Windows):**
+```powershell
+cd terraform
+$dbUrl = terraform output -raw database_url
+Set-Content -Path ../backend/.env -Value "DATABASE_URL=$dbUrl`nPORT=8080`nHOST=0.0.0.0`nNODE_ENV=development`nSCRAPER_DELAY_MS=1000"
+```
+
+**Bash (Linux / macOS):**
+```bash
+cd terraform
+echo "DATABASE_URL=$(terraform output -raw database_url)" > ../backend/.env
+echo "PORT=8080" >> ../backend/.env
+echo "HOST=0.0.0.0" >> ../backend/.env
+echo "NODE_ENV=development" >> ../backend/.env
+echo "SCRAPER_DELAY_MS=1000" >> ../backend/.env
+```
+
+### View Individual Credentials
+
+```bash
+# Get Database Host (Public IP)
+terraform output -raw db_host
+
+# Get Database Name
+terraform output -raw db_name
+
+# Get Database User
+terraform output -raw db_user
+
+# Get Database Password
+terraform output -raw db_password
+
+# Get Full Connection URL
+terraform output -raw database_url
+```
+
+### Run Migrations Against Cloud SQL
+
+```bash
+cd ../backend
+bun run db:migrate
+```
 
 ---
 

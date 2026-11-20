@@ -75,3 +75,91 @@ output "docker_push_commands" {
     docker push ${local.target_backend_container_image}
   EOT
 }
+
+# ------------------------------------------------------------------------------
+# Cloud SQL PostgreSQL Outputs
+# ------------------------------------------------------------------------------
+
+output "db_instance_name" {
+  description = "Name of the Cloud SQL PostgreSQL instance"
+  value       = try(google_sql_database_instance.postgres[0].name, "")
+}
+
+output "db_connection_name" {
+  description = "Cloud SQL instance connection name (PROJECT_ID:REGION:INSTANCE_NAME)"
+  value       = try(google_sql_database_instance.postgres[0].connection_name, "")
+}
+
+output "db_host" {
+  description = "Public IPv4 address of the Cloud SQL PostgreSQL instance"
+  value       = try(google_sql_database_instance.postgres[0].public_ip_address, "")
+}
+
+output "db_port" {
+  description = "Port exposed by Cloud SQL PostgreSQL"
+  value       = 5432
+}
+
+output "db_name" {
+  description = "Default PostgreSQL database name"
+  value       = var.db_name
+}
+
+output "db_user" {
+  description = "PostgreSQL database username"
+  value       = var.db_user
+}
+
+output "db_password" {
+  description = "PostgreSQL database user password"
+  value       = local.effective_db_password
+  sensitive   = true
+}
+
+output "database_url" {
+  description = "Full PostgreSQL connection URI for local development (direct public IP)"
+  value       = var.deploy_database ? "postgresql://${var.db_user}:${local.effective_db_password}@${try(google_sql_database_instance.postgres[0].public_ip_address, "127.0.0.1")}:5432/${var.db_name}" : ""
+  sensitive   = true
+}
+
+output "database_url_proxy" {
+  description = "PostgreSQL connection URI via Cloud SQL Auth Proxy (127.0.0.1:5432)"
+  value       = var.deploy_database ? "postgresql://${var.db_user}:${local.effective_db_password}@127.0.0.1:5432/${var.db_name}" : ""
+  sensitive   = true
+}
+
+output "local_connection_instructions" {
+  description = "Instructions and shell commands to configure local backend with Cloud SQL credentials"
+  value       = <<-EOT
+    # --------------------------------------------------------------------------
+    # HOW TO USE CLOUD SQL IN LOCAL BACKEND:
+    # --------------------------------------------------------------------------
+    # 1. Direct Public Connection (Quickest for Local Dev):
+    #    Run the following in PowerShell / terminal to set up backend/.env:
+    #
+    #    PowerShell:
+    #      cd terraform
+    #      $dbUrl = terraform output -raw database_url
+    #      Set-Content -Path ../backend/.env -Value "DATABASE_URL=$dbUrl`nPORT=8080`nHOST=0.0.0.0`nNODE_ENV=development`nSCRAPER_DELAY_MS=1000"
+    #
+    #    Bash:
+    #      cd terraform
+    #      echo "DATABASE_URL=$(terraform output -raw database_url)" > ../backend/.env
+    #      echo "PORT=8080" >> ../backend/.env
+    #      echo "HOST=0.0.0.0" >> ../backend/.env
+    #      echo "NODE_ENV=development" >> ../backend/.env
+    #      echo "SCRAPER_DELAY_MS=1000" >> ../backend/.env
+    #
+    # 2. Via Google Cloud SQL Auth Proxy (Recommended for Production/Restricted IPs):
+    #    gcloud auth login
+    #    cloud-sql-proxy ${try(google_sql_database_instance.postgres[0].connection_name, "<CONNECTION_NAME>")} --port 5432
+    #
+    #    Then in backend/.env:
+    #      DATABASE_URL=$(terraform output -raw database_url_proxy)
+    #
+    # 3. Run database migrations:
+    #      cd ../backend
+    #      bun run db:migrate
+    # --------------------------------------------------------------------------
+  EOT
+}
