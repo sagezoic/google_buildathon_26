@@ -1,5 +1,5 @@
 variable "allow_unauthenticated" {
-  description = "Whether to allow unauthenticated (public) access to the Cloud Run service"
+  description = "Whether to allow unauthenticated (public) access to the Cloud Run UI service"
   type        = bool
   default     = true
 }
@@ -11,7 +11,13 @@ variable "artifact_registry_repo_name" {
 }
 
 variable "container_image" {
-  description = "Docker image URI to deploy. If empty, defaults to the image in the managed Artifact Registry repository."
+  description = "Docker image URI for UI. If empty, defaults to the image in the managed Artifact Registry repository."
+  type        = string
+  default     = ""
+}
+
+variable "ui_container_image" {
+  description = "Explicit Docker image URI for UI (takes precedence over container_image)"
   type        = string
   default     = ""
 }
@@ -23,13 +29,13 @@ variable "container_port" {
 }
 
 variable "cpu" {
-  description = "CPU allocated to the Cloud Run instance container (e.g. 1000m or 1)"
+  description = "CPU allocated to the UI Cloud Run instance container (e.g. 1000m or 1)"
   type        = string
   default     = "1000m"
 }
 
 variable "create_artifact_registry" {
-  description = "Whether to create an Artifact Registry repository for the UI container"
+  description = "Whether to create Artifact Registry repositories for container images"
   type        = bool
   default     = true
 }
@@ -47,25 +53,25 @@ variable "environment" {
 }
 
 variable "max_instance_count" {
-  description = "Maximum number of Cloud Run container instances for auto-scaling"
+  description = "Maximum number of Cloud Run container instances for UI auto-scaling"
   type        = number
   default     = 10
 }
 
 variable "memory" {
-  description = "Memory allocated to the Cloud Run instance container (e.g. 512Mi, 1Gi)"
+  description = "Memory allocated to the UI Cloud Run instance container (e.g. 512Mi, 1Gi)"
   type        = string
   default     = "512Mi"
 }
 
 variable "min_instance_count" {
-  description = "Minimum number of Cloud Run container instances (0 allows scaling to zero to save costs)"
+  description = "Minimum number of UI Cloud Run container instances (0 allows scaling to zero)"
   type        = number
   default     = 0
 }
 
 variable "project_id" {
-  description = "The Google Cloud Project ID where the UI will be deployed"
+  description = "The Google Cloud Project ID where resources will be deployed"
   type        = string
 }
 
@@ -81,7 +87,71 @@ variable "region" {
 }
 
 variable "service_name" {
-  description = "Name of the Cloud Run service"
+  description = "Name of the UI Cloud Run service"
   type        = string
   default     = "realdha-ui"
+}
+
+# ------------------------------------------------------------------------------
+# Backend Configuration
+# ------------------------------------------------------------------------------
+
+variable "deploy_backend" {
+  description = "Whether to deploy the backend Cloud Run service and repository"
+  type        = bool
+  default     = true
+}
+
+variable "backend_service_name" {
+  description = "Name of the Backend Cloud Run service"
+  type        = string
+  default     = "realdha-backend"
+}
+
+variable "backend_artifact_registry_repo_name" {
+  description = "Name of the Artifact Registry repository for Backend container images"
+  type        = string
+  default     = "realdha-backend"
+}
+
+variable "backend_container_image" {
+  description = "Docker image URI for Backend. If empty, defaults to the image in the backend Artifact Registry repository."
+  type        = string
+  default     = ""
+}
+
+variable "backend_container_port" {
+  description = "Port exposed by the backend container"
+  type        = number
+  default     = 8080
+}
+
+variable "backend_cpu" {
+  description = "CPU allocated to the Backend Cloud Run container"
+  type        = string
+  default     = "1000m"
+}
+
+variable "backend_memory" {
+  description = "Memory allocated to the Backend Cloud Run container"
+  type        = string
+  default     = "512Mi"
+}
+
+variable "backend_min_instance_count" {
+  description = "Minimum number of Backend Cloud Run instances (0 allows scaling to zero)"
+  type        = number
+  default     = 0
+}
+
+variable "backend_max_instance_count" {
+  description = "Maximum number of Backend Cloud Run instances for auto-scaling"
+  type        = number
+  default     = 10
+}
+
+variable "backend_allow_unauthenticated" {
+  description = "Whether to allow unauthenticated (public) access to the Backend Cloud Run service"
+  type        = bool
+  default     = true
 }
