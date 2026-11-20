@@ -1,0 +1,35 @@
+# ------------------------------------------------------------------------------
+# Google Cloud Configuration
+# ------------------------------------------------------------------------------
+
+# Required: Replace with your Google Cloud Project ID
+project_id = "your-gcp-project-id"
+
+# US Region for deployment (e.g. us-central1, us-east1, us-west1, us-east4)
+region = "us-central1"
+
+# Environment tag
+environment = "prod"
+
+# Cloud Run service name
+service_name = "realdha-ui"
+
+# Public internet access (true allows anyone to view the UI)
+allow_unauthenticated = true
+
+# Artifact Registry repository name for Docker images
+artifact_registry_repo_name = "realdha-ui"
+
+# Optional: Specify an existing Docker image URI.
+# If omitted or left empty (""), it defaults to the image in the managed Artifact Registry:
+# <region>-docker.pkg.dev/<project_id>/<artifact_registry_repo_name>/realdha-ui:latest
+container_image = ""
+
+# Auto-scaling settings
+# min_instance_count = 0 allows scaling to zero to minimize costs when idle
+min_instance_count = 0
+max_instance_count = 10
+
+# Resource limits per container instance
+cpu    = "1000m"
+memory = "512Mi"
