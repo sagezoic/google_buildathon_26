@@ -61,13 +61,14 @@ export const NAV: Record<Role, NavItem[]> = {
   ],
   admin: [
     { label: 'Console', to: path('GP-23') },
-    { label: 'Users', to: path('F19-01') },
-    { label: 'Blockchain', to: path('F19-02') },
+    { label: 'Transactions', to: path('F19-01') },
+    { label: 'Contracts', to: path('F19-02') },
     { label: 'Audit log', to: path('F19-03') },
     { label: 'Settings', to: path('X-03') },
   ],
   government: [
     { label: 'Lookup', to: path('F20-01') },
+    { label: 'Records', to: path('F20-02') },
     { label: 'Audit trail', to: path('F20-04') },
   ],
 }
@@ -79,6 +80,7 @@ const ACTIVE_OVERRIDE: Record<string, string> = {
   'GP-15': 'F03-03', 'GP-16': 'F03-03', 'GP-17': 'F03-03', 'GP-18': 'F03-03', 'GP-19': 'F03-03', 'GP-20': 'GP-21', 'GP-22': 'GP-21',
   'GP-14': 'GP-13',
   'F19-01': 'GP-23',
+  'F20-03': 'F20-02',
 }
 export function activePath(id: string) {
   return path(ACTIVE_OVERRIDE[id] ?? id)

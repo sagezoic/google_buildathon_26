@@ -39,6 +39,186 @@
         ],
         "createdAt": "2026-11-20T20:25:43.294Z",
         "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
+      },
+      {
+        "rule": "kicker-above-heading",
+        "value": "*",
+        "files": [
+          "references/realdha-frames/project/V-Coverage-1.dc.html"
+        ],
+        "createdAt": "2026-11-20T20:52:30.675Z",
+        "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
+      },
+      {
+        "rule": "kicker-above-heading",
+        "value": "*",
+        "files": [
+          "references/realdha-frames/project/V-Coverage-2.dc.html"
+        ],
+        "createdAt": "2026-11-20T20:52:30.690Z",
+        "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
+      },
+      {
+        "rule": "kicker-above-heading",
+        "value": "*",
+        "files": [
+          "references/realdha-frames/project/N-X-Annotations.dc.html"
+        ],
+        "createdAt": "2026-11-20T20:52:30.704Z",
+        "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
+      },
+      {
+        "rule": "kicker-above-heading",
+        "value": "*",
+        "files": [
+          "references/realdha-frames/project/N-F05-Annotations.dc.html"
+        ],
+        "createdAt": "2026-11-20T20:52:30.719Z",
+        "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
+      },
+      {
+        "rule": "kicker-above-heading",
+        "value": "*",
+        "files": [
+          "references/realdha-frames/project/N-F06-Annotations.dc.html"
+        ],
+        "createdAt": "2026-11-20T20:52:30.733Z",
+        "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
+      },
+      {
+        "rule": "kicker-above-heading",
+        "value": "*",
+        "files": [
+          "references/realdha-frames/project/N-F07-Annotations.dc.html"
+        ],
+        "createdAt": "2026-11-20T20:52:30.747Z",
+        "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
+      },
+      {
+        "rule": "kicker-above-heading",
+        "value": "*",
+        "files": [
+          "references/realdha-frames/project/N-F08-Annotations.dc.html"
+        ],
+        "createdAt": "2026-11-20T20:52:30.760Z",
+        "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
+      },
+      {
+        "rule": "kicker-above-heading",
+        "value": "*",
+        "files": [
+          "references/realdha-frames/project/N-F09-Annotations.dc.html"
+        ],
+        "createdAt": "2026-11-20T20:52:30.774Z",
+        "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
+      },
+      {
+        "rule": "kicker-above-heading",
+        "value": "*",
+        "files": [
+          "references/realdha-frames/project/N-F10-Annotations.dc.html"
+        ],
+        "createdAt": "2026-11-20T20:52:30.789Z",
+        "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
+      },
+      {
+        "rule": "kicker-above-heading",
+        "value": "*",
+        "files": [
+          "references/realdha-frames/project/N-F11-Annotations.dc.html"
+        ],
+        "createdAt": "2026-11-20T20:52:30.803Z",
+        "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
+      },
+      {
+        "rule": "kicker-above-heading",
+        "value": "*",
+        "files": [
+          "references/realdha-frames/project/N-F12-Annotations.dc.html"
+        ],
+        "createdAt": "2026-11-20T20:52:30.816Z",
+        "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
+      },
+      {
+        "rule": "kicker-above-heading",
+        "value": "*",
+        "files": [
+          "references/realdha-frames/project/N-F13-Annotations.dc.html"
+        ],
+        "createdAt": "2026-11-20T20:52:30.831Z",
+        "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
+      },
+      {
+        "rule": "kicker-above-heading",
+        "value": "*",
+        "files": [
+          "references/realdha-frames/project/N-F14-Annotations.dc.html"
+        ],
+        "createdAt": "2026-11-20T20:52:30.844Z",
+        "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
+      },
+      {
+        "rule": "kicker-above-heading",
+        "value": "*",
+        "files": [
+          "references/realdha-frames/project/N-F15-Annotations.dc.html"
+        ],
+        "createdAt": "2026-11-20T20:52:30.858Z",
+        "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
+      },
+      {
+        "rule": "kicker-above-heading",
+        "value": "*",
+        "files": [
+          "references/realdha-frames/project/N-F16-Annotations.dc.html"
+        ],
+        "createdAt": "2026-11-20T20:52:30.873Z",
+        "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
+      },
+      {
+        "rule": "kicker-above-heading",
+        "value": "*",
+        "files": [
+          "references/realdha-frames/project/N-F17-Annotations.dc.html"
+        ],
+        "createdAt": "2026-11-20T20:52:30.887Z",
+        "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
+      },
+      {
+        "rule": "kicker-above-heading",
+        "value": "*",
+        "files": [
+          "references/realdha-frames/project/N-F18-Annotations.dc.html"
+        ],
+        "createdAt": "2026-11-20T20:52:30.901Z",
+        "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
+      },
+      {
+        "rule": "kicker-above-heading",
+        "value": "*",
+        "files": [
+          "references/realdha-frames/project/N-F19-Annotations.dc.html"
+        ],
+        "createdAt": "2026-11-20T20:52:30.927Z",
+        "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
+      },
+      {
+        "rule": "kicker-above-heading",
+        "value": "*",
+        "files": [
+          "references/realdha-frames/project/N-F20-Annotations.dc.html"
+        ],
+        "createdAt": "2026-11-20T20:52:30.944Z",
+        "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "references/realdha-frames/project/C3-Shell.dc.html"
+        ],
+        "createdAt": "2026-11-20T20:52:30.959Z",
+        "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
       }
     ]
   }

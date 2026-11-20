@@ -78,39 +78,39 @@ Built and persistent (2026-11-21): all 23 screens work with saved fields (`usePe
 - [ ] **End-to-end click-through** of the golden path at all three sizes.
 
 ### Phase 4: Owner flows
-- [ ] **F01 sign up and sign in** (8): sign in, email sign-up, verify email, forgot password, Google handoff, account exists, business details, session and sign-out.
-- [ ] **F02 identity KYC** (3)
-- [ ] **F03 add property** (4): apartment and commercial, upload errors, my properties, draft resume.
-- [ ] **F04 digital twin** (3): apartment twin, ownership history, document viewer.
-- [ ] **F05 verify documents for a property not on Realdha** (5): including the STOP and PROCEED reports.
-- [ ] **F06 lawyer sign-off** (2)
-- [ ] **F07 share a verified record** (3): create link, manage and revoke, recipient view and expired link.
+- [x] **F01 sign up and sign in** (8): sign in, email sign-up, verify email, forgot password, Google handoff, account exists, business details, session and sign-out.
+- [x] **F02 identity KYC** (3)
+- [x] **F03 add property** (4): apartment and commercial, upload errors, my properties, draft resume.
+- [x] **F04 digital twin** (3): apartment twin, ownership history, document viewer.
+- [x] **F05 verify documents for a property not on Realdha** (5): including the STOP and PROCEED reports.
+- [x] **F06 lawyer sign-off** (2)
+- [x] **F07 share a verified record** (3): create link, manage and revoke, recipient view and expired link.
 
 ### Phase 5: Buyer flows
-- [ ] **F08 search** (4)
-- [ ] **F09 area and single property** (3)
-- [ ] **F11 shortlist, compare, AI assistant** (3)
-- [ ] **F12 enquiry** (3)
-- [ ] **F13 book a sales call** (5)
-- [ ] **F18 market watchlist and register interest** (2)
-- [ ] **X-01 buyer home**
+- [x] **F08 search** (4)
+- [x] **F09 area and single property** (3)
+- [x] **F11 shortlist, compare, AI assistant** (3)
+- [x] **F12 enquiry** (3)
+- [x] **F13 book a sales call** (5)
+- [x] **F18 market watchlist and register interest** (2)
+- [x] **X-01 buyer home**
 
 ### Phase 6: Developer and channel partner
-- [ ] **F10 new units** (8): project, towers, bulk CSV, unit grid, publish, new launches, project page, stack picker.
-- [ ] **F14 3D visualisation** (5)
-- [ ] **F15 developer console** (7): dashboard, inventory, price history, enquiry inbox, call calendar, activity heatmap, channel partners.
-- [ ] **F16 channel partner** (5): including F16-05 call availability, marked ADDED.
+- [x] **F10 new units** (8): project, towers, bulk CSV, unit grid, publish, new launches, project page, stack picker.
+- [x] **F14 3D visualisation** (5)
+- [x] **F15 developer console** (7): dashboard, inventory, price history, enquiry inbox, call calendar, activity heatmap, channel partners.
+- [x] **F16 channel partner** (5): including F16-05 call availability, marked ADDED.
 
 ### Phase 7: Tokenisation, admin, government
-- [ ] **F17 tokenised assets and token detail** (2)
-- [ ] **F19 admin** (4): transaction drawer, contracts, audit log, access denied.
-- [ ] **F20 government, read-only** (4): lookup, record, fingerprint check, audit trail and export.
+- [x] **F17 tokenised assets and token detail** (2)
+- [x] **F19 admin** (4): transaction drawer, contracts, audit log, access denied.
+- [x] **F20 government, read-only** (4): lookup, record, fingerprint check, audit trail and export.
 
 ### Phase 8: Cross-cutting
-- [ ] **X-02 notifications**
-- [ ] **X-03 profile and settings**, including the theme setting.
-- [ ] **X-04 error pages**: 404, permission denied, offline, error.
-- [ ] **X-05 twin in Hindi and Marathi**: a full Devanagari pass.
+- [x] **X-02 notifications**
+- [x] **X-03 profile and settings**, including the theme setting.
+- [x] **X-04 error pages**: 404, permission denied, offline, error.
+- [x] **X-05 twin in Hindi and Marathi**: a full Devanagari pass.
 
 ### Phase 9: Retire the old UI and harden
 - [ ] **Delete the old UI**: old components, `App.css`, `shared-components.css`, the alias block and old fonts. Mark `REALDHA_UI_CONSISTENCY_DELIVERABLES.md` as superseded.

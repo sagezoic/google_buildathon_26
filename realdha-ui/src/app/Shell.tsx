@@ -1,4 +1,4 @@
-import { Bell, Moon, Sun } from 'lucide-react'
+import { ArrowLeft, Bell, Moon, Sun } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { Link, NavLink } from 'react-router'
 import { cn } from '../lib/cn'
@@ -70,13 +70,22 @@ export function TopNav({ role, active, unread = 2, initials = INITIALS[role] }: 
   )
 }
 
-/** 390 top bar. */
-export function MobileBar({ initials = 'PK', title }: { initials?: string; title?: string }) {
+/** 390 top bar. With `back` it shows a back arrow and the screen title, as the mobile frames do. */
+export function MobileBar({ initials = 'PK', title, back }: { initials?: string; title?: string; back?: string }) {
   return (
     <header className="flex h-14 flex-none items-center gap-2.5 border-b border-line bg-surface px-4 md:hidden">
-      <Link to="/" className="text-xl font-semibold tracking-[-0.02em] text-brand no-underline">{title ?? 'Realdha'}</Link>
+      {back && (
+        <Link to={back} aria-label="Back" className="-ml-2 flex size-11 items-center justify-center text-text">
+          <ArrowLeft className="size-5" aria-hidden />
+        </Link>
+      )}
+      {back && title ? (
+        <span className="truncate text-h3 font-semibold">{title}</span>
+      ) : (
+        <Link to="/" className="text-xl font-semibold tracking-[-0.02em] text-brand no-underline">Realdha</Link>
+      )}
       <div className="ml-auto flex items-center gap-2">
-        <LangSwitch className="text-xs" />
+        {!back && <LangSwitch className="text-xs" />}
         <ThemeToggle />
         {initials && <Avatar initials={initials} />}
       </div>
@@ -107,10 +116,13 @@ interface ScreenProps {
   className?: string
   /** Hide the 390 bottom tabs (focus tasks such as OTP, upload). */
   noTabs?: boolean
+  /** 390 only: show a back arrow to this route plus `title` in the top bar, as the mobile frames do. */
+  back?: string
+  title?: string
 }
 
 /** One responsive screen per frame ID: wraps content in the DEMO bar, nav and page chrome. */
-export function Screen({ id, layout = 'app', role, children, className, noTabs }: ScreenProps) {
+export function Screen({ id, layout = 'app', role, children, className, noTabs, back, title }: ScreenProps) {
   const def = screenById(id)
   const r = role ?? def?.role ?? 'owner'
   return (
@@ -125,7 +137,7 @@ export function Screen({ id, layout = 'app', role, children, className, noTabs }
       ) : (
         <>
           <TopNav role={r} active={activePath(id)} />
-          <MobileBar initials={INITIALS[r]} />
+          <MobileBar initials={INITIALS[r]} back={back} title={title} />
         </>
       )}
       <main id="main" className={cn('flex flex-1 flex-col', className)} data-screen={id} data-flow={def ? FLOWS[def.flow] : undefined}>
