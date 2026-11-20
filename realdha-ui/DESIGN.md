@@ -79,6 +79,6 @@ Inspired by Lofty's world-class real estate investment and property search marke
     - 30-Year Title Chain: `Unbroken (1996–2026)`
     - MahaRERA Plan: `1,180 sq ft Carpet (Exact Match)`
   - Action buttons: Primary `Buy / Inspect Passport` (vibrant purple) and Secondary `Download Legal Dossier` (crisp white outline).
-  - Assistant Trigger: White pill button `✦ Ask about this property` directly below the card.
-- **Floating AI Trigger Button:**
-  - Electric violet circular button (`✦`) in bottom-right corner that launches the Gemini Property Assistant drawer from anywhere.
+  - Assistant Trigger: Pill button `✦ Ask about this property` directly below the card.
+- **Docked AI Assistant Toolbar:**
+  - Grounded Vertex AI Gemini toolbar permanently docked at the bottom of the viewport with fast question chips and expandable overlay drawer.

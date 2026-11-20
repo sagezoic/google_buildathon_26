@@ -16,7 +16,6 @@ import {
   Users,
   ChevronLeft,
   ChevronRight,
-  Sparkles,
 } from 'lucide-react'
 import type { Scenario } from '../data/scenarios'
 
@@ -32,7 +31,6 @@ export function PropertySearch({
   scenarios,
   onSelectScenario,
   onNavigate,
-  onOpenAssistant,
 }: PropertySearchProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
@@ -382,17 +380,6 @@ export function PropertySearch({
           </div>
         )}
       </div>
-
-      {/* 4. Floating Action AI Assistant Trigger (Bottom Right Sparkle) */}
-      <button
-        type="button"
-        className="lofty-floating-ai-fab"
-        onClick={onOpenAssistant}
-        aria-label="Ask Vertex AI Property Assistant"
-        title="Ask Vertex AI Property Assistant"
-      >
-        <Sparkles size={22} />
-      </button>
     </div>
   )
 }

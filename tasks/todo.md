@@ -62,7 +62,15 @@ Redesigned the entire `realdha-ui` application and `PRODUCT.md` based on the use
   - [x] **Browser Surfaces & Theming**:
     - Updated global scrollbars (`scrollbar-color: #252D4A #0B1020`) and text selection (`background: #5252EE; color: #FFFFFF`).
 
-- [x] **Phase 6: Verification & QA**
-  - [x] `npm run build`: Vite + TypeScript compiled production client in 175ms with 0 errors.
+- [x] **Phase 6: Gemini Bottom Toolbar & Assistant Drawer Redesign**
+  - [x] Modernized `GeminiDrawer.tsx` styles in `realdha-ui/src/App.css` to match the Lofty Modern Institutional Dark theme:
+    - **Docked Bottom Bar (`.drawer-bar`)**: Height 84px, midnight obsidian `#0B1020` surface with subtle top stroke (`1px solid rgba(255, 255, 255, 0.1)`), pill toggle button (`#11162B` / `#FFFFFF`), dark pill input with placeholder and focus glow, and vibrant electric indigo pill `Ask` button (`#5252EE`, hover `#4343DB`).
+    - **Suggested Question Chips (`.drawer-chips-bar`)**: Horizontal scrolling pill buttons (`#11162B` surface, border `rgba(255, 255, 255, 0.1)`, hover `#1E2749` / `#FFFFFF`) with hidden custom scrollbars.
+    - **Expanded Overlay Panel (`.gemini-drawer-container.expanded`)**: 520px fixed bottom panel with deep elevation shadow (`0 -24px 64px rgba(0, 0, 0, 0.75)`), dark midnight header (`#0B1020`) with sparkle icon, trash & collapse icon buttons, and scrollable chat list (`#0E1426`).
+    - **Chat Bubbles & Citations**: High-contrast assistant bubbles (`#11162B`, border `rgba(255, 255, 255, 0.08)`, text `#F1F5F9`) with electric indigo avatar gradient and citation pills (`Inspect Record →` opens `DocumentDossierModal`), user bubbles in electric indigo (`#5252EE`).
+    - **Floating AI FAB (`.lofty-floating-ai-fab`)**: Re-anchored to `bottom: 96px; right: 28px; z-index: 55;` so it floats neatly above the docked bottom bar without overlapping.
+
+- [x] **Phase 7: Verification & QA**
+  - [x] `npm run build`: Vite + TypeScript compiled production client in 190ms with 0 errors.
   - [x] `npx oxlint`: 0 warnings and 0 errors.
-  - [x] URLs tested and verified for scenario state synchronization.
+  - [x] URLs tested and verified for scenario state synchronization across views.
