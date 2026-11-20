@@ -65,6 +65,89 @@ resource "google_service_account" "backend" {
 }
 
 # ==============================================================================
+# Cloud SQL PostgreSQL Database
+# ==============================================================================
+
+# Random 4-byte suffix to avoid naming collision on recreate
+resource "random_id" "db_name_suffix" {
+  count       = var.deploy_database ? 1 : 0
+  byte_length = 4
+}
+
+# Auto-generate a secure random database password when not explicitly provided
+resource "random_password" "db_password" {
+  count   = var.deploy_database && var.db_password == "" ? 1 : 0
+  length  = 24
+  special = false
+}
+
+resource "google_sql_database_instance" "postgres" {
+  count               = var.deploy_database ? 1 : 0
+  name                = var.db_instance_name != "" ? var.db_instance_name : "realdha-postgres-${random_id.db_name_suffix[0].hex}"
+  database_version    = var.db_version
+  region              = var.region
+  project             = var.project_id
+  deletion_protection = var.db_deletion_protection
+
+  settings {
+    tier              = var.db_tier
+    availability_type = var.db_availability_type
+    disk_size         = var.db_disk_size
+    disk_type         = var.db_disk_type
+    disk_autoresize   = true
+
+    backup_configuration {
+      enabled    = var.db_backup_enabled
+      start_time = "04:00"
+    }
+
+    ip_configuration {
+      ipv4_enabled = true
+      ssl_mode     = "ALLOW_UNENCRYPTED_AND_ENCRYPTED"
+
+      dynamic "authorized_networks" {
+        for_each = var.db_authorized_networks
+        content {
+          name  = authorized_networks.value.name
+          value = authorized_networks.value.cidr
+        }
+      }
+    }
+
+    user_labels = local.common_labels
+  }
+
+  depends_on = [
+    google_project_service.services
+  ]
+}
+
+resource "google_sql_database" "postgres_db" {
+  count     = var.deploy_database ? 1 : 0
+  name      = var.db_name
+  instance  = google_sql_database_instance.postgres[0].name
+  project   = var.project_id
+  charset   = "UTF8"
+  collation = "en_US.UTF8"
+}
+
+resource "google_sql_user" "postgres_user" {
+  count    = var.deploy_database ? 1 : 0
+  name     = var.db_user
+  instance = google_sql_database_instance.postgres[0].name
+  project  = var.project_id
+  password = local.effective_db_password
+}
+
+# Grant Cloud SQL Client role to Backend runtime Service Account
+resource "google_project_iam_member" "backend_cloudsql_client" {
+  count   = var.deploy_backend && var.deploy_database ? 1 : 0
+  project = var.project_id
+  role    = "roles/cloudsql.client"
+  member  = "serviceAccount:${google_service_account.backend[0].email}"
+}
+
+# ==============================================================================
 # Backend Cloud Run Service
 # ==============================================================================
 
@@ -84,6 +167,16 @@ resource "google_cloud_run_v2_service" "backend" {
       max_instance_count = var.backend_max_instance_count
     }
 
+    dynamic "volumes" {
+      for_each = var.deploy_database ? [1] : []
+      content {
+        name = "cloudsql"
+        cloud_sql_instance {
+          instances = [google_sql_database_instance.postgres[0].connection_name]
+        }
+      }
+    }
+
     containers {
       image = local.target_backend_container_image
 
@@ -98,16 +191,51 @@ resource "google_cloud_run_v2_service" "backend" {
         }
       }
 
+      dynamic "volume_mounts" {
+        for_each = var.deploy_database ? [1] : []
+        content {
+          name       = "cloudsql"
+          mount_path = "/cloudsql"
+        }
+      }
+
       env {
         name  = "NODE_ENV"
         value = var.environment
+      }
+
+      dynamic "env" {
+        for_each = var.deploy_database ? [1] : []
+        content {
+          name  = "DATABASE_URL"
+          value = "postgresql://${var.db_user}:${local.effective_db_password}@localhost:5432/${var.db_name}?host=/cloudsql/${google_sql_database_instance.postgres[0].connection_name}"
+        }
+      }
+
+      dynamic "env" {
+        for_each = var.deploy_database ? [1] : []
+        content {
+          name  = "DB_NAME"
+          value = var.db_name
+        }
+      }
+
+      dynamic "env" {
+        for_each = var.deploy_database ? [1] : []
+        content {
+          name  = "DB_USER"
+          value = var.db_user
+        }
       }
     }
   }
 
   depends_on = [
     google_project_service.services,
-    google_artifact_registry_repository.backend
+    google_artifact_registry_repository.backend,
+    google_sql_database_instance.postgres,
+    google_sql_database.postgres_db,
+    google_sql_user.postgres_user
   ]
 }
 

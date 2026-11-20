@@ -5,12 +5,17 @@ locals {
     managed_by  = "terraform"
   }
 
-  required_services = var.enable_apis ? [
-    "cloudresourcemanager.googleapis.com",
-    "run.googleapis.com",
-    "artifactregistry.googleapis.com",
-    "iam.googleapis.com"
-  ] : []
+  required_services = concat(
+    var.enable_apis ? [
+      "cloudresourcemanager.googleapis.com",
+      "run.googleapis.com",
+      "artifactregistry.googleapis.com",
+      "iam.googleapis.com"
+    ] : [],
+    var.enable_apis && var.deploy_database ? [
+      "sqladmin.googleapis.com"
+    ] : []
+  )
 
   artifact_repo_host = "${var.region}-docker.pkg.dev"
 
@@ -28,4 +33,9 @@ locals {
   # Backend Container Image resolution
   default_backend_container_image = "${local.artifact_repo_host}/${var.project_id}/${var.backend_artifact_registry_repo_name}/realdha-backend:latest"
   target_backend_container_image  = var.backend_container_image != "" ? var.backend_container_image : local.default_backend_container_image
+
+  # Effective Database Password resolution
+  effective_db_password = var.db_password != "" ? var.db_password : (
+    var.deploy_database && length(random_password.db_password) > 0 ? random_password.db_password[0].result : ""
+  )
 }

@@ -47,3 +47,28 @@ backend_memory                      = "512Mi"
 
 # Optional: Specific Backend container image URI. Defaults to latest in Artifact Registry if empty.
 backend_container_image = ""
+
+# ------------------------------------------------------------------------------
+# Cloud SQL PostgreSQL Configuration
+# ------------------------------------------------------------------------------
+
+deploy_database         = true
+db_instance_name        = "" # Leave empty for auto-generated realdha-postgres-<suffix>
+db_version              = "POSTGRES_16"
+db_tier                 = "db-f1-micro" # db-f1-micro for dev/hackathon, db-custom-1-3840 for prod
+db_name                 = "realdha"
+db_user                 = "realdha"
+db_password             = "" # Leave empty to auto-generate a secure random password
+db_disk_size            = 10
+db_disk_type            = "PD_SSD"
+db_availability_type    = "ZONAL"
+db_deletion_protection  = false
+db_backup_enabled       = true
+
+# Direct access for local dev (0.0.0.0/0 allowed by default; restrict to your IP for prod)
+db_authorized_networks = [
+  {
+    name = "all"
+    cidr = "0.0.0.0/0"
+  }
+]
