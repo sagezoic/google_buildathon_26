@@ -64,7 +64,11 @@ class StorageServiceImpl {
           const decoded = raw.startsWith('{')
             ? raw
             : Buffer.from(raw, 'base64').toString('utf8');
-          options.credentials = JSON.parse(decoded);
+          const parsed = JSON.parse(decoded);
+          if (parsed.private_key) {
+            parsed.private_key = parsed.private_key.replace(/\\n/g, '\n');
+          }
+          options.credentials = parsed;
         } catch (error) {
           console.warn('[StorageService] Error parsing GCP_SERVICE_ACCOUNT_KEY:', error);
         }
@@ -73,7 +77,7 @@ class StorageServiceImpl {
       else if (env.GCS_CLIENT_EMAIL && env.GCS_PRIVATE_KEY) {
         options.credentials = {
           client_email: env.GCS_CLIENT_EMAIL,
-          private_key: env.GCS_PRIVATE_KEY,
+          private_key: env.GCS_PRIVATE_KEY.replace(/\\n/g, '\n'),
         };
       }
       // 3. Check for service account JSON key file path
