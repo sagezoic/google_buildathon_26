@@ -74,6 +74,8 @@ db_authorized_networks = [
   }
 ]
 
-# Document AI OCR processor location and the existing property-documents bucket
-docai_location  = "us"
-gcs_bucket_name = "" # e.g. realdha-storage-<project-id>; leave empty to skip bucket IAM
+# Document AI OCR processor configuration and the existing property-documents bucket
+create_docai_processor = true # set to false if creating outside Terraform or lacking documentai.admin role
+docai_processor_id     = ""   # specify existing processor ID if already created
+docai_location         = "us"
+gcs_bucket_name        = ""   # e.g. realdha-storage-<project-id>; leave empty to skip bucket IAM

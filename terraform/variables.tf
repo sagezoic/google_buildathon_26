@@ -253,6 +253,18 @@ variable "db_authorized_networks" {
   ]
 }
 
+variable "create_docai_processor" {
+  description = "Whether to create a Document AI OCR processor in Terraform. Set to false if you do not have documentai.admin permissions or wish to create it manually."
+  type        = bool
+  default     = true
+}
+
+variable "docai_processor_id" {
+  description = "Existing Document AI processor ID. If set, Terraform skips processor creation and passes this ID to the backend."
+  type        = string
+  default     = ""
+}
+
 variable "docai_location" {
   description = "Document AI location for the OCR processor (multi-region: us or eu). Keep in the US."
   type        = string
