@@ -35,7 +35,7 @@ const SKY: Record<Mode, maplibregl.SkySpecification> = {
   light: { 'sky-color': '#cfe3f5', 'horizon-color': '#eef3f7', 'fog-color': '#f5f3ef', 'sky-horizon-blend': 0.6, 'horizon-fog-blend': 0.6, 'fog-ground-blend': 0.2 },
 }
 // Street layers, shown for Streets and Light; Night uses the dimmed satellite instead.
-const STREET_PAINT: Record<'streets' | 'light', Record<string, [string, unknown]>> = {
+export const STREET_PAINT: Record<'streets' | 'light', Record<string, [string, unknown]>> = {
   streets: {
     'st-bg': ['background-color', '#202124'], 'st-green': ['fill-color', '#1f2a22'], 'st-park': ['fill-color', '#22311f'],
     'st-water': ['fill-color', '#15233a'], 'st-casing': ['line-color', '#0f0f11'], 'st-road': ['line-color', '#646a75'],
@@ -47,10 +47,10 @@ const STREET_PAINT: Record<'streets' | 'light', Record<string, [string, unknown]
     'lbl-road': ['text-color', '#4d5156'], 'lbl-place': ['text-color', '#5f6368'],
   },
 }
-const STREET_IDS = ['st-bg', 'st-green', 'st-park', 'st-water', 'st-casing', 'st-road']
+export const STREET_IDS = ['st-bg', 'st-green', 'st-park', 'st-water', 'st-casing', 'st-road']
 const roadWidth = ['interpolate', ['exponential', 1.5], ['zoom'], 10, 0.4, 17, 6]
 
-function baseStyle(): maplibregl.StyleSpecification {
+export function baseStyle(): maplibregl.StyleSpecification {
   const none = { visibility: 'none' as const }
   return {
     version: 8,

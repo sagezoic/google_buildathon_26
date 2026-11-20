@@ -1,5 +1,5 @@
-import { Building2, CircleCheck, Map as MapIcon, Minus, Plus, Search, Store, type LucideIcon } from 'lucide-react'
-import { useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react'
+import { Building2, CircleCheck, Map as MapIcon, Search, Store, type LucideIcon } from 'lucide-react'
+import { useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
 import { Screen } from '../../../app/Shell'
 import { path } from '../../../app/nav'
@@ -7,14 +7,15 @@ import { useDemoState } from '../../../app/useDemoState'
 import { Button } from '../../../components/ui/button'
 import { Card } from '../../../components/ui/card'
 import { Field } from '../../../components/ui/field'
+import PlotMap from '../../../components/ui/plot-map'
 import { Stepper } from '../../../components/ui/stepper'
-import { plot, STEPS, type PropertyType } from '../../../data/fixtures/property-intake'
-import { usePropertyDraft, type PropertyDraft } from '../../../lib/property-store'
+import { STEPS, type PropertyType } from '../../../data/fixtures/property-intake'
 import { cn } from '../../../lib/cn'
+import { AREA_UNITS, parseArea, plotFeature, type AreaUnit } from '../../../lib/plot-shape'
+import { defaultDraft, isGeoPin, usePropertyDraft, type GeoPin, type PropertyDraft } from '../../../lib/property-store'
 
-interface Pin { x: number; y: number }
-const HOME: Pin = { x: 50, y: 45 }
-const DRAGGED: Pin = { x: 62, y: 58 }
+/** Demo state `pin-dragged`: the pin sits a little south-east of home. */
+const DRAGGED_BY = { lng: 0.0005, lat: -0.0004 }
 
 const TYPES: { id: PropertyType; label: string; desktopLabel: string; Icon: LucideIcon }[] = [
   { id: 'apartment', label: 'Apartment', desktopLabel: 'Apartment', Icon: Building2 },
@@ -22,9 +23,7 @@ const TYPES: { id: PropertyType; label: string; desktopLabel: string; Icon: Luci
   { id: 'commercial', label: 'Commercial', desktopLabel: 'Commercial', Icon: Store },
 ]
 
-const ZOOMS = ['scale-90', 'scale-100', 'scale-110', 'scale-125'] as const
-
-type Errors = Partial<Record<'gat' | 'village' | 'taluka' | 'district', string>>
+type Errors = Partial<Record<'gat' | 'village' | 'taluka' | 'district' | 'area', string>>
 function validate(d: PropertyDraft): Errors {
   const e: Errors = {}
   const gat = d.gat.trim()
@@ -33,69 +32,11 @@ function validate(d: PropertyDraft): Errors {
   if (!d.village.trim()) e.village = 'Enter the village.'
   if (!d.taluka.trim()) e.taluka = 'Enter the taluka.'
   if (!d.district.trim()) e.district = 'Enter the district.'
+  if (parseArea(d.area ?? '') === null) e.area = 'Enter the plot area as a number, like 3,200.'
   return e
 }
 
-const clamp = (n: number) => Math.min(95, Math.max(5, n))
-const coords = (base: { lat: number; lng: number }, p: Pin) => {
-  const lat = base.lat - (p.y - HOME.y) * 0.0003
-  const lng = base.lng + (p.x - HOME.x) * 0.0004
-  return `${lat.toFixed(4)}° N, ${lng.toFixed(4)}° E`
-}
-
-function MapSketch({ zoom }: { zoom: number }) {
-  return (
-    <svg className={cn('absolute inset-0 size-full origin-center transition-transform', ZOOMS[zoom])} viewBox="0 0 700 600" preserveAspectRatio="none" aria-hidden>
-      <g className="stroke-surface" strokeWidth="12" fill="none" vectorEffect="non-scaling-stroke">
-        <path d="M-10 420 C160 360 320 440 500 300 S660 200 720 170" />
-        <path d="M240 -10 C270 150 220 330 300 610" />
-      </g>
-      <g className="stroke-line-strong" strokeWidth="5" fill="none" vectorEffect="non-scaling-stroke">
-        <path d="M-10 220 H720" />
-        <path d="M520 -10 V610" />
-      </g>
-      <path className="fill-success-tint" d="M60 70 L200 50 L230 150 L90 170 Z" />
-      <path className="fill-success-tint" d="M540 380 L680 360 L700 480 L560 500 Z" />
-      <path className="fill-primary/20 stroke-primary" strokeWidth="2.5" strokeDasharray="6 4" vectorEffect="non-scaling-stroke" d="M330 230 L430 215 L445 300 L345 315 Z" />
-    </svg>
-  )
-}
-
-function Pin({ pin, dragged, onMove, hint }: { pin: Pin; dragged: boolean; onMove: (p: Pin) => void; hint: boolean }) {
-  const drag = useRef(false)
-  const box = (e: { currentTarget: HTMLElement }) => e.currentTarget.parentElement!.getBoundingClientRect()
-  const move = (e: PointerEvent<HTMLButtonElement>) => {
-    if (!drag.current) return
-    const r = box(e)
-    onMove({ x: clamp(((e.clientX - r.left) / r.width) * 100), y: clamp(((e.clientY - r.top) / r.height) * 100) })
-  }
-  const key = (e: KeyboardEvent<HTMLButtonElement>) => {
-    const d = { ArrowLeft: [-2, 0], ArrowRight: [2, 0], ArrowUp: [0, -2], ArrowDown: [0, 2] }[e.key]
-    if (!d) return
-    e.preventDefault()
-    onMove({ x: clamp(pin.x + d[0]), y: clamp(pin.y + d[1]) })
-  }
-  return (
-    <div className="absolute flex -translate-x-1/2 -translate-y-full flex-col items-center" style={{ left: `${pin.x}%`, top: `${pin.y}%` }}>
-      {hint && !dragged && <div className="mb-1 rounded-control bg-text px-2 py-1 text-label whitespace-nowrap text-surface max-xl:hidden">Drag to place the pin</div>}
-      <button
-        type="button"
-        aria-label="Property pin. Drag, or use the arrow keys, to move it."
-        className="flex size-11 cursor-grab touch-none items-end justify-center rounded-control active:cursor-grabbing"
-        onPointerDown={(e) => { drag.current = true; e.currentTarget.setPointerCapture(e.pointerId) }}
-        onPointerMove={move}
-        onPointerUp={() => { drag.current = false }}
-        onPointerCancel={() => { drag.current = false }}
-        onKeyDown={key}
-      >
-        <svg width="34" height="44" viewBox="0 0 30 38" aria-hidden>
-          <path d="M15 36 C15 36 3 22 3 14 a12 12 0 0 1 24 0 c0 8-12 22-12 22z" className="fill-primary stroke-surface" strokeWidth="2.5" />
-          <circle cx="15" cy="14" r="4.5" className="fill-surface" />
-        </svg>
-      </button>
-    </div>
-  )
-}
+const coords = (p: GeoPin) => `${p.lat.toFixed(4)}° ${p.lat >= 0 ? 'N' : 'S'}, ${p.lng.toFixed(4)}° ${p.lng >= 0 ? 'E' : 'W'}`
 
 function Tiles({ type, onType, mobile }: { type: PropertyType; onType: (t: PropertyType) => void; mobile?: boolean }) {
   const items = mobile ? [TYPES[1], TYPES[0], TYPES[2]] : TYPES
@@ -130,14 +71,35 @@ function Tiles({ type, onType, mobile }: { type: PropertyType; onType: (t: Prope
   )
 }
 
-function MapPane({ pin, dragged, onMove, zoom, children, className }: { pin: Pin; dragged: boolean; onMove: (p: Pin) => void; zoom: number; children?: ReactNode; className?: string }) {
+function AreaField({ draft, set, error, onBlur, className }: { draft: PropertyDraft; set: (patch: Partial<PropertyDraft>) => void; error?: string; onBlur: () => void; className?: string }) {
   return (
-    <div className={cn('relative overflow-hidden rounded-lg border border-dashed border-line-strong bg-sunken xl:rounded-card xl:border-solid xl:border-line xl:shadow-e1', className)}>
-      <MapSketch zoom={zoom} />
-      <p className="absolute inset-0 flex items-start justify-center p-2 pt-3 text-label text-muted xl:hidden">Map placeholder · drag the pin</p>
-      <Pin pin={pin} dragged={dragged} onMove={onMove} hint />
-      {children}
+    <div className={cn('flex items-start gap-3', className)}>
+      <Field className="flex-1" label="Plot area" value={draft.area} onChange={(e) => set({ area: e.target.value })} onBlur={onBlur} error={error} inputMode="decimal" autoComplete="off" help={error ? undefined : 'Draws the outline on the map.'} />
+      <div className="flex flex-col">
+        <label htmlFor="plot-area-unit" className="mb-1.5 block text-chip font-semibold">Unit</label>
+        <select id="plot-area-unit" value={draft.areaUnit} onChange={(e) => set({ areaUnit: e.target.value as AreaUnit })} className="h-control cursor-pointer rounded-control border border-line-strong bg-field px-3 text-control text-text outline-none hover:border-line-hover focus:border-focus focus:shadow-[0_0_0_3px_var(--rd-focus-halo)] max-xl:h-12">
+          {AREA_UNITS.map((u) => <option key={u.value} value={u.value}>{u.label}</option>)}
+        </select>
+      </div>
     </div>
+  )
+}
+
+/** One WebGL map at a time: both layouts are in the DOM (CSS hides one), so mount the map only for the active breakpoint. */
+function useWide() {
+  return useSyncExternalStore(
+    (cb) => { const q = matchMedia('(min-width: 1440px)'); q.addEventListener('change', cb); return () => q.removeEventListener('change', cb) },
+    () => matchMedia('(min-width: 1440px)').matches,
+    () => true,
+  )
+}
+
+type MapPaneProps = { pin: GeoPin; dragged: boolean; onMove: (p: GeoPin) => void; shape: ReturnType<typeof plotFeature>; fitKey: string; compact?: boolean; children?: ReactNode; className?: string }
+function MapPane({ pin, dragged, onMove, shape, fitKey, compact, children, className }: MapPaneProps) {
+  return (
+    <PlotMap pin={pin} onPinChange={onMove} shape={shape} fitKey={fitKey} hint={!dragged} compact={compact} className={cn('rounded-lg border border-line-strong xl:rounded-card xl:border-line xl:shadow-e1', className)}>
+      {children}
+    </PlotMap>
   )
 }
 
@@ -147,23 +109,29 @@ export default function AddProperty() {
   const navigate = useNavigate()
   const [draft, setDraft] = usePropertyDraft()
   const [mv, setMv] = useState(() => [draft.village, draft.taluka].filter(Boolean).join(', '))
-  const [zoom, setZoom] = useState(1)
   const [query, setQuery] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [seen, setSeen] = useState<Record<string, boolean>>({})
   const [notice, setNotice] = useState('')
   const root = useRef<HTMLDivElement>(null)
 
+  // Drafts saved before the live map hold a percent-based `{ x, y }` pin and no area: fall back to the sample values.
+  const home: GeoPin = isGeoPin(draft.pin) ? (draft.pin as GeoPin) : (defaultDraft.pin as GeoPin)
+  const area = draft.area ?? defaultDraft.area
+  const areaUnit = draft.areaUnit ?? defaultDraft.areaUnit
   const forced = state === 'pin-dragged' && !draft.moved
-  const pin = forced ? DRAGGED : draft.pin
+  const pin = useMemo<GeoPin>(() => (forced ? { lng: home.lng + DRAGGED_BY.lng, lat: home.lat + DRAGGED_BY.lat } : home), [forced, home])
   const moved = forced || draft.moved
   const set = (patch: Partial<PropertyDraft>) => { setNotice(''); setDraft((d) => ({ ...d, ...patch })) }
-  const onMove = (p: Pin) => set({ pin: p, moved: true })
-  const errs = validate(draft)
+  const onMove = (p: GeoPin) => set({ pin: p, moved: true })
+  const errs = validate({ ...draft, area })
   const err = (k: keyof Errors) => (submitted || seen[k] ? errs[k] : undefined)
   const blur = (k: string) => () => setSeen((x) => ({ ...x, [k]: true }))
-  const desktopGps = coords(plot.gps, pin)
-  const mobileGps = coords(plot.mobileGps, pin)
+  const gps = coords(pin)
+  const shape = useMemo(() => plotFeature(pin, area, areaUnit), [pin, area, areaUnit])
+  const fitKey = `${area}|${areaUnit}`
+  const areaDraft = { ...draft, area, areaUnit }
+  const wide = useWide()
 
   const focusFirst = () => setTimeout(() => {
     const bad = Array.from(root.current?.querySelectorAll<HTMLElement>('[aria-invalid="true"]') ?? []).find((el) => el.offsetParent !== null)
@@ -213,9 +181,10 @@ export default function AddProperty() {
               <Field className="flex-1" label="District" value={draft.district} onChange={(e) => set({ district: e.target.value })} onBlur={blur('district')} error={err('district')} />
             </div>
             <Field label="Address or landmark" value={draft.address} onChange={(e) => set({ address: e.target.value })} help="Optional. Helps people find the plot." />
+            <AreaField draft={areaDraft} set={set} error={err('area')} onBlur={blur('area')} />
             <div className="flex items-center gap-3 rounded-lg border border-line bg-canvas px-3 py-2.5">
               <span className="flex-1 text-label text-muted">GPS pin</span>
-              <span className="font-mono text-chip font-medium" aria-live="polite">{desktopGps}</span>
+              <span className="font-mono text-chip font-medium" aria-live="polite">{gps}</span>
             </div>
             <div className="flex-1" />
             <div className="flex items-center justify-between">
@@ -224,17 +193,14 @@ export default function AddProperty() {
             </div>
             {notes}
           </Card>
-          <MapPane pin={pin} dragged={moved} onMove={onMove} zoom={zoom} className="min-w-0 flex-1">
-            <div className="absolute top-3.5 right-3.5 flex flex-col gap-1.5">
-              <button type="button" aria-label="Zoom in" disabled={zoom === 3} onClick={() => setZoom((z) => Math.min(3, z + 1))} className="flex size-10 cursor-pointer items-center justify-center rounded-control border border-line-strong bg-surface text-text hover:bg-primary-tint"><Plus className="size-[18px]" aria-hidden /></button>
-              <button type="button" aria-label="Zoom out" disabled={zoom === 0} onClick={() => setZoom((z) => Math.max(0, z - 1))} className="flex size-10 cursor-pointer items-center justify-center rounded-control border border-line-strong bg-surface text-text hover:bg-primary-tint"><Minus className="size-[18px]" aria-hidden /></button>
-            </div>
-            <form role="search" onSubmit={(e) => { e.preventDefault(); search() }} className="absolute top-3.5 left-3.5 flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-chip">
-              <Search className="size-4 text-muted" aria-hidden />
-              <input aria-label="Search village or Gat number" placeholder="Search village or Gat number" value={query} onChange={(e) => setQuery(e.target.value)} className="w-56 bg-transparent text-chip text-text outline-none placeholder:text-muted" />
-            </form>
-            <div className="absolute bottom-3 left-3.5 rounded bg-surface/90 px-1.5 py-0.5 text-overline text-muted">Sample map tile · map provider attribution</div>
-          </MapPane>
+          {wide && (
+            <MapPane pin={pin} dragged={moved} onMove={onMove} shape={shape} fitKey={fitKey} className="min-w-0 flex-1">
+              <form role="search" onSubmit={(e) => { e.preventDefault(); search() }} className="absolute top-3.5 left-3.5 flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-chip">
+                <Search className="size-4 text-muted" aria-hidden />
+                <input aria-label="Search village or Gat number" placeholder="Search village or Gat number" value={query} onChange={(e) => setQuery(e.target.value)} className="w-56 bg-transparent text-chip text-text outline-none placeholder:text-muted" />
+              </form>
+            </MapPane>
+          )}
         </div>
       </div>
 
@@ -243,10 +209,11 @@ export default function AddProperty() {
         <div className="text-overline font-semibold tracking-[0.06em] text-muted uppercase">Step 1 of 4 · Property</div>
         <h1 className="text-h1 max-md:text-[24px] max-md:leading-8">Add a property</h1>
         <Tiles type={type} onType={setType} mobile />
-        <MapPane pin={pin} dragged={moved} onMove={onMove} zoom={zoom} className="h-[200px]" />
-        <div className="text-label font-medium text-muted" aria-live="polite">GPS {mobileGps} (sample)</div>
+        {!wide && <MapPane pin={pin} dragged={moved} onMove={onMove} shape={shape} fitKey={fitKey} compact className="h-[200px]" />}
+        <div className="text-label font-medium text-muted" aria-live="polite">GPS {gps}</div>
         <Field label="Village" value={mv} onChange={(e) => mobileVillage(e.target.value)} onBlur={() => { blur('village')(); blur('taluka')() }} error={err('village') ?? (err('taluka') && 'Add the taluka after a comma, like Kusgaon, Maval.')} className="[&_input]:h-12" />
         <Field label="Gat / survey number" value={draft.gat} onChange={(e) => set({ gat: e.target.value })} onBlur={blur('gat')} error={err('gat')} inputMode="text" autoComplete="off" className="[&_input]:h-12" />
+        <AreaField draft={areaDraft} set={set} error={err('area')} onBlur={blur('area')} className="[&_input]:h-12" />
         <Field label="Address" value={draft.address} onChange={(e) => set({ address: e.target.value })} className="[&_input]:h-12" />
         {notes}
         <div className="flex gap-2.5 md:max-w-[360px]">

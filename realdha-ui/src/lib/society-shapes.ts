@@ -39,7 +39,7 @@ function circle([lng, lat]: Pos, radius: number, n = 24): Ring {
   return [...ring, ring[0]]
 }
 
-function rect([lng, lat]: Pos, w: number, d: number, angle: number): Ring {
+export function rect([lng, lat]: Pos, w: number, d: number, angle: number): Ring {
   const k = mPerDegLng(lat)
   const c = Math.cos(angle)
   const s = Math.sin(angle)
