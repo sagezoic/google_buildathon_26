@@ -139,8 +139,8 @@ jobs:
 
       - name: Enable Core Bootstrap GCP APIs
         run: |
-          echo "Enabling Cloud Resource Manager and Service Usage APIs..."
-          gcloud services enable cloudresourcemanager.googleapis.com serviceusage.googleapis.com --project="${{ env.GCP_PROJECT_ID }}"
+          echo "Enabling Cloud Resource Manager, Service Usage, and Cloud SQL Admin APIs..."
+          gcloud services enable cloudresourcemanager.googleapis.com serviceusage.googleapis.com sqladmin.googleapis.com --project="${{ env.GCP_PROJECT_ID }}"
 
       - name: Configure Docker for Google Artifact Registry
         run: |
