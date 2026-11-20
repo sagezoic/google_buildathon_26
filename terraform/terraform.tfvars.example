@@ -11,25 +11,39 @@ region = "us-central1"
 # Environment tag
 environment = "prod"
 
-# Cloud Run service name
-service_name = "realdha-ui"
+# Enable APIs automatically
+enable_apis = true
+create_artifact_registry = true
 
-# Public internet access (true allows anyone to view the UI)
-allow_unauthenticated = true
+# ------------------------------------------------------------------------------
+# Frontend (UI) Service Configuration
+# ------------------------------------------------------------------------------
 
-# Artifact Registry repository name for Docker images
+service_name                = "realdha-ui"
 artifact_registry_repo_name = "realdha-ui"
+container_port              = 8080
+allow_unauthenticated       = true
+min_instance_count          = 0
+max_instance_count          = 10
+cpu                         = "1000m"
+memory                      = "512Mi"
 
-# Optional: Specify an existing Docker image URI.
-# If omitted or left empty (""), it defaults to the image in the managed Artifact Registry:
-# <region>-docker.pkg.dev/<project_id>/<artifact_registry_repo_name>/realdha-ui:latest
-container_image = ""
+# Optional: Specific UI container image URI. Defaults to latest in Artifact Registry if empty.
+ui_container_image = ""
 
-# Auto-scaling settings
-# min_instance_count = 0 allows scaling to zero to minimize costs when idle
-min_instance_count = 0
-max_instance_count = 10
+# ------------------------------------------------------------------------------
+# Backend Service Configuration
+# ------------------------------------------------------------------------------
 
-# Resource limits per container instance
-cpu    = "1000m"
-memory = "512Mi"
+deploy_backend                      = true
+backend_service_name                = "realdha-backend"
+backend_artifact_registry_repo_name = "realdha-backend"
+backend_container_port              = 8080
+backend_allow_unauthenticated       = true
+backend_min_instance_count          = 0
+backend_max_instance_count          = 10
+backend_cpu                         = "1000m"
+backend_memory                      = "512Mi"
+
+# Optional: Specific Backend container image URI. Defaults to latest in Artifact Registry if empty.
+backend_container_image = ""

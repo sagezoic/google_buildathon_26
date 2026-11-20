@@ -1,17 +1,20 @@
-# Realdha UI - Google Cloud Terraform Deployment (US)
+# Realdha Full Stack - Google Cloud Terraform Deployment (US)
 
-This Terraform configuration automates the deployment of the `realdha-ui` application to **Google Cloud US** using **Cloud Run (v2)** and **Artifact Registry**.
+This Terraform configuration automates the deployment of both the **Frontend (`realdha-ui`)** and **Backend (`backend`)** applications to **Google Cloud US** using **Cloud Run (v2)** and **Artifact Registry**.
+
+Automated CI/CD is provided via **GitHub Actions** located in `.github/workflows/deploy.yml`.
 
 ---
 
 ## Architecture Overview
 
-- **Compute**: Google Cloud Run (v2) fully managed serverless container service.
+- **Compute**: Google Cloud Run (v2) serverless containers for both Frontend and Backend API.
 - **Container Registry**: Google Cloud Artifact Registry (Docker format) hosted in a US region (default: `us-central1`).
 - **Security & IAM**:
-  - Dedicated least-privilege runtime Service Account (`realdha-ui-sa`).
-  - Configurable public unauthenticated access (`roles/run.invoker` for `allUsers`).
-- **Networking**: Cloud Run HTTPS ingress endpoint automatically provisioned with managed SSL.
+  - Dedicated least-privilege runtime Service Accounts: `realdha-ui-sa` and `realdha-backend-sa`.
+  - Configurable unauthenticated access (`roles/run.invoker` for `allUsers`).
+- **Networking**: Cloud Run HTTPS ingress endpoints automatically provisioned with Google-managed SSL.
+- **Service Integration**: The UI service is automatically injected with the backend's Cloud Run URL (`BACKEND_URL`).
 - **Cost Optimization**: Default auto-scaling configured with `min_instances = 0` (scale-to-zero when idle) up to `max_instances = 10`.
 
 ---
@@ -19,107 +22,95 @@ This Terraform configuration automates the deployment of the `realdha-ui` applic
 ## Directory Structure
 
 ```text
-terraform/
-├── .gitignore                  # Ignores local state, plans, and secret tfvars
-├── locals.tf                   # Common labels, service dependencies, image paths
-├── main.tf                     # Cloud Run service, Artifact Registry, IAM, APIs
-├── outputs.tf                  # Service URL, repo endpoints, build helpers
-├── providers.tf                # Google provider configuration
-├── README.md                   # Deployment documentation and instructions
-├── terraform.tf                # Terraform version and Google provider requirements
-├── terraform.tfvars.example    # Sample configuration values
-└── variables.tf                # Input variables with validation for US regions
+├── .github/
+│   └── workflows/
+│       ├── deploy.yml            # Automated CD on push to main
+│       └── terraform-plan.yml    # Linting & PR speculative plan
+├── backend/                      # Node.js REST API with Dockerfile
+├── docs/
+│   └── github-actions-setup.md   # Step-by-step GitHub Secrets & WIF guide
+├── realdha-ui/                   # React + Vite frontend with Dockerfile
+└── terraform/
+    ├── locals.tf                 # Labels, image resolution, and endpoints
+    ├── main.tf                   # Cloud Run, Artifact Registry, IAM & APIs
+    ├── outputs.tf                # Service URLs and Docker push commands
+    ├── providers.tf              # Google provider configuration
+    ├── terraform.tf              # Required providers & version
+    ├── terraform.tfvars.example  # Configuration template
+    └── variables.tf              # Input variables (US region validation)
 ```
 
 ---
 
-## Prerequisites
+## CI/CD Deployment with GitHub Actions (Recommended)
 
-1. **Google Cloud Account & Project**: An active GCP project with billing enabled.
-2. **Google Cloud SDK (`gcloud`)**: Authenticated to your GCP account:
-   ```bash
-   gcloud auth login
-   gcloud auth application-default login
-   gcloud config set project <YOUR_PROJECT_ID>
-   ```
-3. **Terraform**: Version `>= 1.5.0` installed.
-4. **Docker**: Running locally to build and push container images.
+Every push to `main` triggers `.github/workflows/deploy.yml`, which:
+1. Validates and tests both Frontend and Backend applications.
+2. Authenticates to Google Cloud via Workload Identity Federation or Service Account Key.
+3. Automatically provisions GCP APIs and Artifact Registry repositories.
+4. Builds and pushes versioned Docker container images for both services.
+5. Deploys updated Cloud Run services through Terraform.
+6. Publishes the live service URLs to GitHub Step Summary.
+
+See [docs/github-actions-setup.md](../docs/github-actions-setup.md) for detailed credentials and IAM setup.
 
 ---
 
-## Quickstart Deployment
+## Manual Quickstart Deployment
 
-### Step 1: Create your Terraform variables
-
-Copy the example variables file:
+### Step 1: Configure Variables
 
 ```bash
 cd terraform
 cp terraform.tfvars.example terraform.tfvars
 ```
 
-Edit `terraform.tfvars` and set your `project_id`:
+Edit `terraform.tfvars` with your project ID:
 
 ```hcl
-project_id = "your-actual-gcp-project-id"
+project_id = "your-gcp-project-id"
 region     = "us-central1"
 ```
 
-> **Note on Region**: The `region` variable is validated to be a United States region (must start with `us-`, e.g., `us-central1`, `us-east1`, `us-west1`, `us-east4`).
-
-### Step 2: Initialize Terraform and Create Infrastructure / Artifact Registry
-
-Run:
+### Step 2: Initialize Terraform & Create Repositories
 
 ```bash
 terraform init
-terraform plan
-terraform apply
+terraform apply -target=google_project_service.services -target=google_artifact_registry_repository.ui -target=google_artifact_registry_repository.backend
 ```
 
-This will:
-- Enable the necessary GCP APIs (`run.googleapis.com`, `artifactregistry.googleapis.com`).
-- Create the Artifact Registry Docker repository in your chosen US region.
-- Create the dedicated Service Account.
-
-### Step 3: Build & Push the UI Docker Image
-
-Authenticate Docker with Google Cloud Artifact Registry:
+### Step 3: Build & Push Container Images
 
 ```bash
+# Authenticate Docker with Artifact Registry
 gcloud auth configure-docker us-central1-docker.pkg.dev
-```
 
-From the root of the project, build and push the container image:
-
-```bash
+# 1. Build & Push UI
 cd ../realdha-ui
+docker build -t us-central1-docker.pkg.dev/<PROJECT_ID>/realdha-ui/realdha-ui:latest .
+docker push us-central1-docker.pkg.dev/<PROJECT_ID>/realdha-ui/realdha-ui:latest
 
-# Build Docker image
-docker build -t us-central1-docker.pkg.dev/<YOUR_PROJECT_ID>/realdha-ui/realdha-ui:latest .
-
-# Push image to Artifact Registry
-docker push us-central1-docker.pkg.dev/<YOUR_PROJECT_ID>/realdha-ui/realdha-ui:latest
+# 2. Build & Push Backend
+cd ../backend
+docker build -t us-central1-docker.pkg.dev/<PROJECT_ID>/realdha-backend/realdha-backend:latest .
+docker push us-central1-docker.pkg.dev/<PROJECT_ID>/realdha-backend/realdha-backend:latest
 ```
 
-### Step 4: Apply Cloud Run Deployment
-
-Return to `terraform/` and run:
+### Step 4: Apply Full Infrastructure
 
 ```bash
 cd ../terraform
 terraform apply
 ```
 
-After deployment completes, Terraform outputs the public HTTPS URL:
+After deployment completes, Terraform outputs the public HTTPS URLs:
 
 ```bash
 Outputs:
 
-service_url = "https://realdha-ui-xxxxxxxxxx-uc.a.run.app"
+ui_service_url      = "https://realdha-ui-xxxxxxxxxx-uc.a.run.app"
+backend_service_url = "https://realdha-backend-xxxxxxxxxx-uc.a.run.app"
 ```
-
-Open the URL in your browser to verify the deployed UI.
 
 ---
 
@@ -129,15 +120,16 @@ Open the URL in your browser to verify the deployed UI.
 | :--- | :--- | :--- | :--- |
 | `project_id` | **(Required)** Google Cloud project ID | `string` | - |
 | `region` | US region for deployment | `string` | `"us-central1"` |
-| `service_name` | Name of the Cloud Run service | `string` | `"realdha-ui"` |
-| `container_image` | Docker image URI (defaults to repo image) | `string` | `""` |
-| `container_port` | Port exposed by container | `number` | `8080` |
-| `cpu` | Container CPU allocation | `string` | `"1000m"` |
-| `memory` | Container memory allocation | `string` | `"512Mi"` |
+| `service_name` | Name of UI Cloud Run service | `string` | `"realdha-ui"` |
+| `ui_container_image` | Docker image URI for UI | `string` | `""` |
+| `deploy_backend` | Whether to deploy backend service | `bool` | `true` |
+| `backend_service_name`| Name of Backend Cloud Run service | `string` | `"realdha-backend"` |
+| `backend_container_image`| Docker image URI for Backend | `string` | `""` |
+| `allow_unauthenticated` | Enable public UI access | `bool` | `true` |
+| `backend_allow_unauthenticated` | Enable public Backend access | `bool` | `true` |
 | `min_instance_count` | Minimum instances (0 = scale to zero) | `number` | `0` |
 | `max_instance_count` | Maximum instances for auto-scale | `number` | `10` |
-| `allow_unauthenticated` | Enable public web traffic (`allUsers`) | `bool` | `true` |
-| `create_artifact_registry` | Manage Artifact Registry repo | `bool` | `true` |
+| `create_artifact_registry` | Manage Artifact Registry repos | `bool` | `true` |
 | `enable_apis` | Automatically enable GCP APIs | `bool` | `true` |
 | `environment` | Environment label (`dev`, `prod`) | `string` | `"prod"` |
 
@@ -147,12 +139,13 @@ Open the URL in your browser to verify the deployed UI.
 
 | Name | Description |
 | :--- | :--- |
-| `service_url` | Public HTTPS endpoint for the UI |
-| `service_name` | Cloud Run service name |
-| `service_location` | Deployed US region |
-| `artifact_registry_repository_url` | Docker repository target URL |
-| `docker_push_commands` | Ready-to-run bash commands to build & push image |
-| `service_account_email` | Runtime service account identity |
+| `ui_service_url` | Public HTTPS endpoint for the Frontend UI |
+| `backend_service_url` | Public HTTPS endpoint for the Backend API |
+| `ui_artifact_registry_repository_url` | Docker repo URL for UI container images |
+| `backend_artifact_registry_repository_url` | Docker repo URL for Backend container images |
+| `docker_push_commands` | Ready-to-run bash commands to build & push images |
+| `service_account_email` | Frontend runtime service account identity |
+| `backend_service_account_email` | Backend runtime service account identity |
 
 ---
 

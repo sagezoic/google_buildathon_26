@@ -1,0 +1,22 @@
+{
+  "name": "realdha-backend",
+  "version": "1.0.0",
+  "description": "Backend API service for Realdha",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test test/*.test.js"
+  },
+  "keywords": [
+    "realdha",
+    "cloud-run",
+    "api"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}
