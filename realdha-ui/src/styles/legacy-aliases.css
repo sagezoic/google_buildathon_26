@@ -1,0 +1,41 @@
+/*
+ * TEMPORARY. Old dark-theme names mapped onto the new Realdha roles so the
+ * pre-artifact screens keep compiling while they are rebuilt.
+ * Delete this file (and its import in index.css) in Phase 9 of tasks/todo.md.
+ * Do not use these names in new code.
+ */
+@theme inline {
+  --color-ind: var(--rd-primary);
+  --color-ink: var(--rd-text);
+  --color-g: var(--rd-canvas);
+  --color-pap: var(--rd-surface);
+  --color-rule: var(--rd-line);
+  --color-grn: var(--rd-success);
+  --color-red: var(--rd-danger);
+  --color-amb: var(--rd-warning);
+  --font-narrow: var(--font-sans);
+  --font-devanagari: var(--font-deva);
+}
+
+/* Old global layout and helpers the current App still relies on. */
+html,
+body,
+#root {
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.3;
+  font-weight: 500;
+}
+
+.n {
+  font-variant-numeric: tabular-nums;
+}
+
+.dv {
+  font-family: var(--font-deva);
+}

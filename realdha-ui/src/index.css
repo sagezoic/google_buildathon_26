@@ -1,58 +1,180 @@
-@import url('https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;800&family=Archivo+Narrow:wght@500;700&family=Mukta:wght@500;700;800&display=swap');
+@import "@fontsource-variable/ibm-plex-sans";
+@import "@fontsource-variable/noto-sans-devanagari";
+@import "@fontsource/ibm-plex-mono/500.css";
 @import "tailwindcss";
+@import "./styles/tokens.css";
+@import "./styles/legacy-aliases.css";
 
-@theme {
-  --color-ind: #5252EE;
-  --color-red: #EF4444;
-  --color-grn: #10B981;
-  --color-amb: #F59E0B;
-  --color-ink: #FFFFFF;
-  --color-g: #080C18;
-  --color-pap: #0E1426;
-  --color-rule: rgba(255, 255, 255, 0.08);
-  --font-sans: 'Archivo', sans-serif;
-  --font-narrow: 'Archivo Narrow', sans-serif;
-  --font-devanagari: 'Mukta', sans-serif;
+/* Dark mode follows [data-theme="dark"] on <html>. */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
+/*
+ * Tailwind utilities map to semantic roles only. The default palette is cleared so
+ * nothing outside the Realdha system (bg-blue-500, text-gray-600 …) can creep in.
+ */
+@theme inline {
+  --color-*: initial;
+  --color-canvas: var(--rd-canvas);
+  --color-surface: var(--rd-surface);
+  --color-sunken: var(--rd-surface-sunken);
+  --color-field: var(--rd-field);
+  --color-skeleton: var(--rd-skeleton);
+  --color-scrim: var(--rd-scrim);
+
+  --color-line: var(--rd-line);
+  --color-line-strong: var(--rd-line-strong);
+  --color-line-hover: var(--rd-line-hover);
+
+  --color-text: var(--rd-text);
+  --color-muted: var(--rd-text-muted);
+  --color-disabled: var(--rd-text-disabled);
+  --color-brand: var(--rd-heading-brand);
+
+  --color-primary: var(--rd-primary);
+  --color-primary-text: var(--rd-primary-text);
+  --color-primary-hover: var(--rd-primary-hover);
+  --color-on-primary: var(--rd-on-primary);
+  --color-primary-tint: var(--rd-primary-tint);
+  --color-on-primary-tint: var(--rd-on-primary-tint);
+  --color-disabled-fill: var(--rd-disabled-fill);
+  --color-disabled-line: var(--rd-disabled-line);
+  --color-focus: var(--rd-focus);
+
+  --color-success: var(--rd-success);
+  --color-success-tint: var(--rd-success-tint);
+  --color-success-ink: var(--rd-success-ink);
+  --color-warning: var(--rd-warning);
+  --color-warning-tint: var(--rd-warning-tint);
+  --color-warning-ink: var(--rd-warning-ink);
+  --color-danger: var(--rd-danger);
+  --color-danger-hover: var(--rd-danger-hover);
+  --color-danger-tint: var(--rd-danger-tint);
+  --color-danger-ink: var(--rd-danger-ink);
+  --color-info: var(--rd-info);
+  --color-info-tint: var(--rd-info-tint);
+  --color-info-ink: var(--rd-info-ink);
+  --color-on-status: var(--rd-on-status);
+
+  --color-chain: var(--rd-chain);
+  --color-chain-tint: var(--rd-chain-tint);
+  --color-chain-ink: var(--rd-chain-ink);
+
+  --color-demo: var(--rd-demo-fill);
+  --color-demo-line: var(--rd-demo-line);
+  --color-demo-ink: var(--rd-demo-ink);
+
+  --color-white: #FFFFFF;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  --font-sans: "IBM Plex Sans Variable", "Noto Sans Devanagari Variable", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+  --font-deva: "Noto Sans Devanagari Variable", "IBM Plex Sans Variable", sans-serif;
+
+  /* Type scale from the artifact: size / line-height / weight / tracking */
+  --text-display: 36px;
+  --text-display--line-height: 44px;
+  --text-display--letter-spacing: -0.02em;
+  --text-display--font-weight: 600;
+  --text-h1: 28px;
+  --text-h1--line-height: 36px;
+  --text-h1--letter-spacing: -0.01em;
+  --text-h1--font-weight: 600;
+  --text-h2: 22px;
+  --text-h2--line-height: 30px;
+  --text-h2--font-weight: 600;
+  --text-h3: 18px;
+  --text-h3--line-height: 26px;
+  --text-h3--font-weight: 600;
+  --text-body: 16px;
+  --text-body--line-height: 24px;
+  --text-control: 15px;
+  --text-control--line-height: 20px;
+  --text-small: 14px;
+  --text-small--line-height: 20px;
+  --text-chip: 13px;
+  --text-chip--line-height: 20px;
+  --text-label: 12px;
+  --text-label--line-height: 16px;
+  --text-label--font-weight: 500;
+  --text-overline: 11px;
+  --text-overline--line-height: 16px;
+
+  --radius-control: var(--rd-radius-control);
+  --radius-card: var(--rd-radius-card);
+  --radius-modal: var(--rd-radius-modal);
+  --radius-pill: var(--rd-radius-pill);
+
+  --shadow-e1: var(--rd-shadow-e1);
+  --shadow-e2: var(--rd-shadow-e2);
+  --shadow-e3: var(--rd-shadow-e3);
+
+  --spacing-control: var(--rd-control-h);
+  --spacing-control-sm: var(--rd-control-h-sm);
+  --spacing-gutter: var(--rd-gutter);
+
+  --ease-out: var(--rd-ease-out);
+
+  --breakpoint-md: 834px;
+  --breakpoint-xl: 1440px;
 }
 
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
+@layer base {
+  html {
+    background: var(--rd-canvas);
+    color: var(--rd-text);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 24px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    accent-color: var(--rd-primary);
+    caret-color: var(--rd-primary-text);
+  }
 
-html,
-body,
-#root {
-  height: 100%;
-  overflow: hidden;
-}
+  ::selection {
+    background: var(--rd-primary-tint);
+    color: var(--rd-on-primary-tint);
+  }
 
-body {
-  font: 500 14px/1.3 var(--font-sans);
-  color: var(--color-ink);
-  background: var(--color-g);
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
+  /* Devanagari: same size as Latin, taller lines so matras and conjuncts never clip. */
+  :lang(hi),
+  :lang(mr) {
+    font-family: var(--font-deva);
+    line-height: 1.7;
+  }
 
-.n {
-  font-variant-numeric: tabular-nums;
-}
+  /* Numbers in data line up. */
+  table,
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
 
-.dv {
-  font-family: var(--font-devanagari);
-  font-weight: 800;
-}
+  a {
+    color: var(--rd-primary-text);
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+  /* One focus ring for every interactive element: 2px gap, 3px blue. */
+  :focus-visible {
+    outline: 3px solid var(--rd-focus);
+    outline-offset: 2px;
+  }
 
-button,
-input {
-  font: inherit;
+  * {
+    scrollbar-color: var(--rd-line-strong) transparent;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }

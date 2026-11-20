@@ -1,0 +1,204 @@
+/*
+ * Realdha design tokens.
+ * Source of truth: "Realdha UI frames" artifact (Main style board + C1–C3).
+ *
+ * Layers
+ *   1. Primitives  --rd-p-*   raw values from the artifact. Never used by components.
+ *   2. Semantic    --rd-*     roles. Light by default, dark under [data-theme="dark"].
+ *   3. Tailwind    @theme     utilities (bg-surface, text-muted, border-line, …) in index.css.
+ *
+ * Rules the tokens encode
+ *   - Seal teal (--rd-chain-*) is only for on-chain facts: fingerprints, hashes, network, anchored.
+ *   - Status is never colour alone: every status token pair is used with an icon and a word.
+ *   - Text roles pass 4.5:1 on the surfaces they are paired with (see scripts/check-contrast.mjs).
+ */
+
+:root {
+  /* ---------- 1. Primitives (light, from the artifact) ---------- */
+  --rd-p-blue-900: #0F2447;
+  --rd-p-blue-700: #1B3A6B;
+  --rd-p-blue-50: #E8EDF5;
+  --rd-p-focus: #2F6FB0;
+
+  --rd-p-white: #FFFFFF;
+  --rd-p-grey-50: #F5F6F8;
+  --rd-p-grey-100: #E5E8ED;
+  --rd-p-grey-200: #D8DDE4;
+  --rd-p-grey-300: #B9C1CC;
+  --rd-p-grey-500: #6B7685;
+  --rd-p-grey-600: #4F5B6B;
+  --rd-p-ink: #172033;
+
+  --rd-p-green-600: #1E7A4B;
+  --rd-p-green-50: #E4F3EA;
+  --rd-p-green-800: #14573A;
+  --rd-p-amber-600: #8A5700;
+  --rd-p-amber-50: #FFF1CF;
+  --rd-p-amber-800: #5C3A00;
+  --rd-p-red-600: #B42318;
+  --rd-p-red-50: #FDE9E7;
+  --rd-p-red-800: #8A1B12;
+  --rd-p-sky-600: #1F5F9E;
+  --rd-p-sky-50: #E3EEFA;
+  --rd-p-sky-800: #174B80;
+  --rd-p-teal-600: #0F6D66;
+  --rd-p-teal-50: #DDF1EE;
+  --rd-p-teal-800: #0B524C;
+
+  /* ---------- 2. Semantic roles: light ---------- */
+  color-scheme: light;
+
+  /* Surfaces */
+  --rd-canvas: var(--rd-p-grey-50);        /* page background */
+  --rd-surface: var(--rd-p-white);         /* cards, nav, tables */
+  --rd-surface-sunken: var(--rd-p-grey-50);/* table header, ID chip, disabled field */
+  --rd-field: var(--rd-p-white);           /* input background */
+  --rd-skeleton: var(--rd-p-grey-100);
+  --rd-scrim: rgb(23 32 51 / 0.45);
+
+  /* Lines */
+  --rd-line: var(--rd-p-grey-200);         /* card borders, dividers */
+  --rd-line-strong: var(--rd-p-grey-300);  /* input and secondary-button borders */
+  --rd-line-hover: var(--rd-p-grey-600);   /* field hover border */
+
+  /* Text */
+  --rd-text: var(--rd-p-ink);
+  --rd-text-muted: var(--rd-p-grey-600);
+  --rd-text-disabled: var(--rd-p-grey-500);
+  --rd-heading-brand: var(--rd-p-blue-700); /* wordmark, active nav */
+
+  /* Primary (registry blue) */
+  --rd-primary: var(--rd-p-blue-700);       /* primary button fill */
+  --rd-primary-text: var(--rd-p-blue-700);  /* links, secondary/ghost button text, active nav */
+  --rd-primary-hover: var(--rd-p-blue-900);
+  --rd-on-primary: var(--rd-p-white);
+  --rd-primary-tint: var(--rd-p-blue-50);   /* selected, hover fill */
+  --rd-on-primary-tint: var(--rd-p-blue-900);
+
+  /* Disabled controls */
+  --rd-disabled-fill: var(--rd-p-grey-100);
+  --rd-disabled-line: var(--rd-p-grey-200);
+
+  /* Focus */
+  --rd-focus: var(--rd-p-focus);
+  --rd-focus-halo: rgb(47 111 176 / 0.35);  /* field focus */
+  --rd-focus-gap: var(--rd-p-white);        /* gap between control and ring */
+
+  /* Status: solid (borders, icons, filled buttons), tint (pill/banner fill), ink (text on tint) */
+  --rd-success: var(--rd-p-green-600);
+  --rd-success-tint: var(--rd-p-green-50);
+  --rd-success-ink: var(--rd-p-green-800);
+  --rd-warning: var(--rd-p-amber-600);
+  --rd-warning-tint: var(--rd-p-amber-50);
+  --rd-warning-ink: var(--rd-p-amber-800);
+  --rd-danger: var(--rd-p-red-600);
+  --rd-danger-hover: var(--rd-p-red-800);
+  --rd-danger-tint: var(--rd-p-red-50);
+  --rd-danger-ink: var(--rd-p-red-800);
+  --rd-info: var(--rd-p-sky-600);
+  --rd-info-tint: var(--rd-p-sky-50);
+  --rd-info-ink: var(--rd-p-sky-800);
+  --rd-on-status: var(--rd-p-white);        /* text on any solid status fill */
+
+  /* On-chain (seal teal). Reserved. */
+  --rd-chain: var(--rd-p-teal-600);
+  --rd-chain-tint: var(--rd-p-teal-50);
+  --rd-chain-ink: var(--rd-p-teal-800);     /* fingerprints and hashes on surface and tint */
+
+  /* Demo label */
+  --rd-demo-fill: var(--rd-p-amber-50);
+  --rd-demo-line: var(--rd-p-amber-600);
+  --rd-demo-ink: var(--rd-p-amber-800);
+
+  /* Elevation */
+  --rd-shadow-e1: 0 1px 2px rgb(23 32 51 / 0.08);
+  --rd-shadow-e2: 0 4px 12px rgb(23 32 51 / 0.12);
+  --rd-shadow-e3: 0 12px 32px rgb(23 32 51 / 0.18);
+
+  /* ---------- Scale (theme independent) ---------- */
+  --rd-radius-control: 6px;
+  --rd-radius-card: 12px;
+  --rd-radius-modal: 16px;
+  --rd-radius-pill: 999px;
+
+  --rd-control-h: 44px;
+  --rd-control-h-sm: 36px;
+  --rd-tap-min: 44px;
+  --rd-gutter: 24px;
+
+  --rd-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --rd-dur-fast: 120ms;
+  --rd-dur-base: 200ms;
+  --rd-dur-slow: 320ms;
+}
+
+@media (max-width: 833px) {
+  :root { --rd-gutter: 16px; }
+}
+
+/* ---------- 2b. Semantic roles: dark · Graphite ----------
+ * Not drawn in the artifact; chosen 2026-11-21 from three candidates.
+ * Neutral graphite surfaces, registry blue kept as a solid fill for the primary action.
+ * --rd-primary (fill) and --rd-primary-text (links, secondary text) differ here because
+ * no single blue passes 4.5:1 both under white text and on graphite.
+ */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --rd-canvas: #111316;
+  --rd-surface: #1A1D21;
+  --rd-surface-sunken: #15171A;
+  --rd-field: #15171A;
+  --rd-skeleton: #262A30;
+  --rd-scrim: rgb(0 0 0 / 0.65);
+
+  --rd-line: #2C3036;
+  --rd-line-strong: #646B75;
+  --rd-line-hover: #8F96A0;
+
+  --rd-text: #E9EBEE;
+  --rd-text-muted: #A3A9B2;
+  --rd-text-disabled: #858C96;
+  --rd-heading-brand: #9DBDF0;
+
+  --rd-primary: #2F64B8;
+  --rd-primary-text: #8DB4F0;
+  --rd-primary-hover: #2A5AA6;
+  --rd-on-primary: #FFFFFF;
+  --rd-primary-tint: #1E2A3D;
+  --rd-on-primary-tint: #D6E3F8;
+
+  --rd-disabled-fill: #22262B;
+  --rd-disabled-line: #2C3036;
+
+  --rd-focus: #7FB1EE;
+  --rd-focus-halo: rgb(127 177 238 / 0.40);
+  --rd-focus-gap: #1A1D21;
+
+  --rd-success: #4CC08A;
+  --rd-success-tint: #142A1F;
+  --rd-success-ink: #92DDB5;
+  --rd-warning: #E0A93B;
+  --rd-warning-tint: #2D240F;
+  --rd-warning-ink: #F3CD7C;
+  --rd-danger: #F07167;
+  --rd-danger-hover: #F59A92;
+  --rd-danger-tint: #361816;
+  --rd-danger-ink: #FFB4AB;
+  --rd-info: #6EA6E6;
+  --rd-info-tint: #172638;
+  --rd-info-ink: #A9CBF2;
+  --rd-on-status: #111316;
+
+  --rd-chain: #46BDB1;
+  --rd-chain-tint: #12292A;
+  --rd-chain-ink: #86D9CF;
+
+  --rd-demo-fill: #2D240F;
+  --rd-demo-line: #E0A93B;
+  --rd-demo-ink: #F3CD7C;
+
+  --rd-shadow-e1: 0 1px 2px rgb(0 0 0 / 0.40);
+  --rd-shadow-e2: 0 4px 12px rgb(0 0 0 / 0.45);
+  --rd-shadow-e3: 0 12px 32px rgb(0 0 0 / 0.55);
+}

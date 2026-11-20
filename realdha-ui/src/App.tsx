@@ -1,3 +1,10 @@
-import { App } from './components/App'
+import { PrefsProvider } from './app/prefs'
+import { Routes } from './app/routes'
 
-export default App
+export default function App() {
+  return (
+    <PrefsProvider>
+      <Routes />
+    </PrefsProvider>
+  )
+}

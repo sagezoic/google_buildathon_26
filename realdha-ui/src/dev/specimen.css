@@ -1,0 +1,6 @@
+/* The old App locks the page height; the specimen scrolls. */
+html.specimen,
+html.specimen body {
+  height: auto;
+  overflow: auto;
+}
