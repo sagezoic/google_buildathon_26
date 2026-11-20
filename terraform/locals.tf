@@ -13,7 +13,8 @@ locals {
       "iam.googleapis.com"
     ] : [],
     var.enable_apis && var.deploy_database ? [
-      "sqladmin.googleapis.com"
+      "sqladmin.googleapis.com",
+      "compute.googleapis.com"
     ] : []
   )
 
