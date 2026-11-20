@@ -134,7 +134,12 @@ export interface StoredDoc {
   size: string
   pages?: number
   langs?: string[]
-  status: 'uploaded'
+  /** Server document id. Absent on the demo seed rows, which keep the simulated flow. */
+  id?: string
+  /** Server-side state; seed and not-yet-processed rows are 'uploaded'. */
+  status: 'uploaded' | 'processing' | 'processed' | 'failed'
+  /** Why processing failed, shown on the GP-09 row. */
+  error?: string
 }
 
 /** Documents already on file when the owner reaches GP-08 (the frame's four uploaded rows). */
