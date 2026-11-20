@@ -75,6 +75,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test-and-build]
     if: always() && (needs.test-and-build.result == 'success' || needs.test-and-build.result == 'skipped')
+    env:
+      WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      WIF_SA: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      SA_KEY: ${{ secrets.GCP_SA_KEY }}
 
     steps:
       - name: Checkout repository
@@ -104,22 +108,22 @@ jobs:
       # Google Cloud Authentication
       # Supports Workload Identity Federation (recommended) or Service Account Key JSON
       - name: Authenticate to Google Cloud (Workload Identity Federation)
-        if: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER != '' }}"
+        if: env.WIF_PROVIDER != ''
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.WIF_SA }}
           token_format: 'access_token'
 
       - name: Authenticate to Google Cloud (Service Account Key Fallback)
-        if: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER == '' && secrets.GCP_SA_KEY != '' }}"
+        if: env.WIF_PROVIDER == '' && env.SA_KEY != ''
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          credentials_json: ${{ env.SA_KEY }}
           token_format: 'access_token'
 
       - name: Fail if No Credentials Configured
-        if: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER == '' && secrets.GCP_SA_KEY == '' }}"
+        if: env.WIF_PROVIDER == '' && env.SA_KEY == ''
         run: |
           echo "::error::Neither GCP_WORKLOAD_IDENTITY_PROVIDER nor GCP_SA_KEY secret is configured. Please see docs/github-actions-setup.md for setup instructions."
           exit 1

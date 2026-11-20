@@ -84,37 +84,53 @@ jobs:
     name: Terraform Plan
     runs-on: ubuntu-latest
     needs: [app-checks, terraform-checks]
-    if: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER != '' || secrets.GCP_SA_KEY != '' }}"
+    env:
+      WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      WIF_SA: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      SA_KEY: ${{ secrets.GCP_SA_KEY }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Check GCP Credentials
+        id: check-creds
+        run: |
+          if [ -n "$WIF_PROVIDER" ] || [ -n "$SA_KEY" ]; then
+            echo "has_creds=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_creds=false" >> $GITHUB_OUTPUT
+            echo "No GCP credentials detected; skipping speculative plan step."
+          fi
+
       - name: Authenticate to Google Cloud (Workload Identity Federation)
-        if: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER != '' }}"
+        if: steps.check-creds.outputs.has_creds == 'true' && env.WIF_PROVIDER != ''
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.WIF_SA }}
           token_format: 'access_token'
 
       - name: Authenticate to Google Cloud (Service Account Key Fallback)
-        if: "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER == '' && secrets.GCP_SA_KEY != '' }}"
+        if: steps.check-creds.outputs.has_creds == 'true' && env.WIF_PROVIDER == '' && env.SA_KEY != ''
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          credentials_json: ${{ env.SA_KEY }}
           token_format: 'access_token'
 
       - name: Set up Google Cloud SDK
+        if: steps.check-creds.outputs.has_creds == 'true'
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Set up Terraform
+        if: steps.check-creds.outputs.has_creds == 'true'
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
           terraform_wrapper: false
 
       - name: Configure Terraform Remote Backend (if specified)
+        if: steps.check-creds.outputs.has_creds == 'true'
         working-directory: terraform
         run: |
           STATE_BUCKET="${{ secrets.GCS_TF_STATE_BUCKET || vars.GCS_TF_STATE_BUCKET }}"
@@ -130,11 +146,13 @@ jobs:
           fi
 
       - name: Terraform Init
+        if: steps.check-creds.outputs.has_creds == 'true'
         working-directory: terraform
         run: |
           terraform init -input=false
 
       - name: Terraform Plan
+        if: steps.check-creds.outputs.has_creds == 'true'
         id: plan
         working-directory: terraform
         run: |
@@ -150,6 +168,7 @@ jobs:
           cat plan_output.txt
 
       - name: Add Plan to Step Summary
+        if: steps.check-creds.outputs.has_creds == 'true'
         working-directory: terraform
         run: |
           echo "### 📋 Terraform Plan Output (PR #${{ github.event.pull_request.number }})" >> $GITHUB_STEP_SUMMARY
