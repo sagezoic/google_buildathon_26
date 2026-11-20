@@ -1,3 +1,45 @@
 {
-  "buildPath": "comp"
+  "buildPath": "comp",
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "kicker-above-heading",
+        "value": "*",
+        "files": [
+          "references/realdha-frames/project/V-OpenQuestions.dc.html"
+        ],
+        "createdAt": "2026-11-20T20:25:37.472Z",
+        "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
+      },
+      {
+        "rule": "kicker-above-heading",
+        "value": "*",
+        "files": [
+          "references/realdha-frames/project/N-GP-Annotations.dc.html"
+        ],
+        "createdAt": "2026-11-20T20:25:37.490Z",
+        "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
+      },
+      {
+        "rule": "cramped-padding",
+        "value": "*",
+        "files": [
+          "references/realdha-frames/project/C2-Content.dc.html"
+        ],
+        "createdAt": "2026-11-20T20:25:43.280Z",
+        "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
+      },
+      {
+        "rule": "tiny-text",
+        "value": "*",
+        "files": [
+          "references/realdha-frames/project/C2-Content.dc.html"
+        ],
+        "createdAt": "2026-11-20T20:25:43.294Z",
+        "reason": "Downloaded reference frame from the artifact (read-only spec, not shipped UI); Claude triage, not user confirmed"
+      }
+    ]
+  }
 }
