@@ -16,3 +16,14 @@ Mermaid draws edges behind node labels with transparent backgrounds, so arrows c
 
     mmdc -i realdha-architecture.mmd -o base.svg -b white --iconPacksNamesAndUrls "rd#http://127.0.0.1:8765/icons.json"
     node postprocess.js base.svg realdha-architecture.svg realdha-architecture.png
+
+## Vertical gap compaction
+After mmdc, run: python3 compact.py base.svg base_c.svg 380 (closes the gap between the top row and the rest), then node postprocess.js base_c.svg out.svg out.png
+
+Text sizing: service labels 24px, group titles 20px (CSS injected before postprocess.js); users/payments/AI group boxes extended 22 units for two-line labels.
+
+Update: iconSize 96, idealEdgeLengthMultiplier 2.5, nodeSeparation 140; compact.py delta 360; label CSS 22px/18px, no group extension needed.
+
+Tighter: idealEdgeLengthMultiplier 2.3. finish.sh automates compaction (gap reduced to ~110 units), 22px/18px label CSS, postprocess and 16:9 export: finish.sh base.svg tag
+
+Chain Worker arrow shortened: compactx.py shifts worker and Ethereum left (gap 150 units) after the vertical compaction.
