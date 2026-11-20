@@ -39,12 +39,15 @@ architecture-beta
     service gemini(rd:gemini)[Gemini] in ai_g
 
     service gcs(rd:gcs)[Cloud Storage] in data_g
+    service fs(rd:fs)[Firestore] in data_g
     service bq(rd:bq)[BigQuery] in data_g
     service sql(rd:sql)[Cloud SQL] in data_g
     service valkey(rd:valkey)[Memorystore Valkey] in data_g
     service pubsub(rd:pubsub)[Google Pub Sub] in data_g
     junction j1 in gcp
     junction jg in gcp
+    junction jf in gcp
+    junction jh in gcp
     junction jp in gcp
     junction jr in gcp
     junction j2 in gcp
@@ -71,7 +74,10 @@ architecture-beta
     jp:R -- L:jr
     jr:T --> B:trans
     j1:R --> L:pubsub
-    j2:R --> L:gcs
+    j2:R -- L:jf
+    jf:R --> L:gcs
+    jf:B -- T:jh
+    jh:R --> L:fs
     j3:R --> L:valkey
     j3:B --> T:sql
     gcs:T --> B:pubsub
@@ -80,7 +86,9 @@ architecture-beta
     sql:R --> L:bq
 
     align row pay jt clerk gemini docai trans
-    align row users armor api j2 gcs
+    align row users armor api j2 jf gcs
+    align row jh fs
+    align column jf jh
     align row j3 valkey
     align row cdn ui j1 pubsub worker eth
     align row iam sql bq
@@ -91,4 +99,4 @@ architecture-beta
     align column gemini jg j1 j2 j3 sql
     align row jg jp jr
     align column trans jr
-    align column docai jp pubsub gcs valkey bq
+    align column docai jp pubsub gcs fs valkey bq
