@@ -131,6 +131,11 @@ jobs:
       - name: Set up Google Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Enable Core Bootstrap GCP APIs
+        run: |
+          echo "Enabling Cloud Resource Manager and Service Usage APIs..."
+          gcloud services enable cloudresourcemanager.googleapis.com serviceusage.googleapis.com --project="${{ env.GCP_PROJECT_ID }}"
+
       - name: Configure Docker for Google Artifact Registry
         run: |
           gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet

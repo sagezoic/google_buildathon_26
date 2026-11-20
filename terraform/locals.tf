@@ -6,6 +6,7 @@ locals {
   }
 
   required_services = var.enable_apis ? [
+    "cloudresourcemanager.googleapis.com",
     "run.googleapis.com",
     "artifactregistry.googleapis.com",
     "iam.googleapis.com"
