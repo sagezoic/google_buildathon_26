@@ -1,0 +1,49 @@
+# ------------------------------------------------------------------------------
+# Google Cloud Configuration
+# ------------------------------------------------------------------------------
+
+# Required: Replace with your Google Cloud Project ID
+project_id = "your-gcp-project-id"
+
+# US Region for deployment (e.g. us-central1, us-east1, us-west1, us-east4)
+region = "us-central1"
+
+# Environment tag
+environment = "prod"
+
+# Enable APIs automatically
+enable_apis = true
+create_artifact_registry = true
+
+# ------------------------------------------------------------------------------
+# Frontend (UI) Service Configuration
+# ------------------------------------------------------------------------------
+
+service_name                = "realdha-ui"
+artifact_registry_repo_name = "realdha-ui"
+container_port              = 8080
+allow_unauthenticated       = true
+min_instance_count          = 0
+max_instance_count          = 10
+cpu                         = "1000m"
+memory                      = "512Mi"
+
+# Optional: Specific UI container image URI. Defaults to latest in Artifact Registry if empty.
+ui_container_image = ""
+
+# ------------------------------------------------------------------------------
+# Backend Service Configuration
+# ------------------------------------------------------------------------------
+
+deploy_backend                      = true
+backend_service_name                = "realdha-backend"
+backend_artifact_registry_repo_name = "realdha-backend"
+backend_container_port              = 8080
+backend_allow_unauthenticated       = true
+backend_min_instance_count          = 0
+backend_max_instance_count          = 10
+backend_cpu                         = "1000m"
+backend_memory                      = "512Mi"
+
+# Optional: Specific Backend container image URI. Defaults to latest in Artifact Registry if empty.
+backend_container_image = ""

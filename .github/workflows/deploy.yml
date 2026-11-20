@@ -1,0 +1,291 @@
+name: Deploy Frontend & Backend to Google Cloud (Terraform)
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'realdha-ui/**'
+      - 'backend/**'
+      - 'terraform/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment Environment (prod/staging/dev)'
+        required: true
+        default: 'prod'
+      skip_tests:
+        description: 'Skip linting and unit tests before deployment'
+        type: boolean
+        default: false
+
+concurrency:
+  group: production-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write # Required for Google Cloud Workload Identity Federation
+
+env:
+  DEFAULT_REGION: 'us-central1'
+  TERRAFORM_VERSION: '1.9.5'
+  NODE_VERSION: '22'
+  BUN_VERSION: '1.4.5'
+
+jobs:
+  # ============================================================================
+  # 1. Validation & Tests Job
+  # ============================================================================
+  test-and-build:
+    name: Build & Test Applications
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'workflow_dispatch' || !inputs.skip_tests }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+          cache-dependency-path: realdha-ui/package-lock.json
+
+      - name: Test Frontend (realdha-ui)
+        working-directory: realdha-ui
+        run: |
+          echo "=== Building frontend ==="
+          npm ci
+          npm run build
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Test Backend (backend)
+        working-directory: backend
+        run: |
+          echo "=== Testing backend ==="
+          bun install
+          bun test
+
+  # ============================================================================
+  # 2. Deploy Infrastructure & Applications via Terraform
+  # ============================================================================
+  deploy:
+    name: Deploy to Google Cloud
+    runs-on: ubuntu-latest
+    needs: [test-and-build]
+    if: always() && (needs.test-and-build.result == 'success' || needs.test-and-build.result == 'skipped')
+    env:
+      WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+      WIF_SA: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+      SA_KEY: ${{ secrets.GCP_SA_KEY }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Determine GCP Project ID and Region from secrets or fallback
+      - name: Configure Deployment Environment Variables
+        id: config
+        run: |
+          GCP_PROJECT="${{ secrets.GCP_PROJECT_ID || vars.GCP_PROJECT_ID }}"
+          if [ -z "$GCP_PROJECT" ]; then
+            echo "::error::GCP_PROJECT_ID secret or variable is required."
+            exit 1
+          fi
+
+          REGION="${{ secrets.GCP_REGION || vars.GCP_REGION || env.DEFAULT_REGION }}"
+          ENV_NAME="${{ github.event.inputs.environment || 'prod' }}"
+
+          echo "project_id=$GCP_PROJECT" >> $GITHUB_OUTPUT
+          echo "region=$REGION" >> $GITHUB_OUTPUT
+          echo "env_name=$ENV_NAME" >> $GITHUB_OUTPUT
+
+          echo "GCP_PROJECT_ID=$GCP_PROJECT" >> $GITHUB_ENV
+          echo "GCP_REGION=$REGION" >> $GITHUB_ENV
+          echo "DEPLOY_ENV=$ENV_NAME" >> $GITHUB_ENV
+
+      # Google Cloud Authentication
+      # Supports Workload Identity Federation (recommended) or Service Account Key JSON
+      - name: Authenticate to Google Cloud (Workload Identity Federation)
+        if: env.WIF_PROVIDER != ''
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.WIF_SA }}
+          token_format: 'access_token'
+
+      - name: Authenticate to Google Cloud (Service Account Key Fallback)
+        if: env.WIF_PROVIDER == '' && env.SA_KEY != ''
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ env.SA_KEY }}
+          token_format: 'access_token'
+
+      - name: Fail if No Credentials Configured
+        if: env.WIF_PROVIDER == '' && env.SA_KEY == ''
+        run: |
+          echo "::error::Neither GCP_WORKLOAD_IDENTITY_PROVIDER nor GCP_SA_KEY secret is configured. Please see docs/github-actions-setup.md for setup instructions."
+          exit 1
+
+      - name: Set up Google Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Enable Core Bootstrap GCP APIs
+        run: |
+          echo "Enabling Cloud Resource Manager and Service Usage APIs..."
+          gcloud services enable cloudresourcemanager.googleapis.com serviceusage.googleapis.com --project="${{ env.GCP_PROJECT_ID }}"
+
+      - name: Configure Docker for Google Artifact Registry
+        run: |
+          gcloud auth configure-docker ${{ env.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: false
+
+      # Remote State: Persistent GCS bucket prevents duplicate resource errors (Error 409)
+      - name: Configure Terraform Remote Backend
+        working-directory: terraform
+        run: |
+          STATE_BUCKET="${{ secrets.GCS_TF_STATE_BUCKET || vars.GCS_TF_STATE_BUCKET || format('{0}-tfstate', env.GCP_PROJECT_ID) }}"
+          echo "Ensuring GCS remote state bucket gs://$STATE_BUCKET exists..."
+          gcloud storage buckets create "gs://$STATE_BUCKET" --location="${{ env.GCP_REGION }}" 2>/dev/null || true
+
+          echo "Configuring GCS remote state in backend.tf"
+          cat <<EOF > backend.tf
+          terraform {
+            backend "gcs" {
+              bucket = "$STATE_BUCKET"
+              prefix = "terraform/state/${{ env.DEPLOY_ENV }}"
+            }
+          }
+          EOF
+
+      - name: Terraform Init
+        working-directory: terraform
+        run: |
+          terraform init -input=false
+
+      # Adopt existing GCP resources into Terraform state only if they already exist
+      - name: Adopt Existing Infrastructure into State (Prevent 409 Conflict)
+        working-directory: terraform
+        run: |
+          # Only import Artifact Registry repositories if they actually exist in GCP
+          if gcloud artifacts repositories describe realdha-ui --location="${{ env.GCP_REGION }}" --project="${{ env.GCP_PROJECT_ID }}" >/dev/null 2>&1; then
+            echo "Adopting existing realdha-ui repository into state..."
+            terraform import -input=false \
+              -var="project_id=${{ env.GCP_PROJECT_ID }}" \
+              -var="region=${{ env.GCP_REGION }}" \
+              'google_artifact_registry_repository.ui[0]' \
+              "projects/${{ env.GCP_PROJECT_ID }}/locations/${{ env.GCP_REGION }}/repositories/realdha-ui" || true
+          fi
+
+          if gcloud artifacts repositories describe realdha-backend --location="${{ env.GCP_REGION }}" --project="${{ env.GCP_PROJECT_ID }}" >/dev/null 2>&1; then
+            echo "Adopting existing realdha-backend repository into state..."
+            terraform import -input=false \
+              -var="project_id=${{ env.GCP_PROJECT_ID }}" \
+              -var="region=${{ env.GCP_REGION }}" \
+              'google_artifact_registry_repository.backend[0]' \
+              "projects/${{ env.GCP_PROJECT_ID }}/locations/${{ env.GCP_REGION }}/repositories/realdha-backend" || true
+          fi
+
+      # Bootstrap Phase: Ensure APIs and Artifact Registry repositories exist before image push
+      - name: Provision Required APIs & Artifact Registries
+        working-directory: terraform
+        run: |
+          echo "=== Provisioning Google Cloud APIs and Artifact Registries ==="
+          terraform apply -auto-approve -input=false \
+            -target=google_project_service.services \
+            -target=google_artifact_registry_repository.ui \
+            -target=google_artifact_registry_repository.backend \
+            -var="project_id=${{ env.GCP_PROJECT_ID }}" \
+            -var="region=${{ env.GCP_REGION }}" \
+            -var="environment=${{ env.DEPLOY_ENV }}"
+
+      # Container Build & Push
+      - name: Build, Tag & Push UI Docker Image
+        id: build-ui
+        run: |
+          UI_IMAGE_BASE="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/realdha-ui/realdha-ui"
+          UI_IMAGE_SHA="${UI_IMAGE_BASE}:${{ github.sha }}"
+          UI_IMAGE_LATEST="${UI_IMAGE_BASE}:latest"
+
+          echo "Building UI image: $UI_IMAGE_SHA"
+          cd realdha-ui
+          docker build -t "$UI_IMAGE_SHA" -t "$UI_IMAGE_LATEST" .
+
+          echo "Pushing UI image..."
+          docker push "$UI_IMAGE_SHA"
+          docker push "$UI_IMAGE_LATEST"
+
+          echo "image_sha=$UI_IMAGE_SHA" >> $GITHUB_OUTPUT
+          cd ..
+
+      - name: Build, Tag & Push Backend Docker Image
+        id: build-backend
+        run: |
+          BACKEND_IMAGE_BASE="${{ env.GCP_REGION }}-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/realdha-backend/realdha-backend"
+          BACKEND_IMAGE_SHA="${BACKEND_IMAGE_BASE}:${{ github.sha }}"
+          BACKEND_IMAGE_LATEST="${BACKEND_IMAGE_BASE}:latest"
+
+          echo "Building Backend image: $BACKEND_IMAGE_SHA"
+          cd backend
+          docker build -t "$BACKEND_IMAGE_SHA" -t "$BACKEND_IMAGE_LATEST" .
+
+          echo "Pushing Backend image..."
+          docker push "$BACKEND_IMAGE_SHA"
+          docker push "$BACKEND_IMAGE_LATEST"
+
+          echo "image_sha=$BACKEND_IMAGE_SHA" >> $GITHUB_OUTPUT
+          cd ..
+
+      # Full Deployment Phase: Apply full Terraform configuration with newly pushed images
+      - name: Terraform Apply (Cloud Run & Full Stack)
+        id: terraform-apply
+        working-directory: terraform
+        run: |
+          echo "=== Applying Terraform full infrastructure and Cloud Run deployments ==="
+          terraform apply -auto-approve -input=false \
+            -var="project_id=${{ env.GCP_PROJECT_ID }}" \
+            -var="region=${{ env.GCP_REGION }}" \
+            -var="environment=${{ env.DEPLOY_ENV }}" \
+            -var="ui_container_image=${{ steps.build-ui.outputs.image_sha }}" \
+            -var="backend_container_image=${{ steps.build-backend.outputs.image_sha }}"
+
+      # Extract outputs for Job Summary
+      - name: Retrieve Deployment Outputs
+        id: tf-outputs
+        working-directory: terraform
+        run: |
+          UI_URL=$(terraform output -raw ui_service_url 2>/dev/null || echo "")
+          BACKEND_URL=$(terraform output -raw backend_service_url 2>/dev/null || echo "")
+          echo "ui_url=$UI_URL" >> $GITHUB_OUTPUT
+          echo "backend_url=$BACKEND_URL" >> $GITHUB_OUTPUT
+
+      - name: Generate Deployment Step Summary
+        run: |
+          cat << 'EOF' >> $GITHUB_STEP_SUMMARY
+          ## 🚀 Deployment Successful!
+
+          The frontend and backend have been provisioned and deployed to **Google Cloud** via **Terraform**.
+
+          | Component | Status | Endpoint URL | Image Deployed |
+          | :--- | :--- | :--- | :--- |
+          | **Frontend (UI)** | 🟢 Deployed | [${{ steps.tf-outputs.outputs.ui_url }}](${{ steps.tf-outputs.outputs.ui_url }}) | `${{ steps.build-ui.outputs.image_sha }}` |
+          | **Backend API** | 🟢 Deployed | [${{ steps.tf-outputs.outputs.backend_url }}](${{ steps.tf-outputs.outputs.backend_url }}) | `${{ steps.build-backend.outputs.image_sha }}` |
+
+          ### Deployment Details
+          - **Google Cloud Project**: `${{ env.GCP_PROJECT_ID }}`
+          - **Region**: `${{ env.GCP_REGION }}`
+          - **Environment**: `${{ env.DEPLOY_ENV }}`
+          - **Commit SHA**: `${{ github.sha }}`
+          EOF
