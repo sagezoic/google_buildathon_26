@@ -9,12 +9,16 @@ import { Card } from '../../../components/ui/card'
 import { Field } from '../../../components/ui/field'
 import { Pill } from '../../../components/ui/pill'
 import { checkFile, fileSize, usePropertyDocuments, usePropertyDraft, usePropertyFindings } from '../../../lib/property-store'
-import { findings, settledFields, type ActionKind, type Finding, type Resolution, type ReviewAction } from '../../../data/fixtures/property-intake'
+import { findings as fixtureFindings, settledFields as fixtureSettled, type ActionKind, type Finding, type Resolution, type ReviewAction, type StoredDoc } from '../../../data/fixtures/property-intake'
 import { cn } from '../../../lib/cn'
+import { deriveFindings, deriveSettled, docLabel, langLabel, useDocDetails, type SettledField } from '../../../lib/property-findings'
+import type { ServerDocDetail } from '../../../lib/property-api'
+import { uploadDocument } from '../../../lib/property-api'
 
 type Filter = 'all' | 'attention' | 'confirmed'
 const ZOOM = ['scale-90', 'scale-100', 'scale-110', 'scale-125'] as const
-const TOTAL = 8
+/** Fields shown in the demo (3 flagged + 5 read cleanly). Real reviews count what was actually read. */
+const DEMO_TOTAL = 8
 
 const RESOLVED: Record<Resolution, string> = { confirmed: 'Confirmed', corrected: 'Corrected', uploaded: 'Uploaded', skipped: 'Not provided' }
 const ResolvedPill = ({ r }: { r: Resolution }) => (
@@ -34,7 +38,7 @@ function validateFix(id: Finding['id'], v: string): string | null {
   return null
 }
 
-function useResolutions() {
+function useResolutions(propertyId?: string) {
   const [stored, setStored] = usePropertyFindings()
   const [, setDocs] = usePropertyDocuments()
   const [editing, setEditing] = useState<Finding['id'] | null>(null)
@@ -53,7 +57,7 @@ function useResolutions() {
   }
   const saveFix = (f: Finding, value: string) => { decide(f.id, 'corrected', value.trim()); setEditing(null) }
   const undo = (f: Finding) => { setUploadError(null); setStored((x) => { const n = { ...x }; delete n[f.id]; return n }) }
-  const onFile = (files: FileList | null) => {
+  const onFile = async (files: FileList | null) => {
     const f = files?.[0]
     if (!f) return
     const id = pending.current
@@ -61,7 +65,14 @@ function useResolutions() {
     if (why) { setUploadError({ id, msg: why }); return }
     setUploadError(null)
     const slot = id === 'B' ? 'mutation' : 'agreement'
-    setDocs((d) => [...d.filter((x) => x.slot !== slot), { slot, file: f.name, size: fileSize(f.size), status: 'uploaded' }])
+    let stored: StoredDoc = { slot, file: f.name, size: fileSize(f.size), status: 'uploaded' }
+    if (propertyId) {
+      try {
+        const d = await uploadDocument(propertyId, slot, f)
+        stored = { ...stored, file: d.filename, id: d.id }
+      } catch (e) { setUploadError({ id, msg: e instanceof Error ? e.message : 'Upload failed.' }); return }
+    }
+    setDocs((d) => [...d.filter((x) => x.slot !== slot), stored])
     decide(id, 'uploaded')
   }
   return { res, editing, setEditing, fixed, act, saveFix, undo, file, onFile, uploadError }
@@ -138,17 +149,81 @@ function Viewer({ className }: { className?: string }) {
   )
 }
 
+/** The real source viewer: the selected document's text as Document AI read it, with its English translation beneath. */
+function DocumentViewer({ docs, loading, error, className }: { docs: ServerDocDetail[]; loading: boolean; error?: string; className?: string }) {
+  const [sel, setSel] = useState(0)
+  const [both, setBoth] = useState(true)
+  const [zoom, setZoom] = useState(1)
+  const doc = docs[Math.min(sel, docs.length - 1)]
+  const chip = 'cursor-pointer rounded-control px-2.5 py-1 text-label'
+  const translated = !!doc?.translatedText
+  return (
+    <Card className={cn('flex min-w-0 flex-col overflow-hidden p-0', className)}>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-canvas px-[18px] py-3">
+        <div className="flex min-w-0 items-center gap-2 text-small font-semibold">
+          <FileText className="size-[18px] flex-none text-muted" aria-hidden />
+          {docs.length > 1 ? (
+            <select aria-label="Document" value={Math.min(sel, docs.length - 1)} onChange={(e) => setSel(Number(e.target.value))} className="min-h-9 max-w-[220px] cursor-pointer rounded-control border border-line-strong bg-field px-2 text-small text-text">
+              {docs.map((d, i) => <option key={d.id} value={i}>{docLabel(d)}</option>)}
+            </select>
+          ) : <span className="truncate">{doc ? docLabel(doc) : 'Document'}</span>}
+        </div>
+        <div className="flex items-center gap-1.5">
+          {translated && (
+            <>
+              <button type="button" aria-pressed={!both} onClick={() => setBoth(false)} className={cn(chip, 'font-medium', !both ? 'border border-primary bg-primary-tint font-semibold' : 'border border-line-strong bg-surface')}>Original</button>
+              <button type="button" aria-pressed={both} onClick={() => setBoth(true)} className={cn(chip, both ? 'border border-primary bg-primary-tint font-semibold' : 'border border-line-strong bg-surface font-medium')}>Original + English</button>
+            </>
+          )}
+          <Button size="sm" variant="secondary" aria-label="Zoom out" className="w-9 px-0" disabled={zoom === 0} onClick={() => setZoom((z) => z - 1)}><Minus className="size-4" aria-hidden /></Button>
+          <Button size="sm" variant="secondary" aria-label="Zoom in" className="w-9 px-0" disabled={zoom === ZOOM.length - 1} onClick={() => setZoom((z) => z + 1)}><Plus className="size-4" aria-hidden /></Button>
+        </div>
+      </div>
+      <div className="flex flex-1 justify-center overflow-auto bg-sunken p-6">
+        {error ? <p role="alert" className="text-small text-danger-ink">{error}</p>
+          : loading || !doc ? <p role="status" className="text-small text-muted">{loading ? 'Loading the documents…' : 'No documents have been read yet.'}</p>
+          : (
+            <article className={cn('flex h-max w-[560px] max-w-full origin-top flex-col gap-3 border border-line-strong bg-surface px-9 py-8 text-control leading-7 shadow-e2 max-md:px-5', ZOOM[zoom])}>
+              <div lang={doc.lang && doc.lang !== 'und' ? doc.lang : undefined} className="whitespace-pre-wrap">{doc.originalText}</div>
+              {translated && both && (
+                <div lang="en" className="border-t border-dashed border-line-strong pt-3 text-label leading-[20px] whitespace-pre-wrap text-muted">{doc.translatedText}</div>
+              )}
+            </article>
+          )}
+      </div>
+      <div className="flex justify-between border-t border-line px-[18px] py-2.5 text-label text-muted">
+        <span>{doc ? `${langLabel(doc.lang)} detected${translated ? ' · translated to English' : ''}` : ''}</span>
+        <span>{doc?.pages ? `${doc.pages} page${doc.pages === 1 ? '' : 's'}` : ''}</span>
+      </div>
+    </Card>
+  )
+}
+
 /** GP-10 · Extraction review. 1440: field list + source viewer. 834/390: field cards, with a Fields / Document switch. */
 export default function Review() {
   const [view, setView] = useDemoState(['review', 'document'] as const)
   const [filter, setFilter] = usePersistentState<Filter>('property.findings.filter', 'all')
   const [draft] = usePropertyDraft()
-  const { res, editing, setEditing, fixed, act, saveFix, undo, file, onFile, uploadError } = useResolutions()
+  const [docs] = usePropertyDocuments()
+  /** Real review: every document is on the server and was read. Otherwise the demo fixtures show. */
+  const real = !!draft.id && docs.length > 0 && docs.every((d) => d.id)
+  const { loading, details, error } = useDocDetails(real ? draft.id : undefined, docs)
+  const { res, editing, setEditing, fixed, act, saveFix, undo, file, onFile, uploadError } = useResolutions(real ? draft.id : undefined)
+  // A mutation entry that was uploaded to resolve finding B must keep showing B as resolved.
+  const findings: Finding[] = real
+    ? deriveFindings(details, { area: draft.area, areaUnit: draft.areaUnit }, docs.some((d) => d.slot === 'mutation') && !res.B)
+    : fixtureFindings
+  const settledFields: SettledField[] = real
+    ? deriveSettled(details, draft, findings.some((f) => f.id === 'A'))
+    : fixtureSettled.map((s) => ({ k: s.k, v: s.k.startsWith('Gat') ? `${draft.gat} · ${draft.village}` : s.v, confirmed: s.confirmed, source: 'NA order' }))
   const open = findings.filter((f) => !res[f.id])
   const resolvedCount = findings.length - open.length
-  const confirmedCount = 2 + resolvedCount
+  const confirmedCount = settledFields.filter((s) => s.confirmed).length + resolvedCount
+  const TOTAL = real ? findings.length + settledFields.length : DEMO_TOTAL
   const show = (resolved: boolean, kind: 'finding' | 'confirmed' | 'other') =>
     filter === 'all' || (filter === 'attention' ? kind === 'finding' && !resolved : kind === 'confirmed' || (kind === 'finding' && resolved))
+  const viewer = (className: string) => (real ? <DocumentViewer docs={details} loading={loading} error={error} className={className} /> : <Viewer className={className} />)
+  const nothingRead = real && !loading && !error && TOTAL === 0
 
   const tabs: { id: Filter; label: string }[] = [
     { id: 'all', label: `All ${TOTAL}` },
@@ -158,7 +233,7 @@ export default function Review() {
 
   return (
     <Screen id="GP-10" noTabs>
-      <input ref={file} type="file" accept=".pdf,.jpg,.jpeg,.png" className="sr-only" tabIndex={-1} aria-hidden onChange={(e) => { onFile(e.target.files); e.target.value = '' }} />
+      <input ref={file} type="file" accept=".pdf,.jpg,.jpeg,.png" className="sr-only" tabIndex={-1} aria-hidden onChange={(e) => { void onFile(e.target.files); e.target.value = '' }} />
 
       {/* 1440 */}
       <div className="flex min-h-0 flex-1 flex-col gap-4 px-12 py-6 max-xl:hidden">
@@ -182,6 +257,7 @@ export default function Review() {
               ))}
             </div>
             <ul>
+              {nothingRead && <li role="status" className="px-[18px] py-4 text-small text-muted">We could not read any fields from these documents. Check the text on the right, or upload a clearer copy.</li>}
               {findings.map((f) => {
                 const r = res[f.id]
                 if (!show(!!r, 'finding')) return null
@@ -207,13 +283,13 @@ export default function Review() {
               })}
               {settledFields.map((s, i) => show(false, s.confirmed ? 'confirmed' : 'other') && (
                 <li key={s.k} className={cn('flex items-center justify-between px-[18px] py-4', i < settledFields.length - 1 && 'border-b border-line')}>
-                  <div><div className="text-label text-muted">{s.k}</div><div className="text-control font-semibold">{s.k.startsWith('Gat') ? `${draft.gat} · ${draft.village}` : s.v}</div></div>
-                  {s.confirmed ? <Pill tone="success" icon={<CircleCheck className="size-3.5" />}>Confirmed</Pill> : <Pill tone="info" icon={<Info className="size-3.5" />}>Read from NA order</Pill>}
+                  <div><div className="text-label text-muted">{s.k}</div><div className="text-control font-semibold">{s.v}</div></div>
+                  {s.confirmed ? <Pill tone="success" icon={<CircleCheck className="size-3.5" />}>Confirmed</Pill> : <Pill tone="info" icon={<Info className="size-3.5" />}>Read from {s.source}</Pill>}
                 </li>
               ))}
             </ul>
           </Card>
-          <Viewer className="flex-1" />
+          {viewer('flex-1')}
         </div>
       </div>
 
@@ -226,7 +302,7 @@ export default function Review() {
           ))}
         </div>
         {view === 'document' ? (
-          <Viewer className="md:col-span-full" />
+          viewer('md:col-span-full')
         ) : (
           <>
             {findings.map((f) => {
@@ -246,11 +322,14 @@ export default function Review() {
                 </Card>
               )
             })}
-            <Card className="flex flex-col gap-3 p-3.5">
-              <b className="text-small">Survey number</b>
-              <div className="text-control leading-[22px] font-semibold">{draft.gat}</div>
-              <Pill tone="success" icon={<CircleCheck className="size-3.5" />} className="self-start">Matches</Pill>
-            </Card>
+            {settledFields.map((s) => (
+              <Card key={s.k} className="flex flex-col gap-3 p-3.5">
+                <b className="text-small">{s.k}</b>
+                <div className="text-control leading-[22px] font-semibold">{s.v}</div>
+                {s.confirmed ? <Pill tone="success" icon={<CircleCheck className="size-3.5" />} className="self-start">Confirmed</Pill> : <Pill tone="info" icon={<Info className="size-3.5" />} className="self-start">Read from {s.source}</Pill>}
+              </Card>
+            ))}
+            {nothingRead && <p role="status" className="text-small text-muted md:col-span-full">We could not read any fields from these documents. Check the text in Document view, or upload a clearer copy.</p>}
           </>
         )}
         <Button size="lg" block to={path('GP-11')} className="md:col-span-full md:max-w-[360px]">See verification report</Button>
