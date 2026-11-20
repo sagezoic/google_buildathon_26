@@ -73,6 +73,21 @@ bun run db:migrate
 bun run db:studio
 ```
 
+CI does not run migrations. Run `bun run db:migrate` against Cloud SQL (with `DATABASE_URL` set to it) before deploying a change that adds tables.
+
+---
+
+## Property documents (upload, OCR, translation)
+
+`/api/properties` backs the Add Property flow:
+
+1. `POST /api/properties` creates a draft; `PUT /api/properties/:id` updates it.
+2. `POST /api/properties/:id/documents` (multipart `file` + `slot`) stores the file in Cloud Storage under `properties/<id>/<slot>/`.
+3. `POST /api/properties/:id/documents/:docId/process` reads it with Document AI (Enterprise OCR), detects the language, translates to English with Cloud Translation unless it is already English, extracts key fields (gat, village, owner, area, mutation numbers) and stores everything.
+4. `GET /api/properties/:id/documents/:docId` returns the original and English text.
+
+Needs `DOCAI_PROCESSOR_ID` (an `OCR_PROCESSOR` in `DOCAI_LOCATION`, default `us`), the Document AI and Translation APIs enabled, and the roles `roles/documentai.apiUser` and `roles/cloudtranslate.user` for the runtime identity. Terraform creates the processor and grants these. Online OCR reads up to 30 pages per PDF.
+
 ---
 
 ## Scraper CLI

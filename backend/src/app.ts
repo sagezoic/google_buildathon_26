@@ -5,6 +5,8 @@ import { healthRoutes } from './routes/health';
 import { infoRoutes } from './routes/info';
 import { flatsRoutes } from './modules/flats/routes';
 import { storageRoutes } from './routes/storage';
+import { propertiesRoutes } from './modules/properties/routes';
+import { ApiError } from './lib/errors';
 
 export const app = new Elysia()
   // Global CORS middleware
@@ -24,12 +26,22 @@ export const app = new Elysia()
           { name: 'General', description: 'General service info and root endpoints' },
           { name: 'Flats', description: 'Flat Finder society search, localities, and details' },
           { name: 'Storage', description: 'Google Cloud Storage operations, signed URLs, and file management' },
+          { name: 'Properties', description: 'Add Property drafts, document upload, OCR, translation and field extraction' },
         ],
       },
     })
   )
   // Global error handling conforming to backend patterns
   .onError(({ code, error, set }) => {
+    if (error instanceof ApiError) {
+      set.status = error.status;
+      return {
+        error: error.error,
+        message: error.message,
+        code: error.status,
+      };
+    }
+
     if (code === 'NOT_FOUND') {
       set.status = 404;
       return {
@@ -49,10 +61,14 @@ export const app = new Elysia()
     }
 
     console.error('[realdha-backend] Server error:', error);
+    const causeMessage = (error as any)?.cause?.message || (error as any)?.cause;
+    const baseMessage = error instanceof Error ? error.message : 'An unexpected error occurred.';
+    const detailedMessage = causeMessage ? `${baseMessage}\nCause: ${causeMessage}` : baseMessage;
+
     set.status = 500;
     return {
       error: 'Internal Server Error',
-      message: error instanceof Error ? error.message : 'An unexpected error occurred.',
+      message: detailedMessage,
       code: 500,
     };
   })
@@ -60,6 +76,7 @@ export const app = new Elysia()
   .use(healthRoutes)
   .use(infoRoutes)
   .use(flatsRoutes)
-  .use(storageRoutes);
+  .use(storageRoutes)
+  .use(propertiesRoutes);
 
 export default app;
