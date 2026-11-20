@@ -146,15 +146,16 @@ jobs:
           terraform_version: ${{ env.TERRAFORM_VERSION }}
           terraform_wrapper: false
 
-      # Remote State (Optional but recommended for production):
-      # If GCS_TF_STATE_BUCKET secret is provided, configure GCS backend dynamically.
-      - name: Configure Terraform Remote Backend (if GCS bucket is specified)
+      # Remote State: Persistent GCS bucket prevents duplicate resource errors (Error 409)
+      - name: Configure Terraform Remote Backend
         working-directory: terraform
         run: |
-          STATE_BUCKET="${{ secrets.GCS_TF_STATE_BUCKET || vars.GCS_TF_STATE_BUCKET }}"
-          if [ -n "$STATE_BUCKET" ]; then
-            echo "Configuring GCS remote state backend bucket: $STATE_BUCKET"
-            cat <<EOF > backend.tf
+          STATE_BUCKET="${{ secrets.GCS_TF_STATE_BUCKET || vars.GCS_TF_STATE_BUCKET || format('{0}-tfstate', env.GCP_PROJECT_ID) }}"
+          echo "Ensuring GCS remote state bucket gs://$STATE_BUCKET exists..."
+          gcloud storage buckets create "gs://$STATE_BUCKET" --location="${{ env.GCP_REGION }}" 2>/dev/null || true
+
+          echo "Configuring GCS remote state in backend.tf"
+          cat <<EOF > backend.tf
           terraform {
             backend "gcs" {
               bucket = "$STATE_BUCKET"
@@ -162,14 +163,41 @@ jobs:
             }
           }
           EOF
-          else
-            echo "No GCS_TF_STATE_BUCKET provided. Using standard state."
-          fi
 
       - name: Terraform Init
         working-directory: terraform
         run: |
           terraform init -input=false
+
+      # Adopt existing GCP resources into Terraform state if they were already created
+      - name: Adopt Existing Infrastructure into State (Prevent 409 Conflict)
+        working-directory: terraform
+        run: |
+          echo "Adopting any existing Artifact Registry repositories into Terraform state..."
+          terraform import -input=false \
+            -var="project_id=${{ env.GCP_PROJECT_ID }}" \
+            -var="region=${{ env.GCP_REGION }}" \
+            'google_artifact_registry_repository.ui[0]' \
+            "projects/${{ env.GCP_PROJECT_ID }}/locations/${{ env.GCP_REGION }}/repositories/realdha-ui" || true
+
+          terraform import -input=false \
+            -var="project_id=${{ env.GCP_PROJECT_ID }}" \
+            -var="region=${{ env.GCP_REGION }}" \
+            'google_artifact_registry_repository.backend[0]' \
+            "projects/${{ env.GCP_PROJECT_ID }}/locations/${{ env.GCP_REGION }}/repositories/realdha-backend" || true
+
+          echo "Adopting any existing service accounts into Terraform state..."
+          terraform import -input=false \
+            -var="project_id=${{ env.GCP_PROJECT_ID }}" \
+            -var="region=${{ env.GCP_REGION }}" \
+            'google_service_account.ui' \
+            "projects/${{ env.GCP_PROJECT_ID }}/serviceAccounts/realdha-ui-sa@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com" || true
+
+          terraform import -input=false \
+            -var="project_id=${{ env.GCP_PROJECT_ID }}" \
+            -var="region=${{ env.GCP_REGION }}" \
+            'google_service_account.backend[0]' \
+            "projects/${{ env.GCP_PROJECT_ID }}/serviceAccounts/realdha-backend-sa@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com" || true
 
       # Bootstrap Phase: Ensure APIs and Artifact Registry repositories exist before image push
       - name: Provision Required APIs & Artifact Registries
