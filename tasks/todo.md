@@ -49,7 +49,7 @@ Rebuild `realdha-ui` to match the artifact (https://claude.ai/artifact/8PDuFJ7oR
 
 ### Phase 1: App foundation
 - [~] **Download every frame** (GP frames at all 3 sizes, C1/C2/C3, P-00, N-GP, Main are in `references/realdha-frames/project/`; F and X frames still to fetch. Frames render locally via `node scripts/frame-shot.mjs`) (`project/*.dc.html`, all three sizes) to `references/realdha-frames/`, which is read-only reference material. Spike: get frames rendering locally for side-by-side screenshots. If the frame runtime won't render outside the artifact, use screenshots of the published artifact instead.
-- [x] **Router** (react-router) with a route map of all 111 screen IDs (the P-00 index lists 111, not 123; the 123 in the brief counts differently). Routes are lowercase ids (`/gp-01`), auto-registered from `src/screens/<ID-Name>.tsx`. Role-aware layouts: owner, buyer, developer, channel partner, lawyer, admin, government.
+- [x] **Router & Domain Architecture** (react-router): Reorganized all 111 screens from flat `src/screens` into modular domain directories (`src/routes/{auth,onboarding,properties,verification,buyer,developer,partner,lawyer,market,admin,gov,shared}`) with canonical RESTful URLs (e.g., `/properties/new/plot`, `/onboarding/signup`, `/search`, `/market`).
 - [x] **App shell from C3** (`src/app/Shell.tsx`):
   - Sample-data label.
   - Top nav with role items and active underline.
@@ -57,7 +57,7 @@ Rebuild `realdha-ui` to match the artifact (https://claude.ai/artifact/8PDuFJ7oR
   - Avatar, notifications, EN/हिं/मरा switcher, theme toggle.
 - [ ] **i18n scaffold** (en/hi/mr). English copy for every screen; Hindi and Marathi only where the artifact translates (X-05) until scope is confirmed.
 - [ ] **Sample-data fixtures** taken from the frames: Prakash's Kusgaon plot 112/2, A-1804 RA-PUN-001-A-18-04, Sameer's STOP report, market tickers, and so on.
-- [x] **Dev flow index** at `/dev/flows`: (P-00) route with Prev, Next and Flow index controls.
+- [x] **Dev flow index** at `/dev/flows`: (P-00) route with Prev, Next and Flow index controls, mapped directly to canonical paths.
 - [x] **Verify tooling** (`scripts/shot.mjs`, `scripts/frame-shot.mjs`; uses the Playwright-cached chrome-headless-shell): a script that screenshots any route at 1440/834/390 in light and dark.
 
 ### Phase 2: Component library (C1–C3)

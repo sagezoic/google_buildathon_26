@@ -24,7 +24,7 @@ function NotBuilt({ id, title }: { id: string; title: string }) {
 const routes = SCREENS.map((s) => {
   const loader = REGISTRY[s.slug]
   const El = loader ? lazy(loader) : () => <NotBuilt id={s.id} title={s.title} />
-  return { path: path(s.id), element: <Suspense fallback={null}><El /></Suspense> }
+  return { path: s.path, element: <Suspense fallback={null}><El /></Suspense> }
 })
 
 const router = createBrowserRouter([
