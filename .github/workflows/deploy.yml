@@ -169,35 +169,28 @@ jobs:
         run: |
           terraform init -input=false
 
-      # Adopt existing GCP resources into Terraform state if they were already created
+      # Adopt existing GCP resources into Terraform state only if they already exist
       - name: Adopt Existing Infrastructure into State (Prevent 409 Conflict)
         working-directory: terraform
         run: |
-          echo "Adopting any existing Artifact Registry repositories into Terraform state..."
-          terraform import -input=false \
-            -var="project_id=${{ env.GCP_PROJECT_ID }}" \
-            -var="region=${{ env.GCP_REGION }}" \
-            'google_artifact_registry_repository.ui[0]' \
-            "projects/${{ env.GCP_PROJECT_ID }}/locations/${{ env.GCP_REGION }}/repositories/realdha-ui" || true
+          # Only import Artifact Registry repositories if they actually exist in GCP
+          if gcloud artifacts repositories describe realdha-ui --location="${{ env.GCP_REGION }}" --project="${{ env.GCP_PROJECT_ID }}" >/dev/null 2>&1; then
+            echo "Adopting existing realdha-ui repository into state..."
+            terraform import -input=false \
+              -var="project_id=${{ env.GCP_PROJECT_ID }}" \
+              -var="region=${{ env.GCP_REGION }}" \
+              'google_artifact_registry_repository.ui[0]' \
+              "projects/${{ env.GCP_PROJECT_ID }}/locations/${{ env.GCP_REGION }}/repositories/realdha-ui" || true
+          fi
 
-          terraform import -input=false \
-            -var="project_id=${{ env.GCP_PROJECT_ID }}" \
-            -var="region=${{ env.GCP_REGION }}" \
-            'google_artifact_registry_repository.backend[0]' \
-            "projects/${{ env.GCP_PROJECT_ID }}/locations/${{ env.GCP_REGION }}/repositories/realdha-backend" || true
-
-          echo "Adopting any existing service accounts into Terraform state..."
-          terraform import -input=false \
-            -var="project_id=${{ env.GCP_PROJECT_ID }}" \
-            -var="region=${{ env.GCP_REGION }}" \
-            'google_service_account.ui' \
-            "projects/${{ env.GCP_PROJECT_ID }}/serviceAccounts/realdha-ui-sa@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com" || true
-
-          terraform import -input=false \
-            -var="project_id=${{ env.GCP_PROJECT_ID }}" \
-            -var="region=${{ env.GCP_REGION }}" \
-            'google_service_account.backend[0]' \
-            "projects/${{ env.GCP_PROJECT_ID }}/serviceAccounts/realdha-backend-sa@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com" || true
+          if gcloud artifacts repositories describe realdha-backend --location="${{ env.GCP_REGION }}" --project="${{ env.GCP_PROJECT_ID }}" >/dev/null 2>&1; then
+            echo "Adopting existing realdha-backend repository into state..."
+            terraform import -input=false \
+              -var="project_id=${{ env.GCP_PROJECT_ID }}" \
+              -var="region=${{ env.GCP_REGION }}" \
+              'google_artifact_registry_repository.backend[0]' \
+              "projects/${{ env.GCP_PROJECT_ID }}/locations/${{ env.GCP_REGION }}/repositories/realdha-backend" || true
+          fi
 
       # Bootstrap Phase: Ensure APIs and Artifact Registry repositories exist before image push
       - name: Provision Required APIs & Artifact Registries
