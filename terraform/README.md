@@ -135,6 +135,7 @@ backend_service_url = "https://realdha-backend-xxxxxxxxxx-uc.a.run.app"
 | `deploy_database` | Provision Cloud SQL PostgreSQL | `bool` | `true` |
 | `db_instance_name` | Instance name (empty for auto-suffix) | `string` | `""` |
 | `db_version` | PostgreSQL database version | `string` | `"POSTGRES_16"` |
+| `db_edition` | Cloud SQL edition (`ENTERPRISE` or `ENTERPRISE_PLUS`) | `string` | `"ENTERPRISE"` |
 | `db_tier` | Cloud SQL machine tier | `string` | `"db-f1-micro"` |
 | `db_name` | Default PostgreSQL database name | `string` | `"realdha"` |
 | `db_user` | PostgreSQL database user | `string` | `"realdha"` |
