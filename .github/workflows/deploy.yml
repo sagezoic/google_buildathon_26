@@ -32,6 +32,7 @@ env:
   DEFAULT_REGION: 'us-central1'
   TERRAFORM_VERSION: '1.9.5'
   NODE_VERSION: '22'
+  BUN_VERSION: '1.4.5'
 
 jobs:
   # ============================================================================
@@ -60,12 +61,17 @@ jobs:
           npm ci
           npm run build
 
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
       - name: Test Backend (backend)
         working-directory: backend
         run: |
           echo "=== Testing backend ==="
-          npm install
-          npm test
+          bun install
+          bun test
 
   # ============================================================================
   # 2. Deploy Infrastructure & Applications via Terraform
