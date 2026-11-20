@@ -1,7 +1,6 @@
 import { Storage, type StorageOptions, type Bucket, type File } from '@google-cloud/storage';
-import { existsSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { env } from '../config/env';
+import { gcpClientOptions } from './gcp-auth';
 
 export interface UploadOptions {
   filename: string;
@@ -53,50 +52,7 @@ class StorageServiceImpl {
 
   public getClient(): Storage {
     if (!this.client) {
-      const options: StorageOptions = {
-        projectId: env.GCP_PROJECT_ID,
-      };
-
-      // 1. Check for inline JSON or Base64 credentials string
-      if (env.GCP_SERVICE_ACCOUNT_KEY) {
-        try {
-          const raw = env.GCP_SERVICE_ACCOUNT_KEY.trim();
-          const decoded = raw.startsWith('{')
-            ? raw
-            : Buffer.from(raw, 'base64').toString('utf8');
-          const parsed = JSON.parse(decoded);
-          if (parsed.private_key) {
-            parsed.private_key = parsed.private_key.replace(/\\n/g, '\n');
-          }
-          options.credentials = parsed;
-        } catch (error) {
-          console.warn('[StorageService] Error parsing GCP_SERVICE_ACCOUNT_KEY:', error);
-        }
-      }
-      // 2. Check for explicit client email and private key
-      else if (env.GCS_CLIENT_EMAIL && env.GCS_PRIVATE_KEY) {
-        options.credentials = {
-          client_email: env.GCS_CLIENT_EMAIL,
-          private_key: env.GCS_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        };
-      }
-      // 3. Check for service account JSON key file path
-      else if (env.GOOGLE_APPLICATION_CREDENTIALS) {
-        const candidatePath = resolve(process.cwd(), env.GOOGLE_APPLICATION_CREDENTIALS);
-        const resolvedPath = existsSync(candidatePath)
-          ? candidatePath
-          : existsSync(env.GOOGLE_APPLICATION_CREDENTIALS)
-            ? env.GOOGLE_APPLICATION_CREDENTIALS
-            : null;
-
-        if (resolvedPath) {
-          try {
-            options.credentials = JSON.parse(readFileSync(resolvedPath, 'utf8'));
-          } catch {
-            options.keyFilename = resolvedPath;
-          }
-        }
-      }
+      const options: StorageOptions = gcpClientOptions();
 
       this.client = new Storage(options);
     }
