@@ -13,6 +13,8 @@ export const plot = {
   mobileAddress: 'Near Kusgaon fata, Lonavala 410401',
   gps: { lat: 18.7546, lng: 73.4062 },
   mobileGps: { lat: 18.7557, lng: 73.4091 },
+  area: '3,200',
+  areaUnit: 'sqft',
 } as const
 
 export interface UploadDoc {

@@ -1,8 +1,12 @@
 import { usePersistentState } from '../app/persist'
+import type { AreaUnit } from './plot-shape'
 import { plot, seedDocuments, type PropertyType, type Resolution, type StoredDoc } from '../data/fixtures/property-intake'
 
 /** Shared add-property state (GP-06 to GP-11). Keys: property.draft, property.documents, property.findings, property.check. */
 export type Stage = 'details' | 'documents' | 'checked'
+
+export interface GeoPin { lng: number; lat: number }
+export const isGeoPin = (p: unknown): p is GeoPin => typeof (p as GeoPin)?.lng === 'number' && typeof (p as GeoPin)?.lat === 'number'
 
 export interface PropertyDraft {
   type: PropertyType
@@ -11,7 +15,11 @@ export interface PropertyDraft {
   taluka: string
   district: string
   address: string
-  pin: { x: number; y: number }
+  /** Map pin. Supports both { x, y } (legacy sketch) and GeoPin { lng, lat }. */
+  pin: { x: number; y: number } | GeoPin
+  /** Plot area as typed, with its unit. Drives the shape drawn on the map. */
+  area: string
+  areaUnit: AreaUnit
   moved: boolean
   /** True once the owner pressed Save draft or Continue: GP-06 then lists the property. */
   saved: boolean
@@ -20,7 +28,7 @@ export interface PropertyDraft {
 
 export const defaultDraft: PropertyDraft = {
   type: 'plot', gat: plot.gat, village: plot.village, taluka: plot.taluka, district: plot.district, address: plot.address,
-  pin: { x: 50, y: 45 }, moved: false, saved: false, stage: 'details',
+  pin: { lng: plot.gps.lng, lat: plot.gps.lat }, area: plot.area, areaUnit: plot.areaUnit, moved: false, saved: false, stage: 'details',
 }
 
 export const TYPE_LABEL: Record<PropertyType, string> = { apartment: 'Apartment', plot: 'Plot', commercial: 'Commercial' }

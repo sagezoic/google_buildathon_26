@@ -16,6 +16,10 @@ export interface SocietyCard {
   developer: string | null
   locality: string | null
   pincode: string | null
+  lat?: number | null
+  lng?: number | null
+  towers?: number | null
+  acres?: number | null
   kind: string | null
   status: string | null
   possession: string | null
@@ -88,6 +92,8 @@ export interface CitySummary {
   slug: string
   name: string
   societies_count: number
+  center?: [number, number] // [lng, lat]
+  zoom?: number
 }
 
 export interface SocietyQuery {

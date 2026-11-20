@@ -52,7 +52,7 @@ export const app = new Elysia()
     set.status = 500;
     return {
       error: 'Internal Server Error',
-      message: 'An unexpected error occurred.',
+      message: error instanceof Error ? error.message : 'An unexpected error occurred.',
       code: 500,
     };
   })

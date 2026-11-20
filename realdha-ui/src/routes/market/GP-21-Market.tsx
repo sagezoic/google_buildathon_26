@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, Star } from 'lucide-react'
+import { lazy, Suspense, useEffect, useState } from 'react'
+import { ChevronLeft, ChevronRight, List, Map as MapIcon, Star } from 'lucide-react'
 import { usePersistentState } from '../../app/persist'
 import { Screen } from '../../app/Shell'
 import { cn } from '../../lib/cn'
@@ -8,6 +8,9 @@ import {
   type CitySummary, type FlatMode, type FlatSort, type SocietyCard,
 } from '../../lib/flats-api'
 import { useSocieties } from '../../lib/useSocieties'
+
+const MarketMap = lazy(() => import('../../components/ui/market-map'))
+const MAP_LIMIT = 100
 
 const TABS = ['all', 'watchlist'] as const
 const TYPES = [['', 'Type: All'], ['apartment', 'Apartment'], ['villa', 'Villa'], ['builder floor', 'Builder floor'], ['plot', 'Plot']] as const
@@ -58,8 +61,8 @@ function Pager({ page, pages, total, onPage }: { page: number; pages: number; to
 const select = 'h-control cursor-pointer rounded-control border border-line-strong bg-field px-2.5 text-small text-text hover:border-line-hover max-xl:h-11 max-xl:px-3 max-xl:text-primary-text'
 const PLACEHOLDER = 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80'
 
-interface Filters { tab: (typeof TABS)[number]; q: string; city: string; type: string; mode: FlatMode; sort: FlatSort }
-const INITIAL: Filters = { tab: 'all', q: '', city: 'pune', type: '', mode: 'buy', sort: 'best' }
+interface Filters { view: 'list' | 'map'; tab: (typeof TABS)[number]; q: string; city: string; type: string; mode: FlatMode; sort: FlatSort }
+const INITIAL: Filters = { view: 'list', tab: 'all', q: '', city: 'pune', type: '', mode: 'buy', sort: 'best' }
 
 function Pill({ children, tone }: { children: React.ReactNode; tone: 'brand' | 'ok' | 'dark' }) {
   return (
@@ -151,10 +154,11 @@ function SocietyTile({ s, mode, watched, onToggle }: { s: SocietyCard; mode: Fla
 
 /** GP-21 · Market. Societies from the Flat Finder API (/api/flats). View only. */
 export default function Market() {
-  const [f, setF] = usePersistentState<Filters>('market.filters.v2', INITIAL)
+  const [f, setF] = usePersistentState<Filters>('market.filters.v3', INITIAL)
   const [watch, setWatch] = usePersistentState<string[]>('market.watchlist.v2', [])
   const [cities, setCities] = useState<CitySummary[]>([])
-  const { tab, q, city, type, mode, sort } = f
+  const { view, tab, q, city, type, mode, sort } = f
+  const isMap = view === 'map'
   const [page, setPage] = useState(1)
   const set = <K extends keyof Filters>(k: K, v: Filters[K]) => { setPage(1); setF((x) => ({ ...x, [k]: v })) }
   const toggle = (id: string) => setWatch((w) => (w.includes(id) ? w.filter((x) => x !== id) : [...w, id]))
@@ -169,13 +173,15 @@ export default function Market() {
   const isWatch = tab === 'watchlist'
   const { data, loading, error, retry } = useSocieties({
     city, q: q.trim() || undefined, mode, kind: type || undefined, sort,
-    limit: isWatch ? 100 : PAGE_SIZE, offset: isWatch ? 0 : (page - 1) * PAGE_SIZE,
+    limit: isWatch || isMap ? MAP_LIMIT : PAGE_SIZE, offset: isWatch || isMap ? 0 : (page - 1) * PAGE_SIZE,
   })
   const fetched = data?.societies ?? []
   const watched = isWatch ? fetched.filter((s) => watch.includes(s.id)) : fetched
   const total = isWatch ? watched.length : data?.total ?? 0
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const current = Math.min(page, pages)
+  const mapRows = isWatch ? watched : fetched
+  const cityConf = cities.find((c) => c.slug === city)
   const rows = isWatch ? watched.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE) : fetched
   const goToPage = (n: number) => {
     setPage(n)
@@ -201,6 +207,10 @@ export default function Market() {
               <option value="buy">Buy</option>
               <option value="rent">Rent</option>
             </select>
+            <button type="button" aria-pressed={isMap} onClick={() => set('view', isMap ? 'list' : 'map')} className={cn(select, 'inline-flex items-center gap-1.5', isMap && 'border-primary bg-primary text-on-primary max-xl:text-on-primary')}>
+              {isMap ? <List aria-hidden className="size-4" /> : <MapIcon aria-hidden className="size-4" />}
+              {isMap ? 'List view' : 'Map view'}
+            </button>
             <select aria-label="Sort" value={sort} onChange={(e) => set('sort', e.target.value as FlatSort)} className={select}>
               {SORTS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
             </select>
@@ -224,6 +234,13 @@ export default function Market() {
           <ul aria-busy="true" className={GRID}>
             {Array.from({ length: 8 }, (_, i) => <li key={i} className="aspect-[3/4] animate-pulse rounded-card border border-line bg-surface" />)}
           </ul>
+        ) : isMap ? (
+          <>
+            <Suspense fallback={<div aria-busy="true" className="h-[70vh] min-h-96 animate-pulse rounded-card border border-line bg-surface" />}>
+              <MarketMap societies={mapRows} mode={mode} center={cityConf?.center} zoom={cityConf?.zoom} onUnavailable={() => set('view', 'list')} />
+            </Suspense>
+            {!isWatch && (data?.total ?? 0) > MAP_LIMIT && <p role="status" className="text-small text-muted">Showing the first {MAP_LIMIT} of {data?.total}. Refine the filters to narrow the map.</p>}
+          </>
         ) : rows.length === 0 ? (
           <p role="status" className="text-small text-muted">
             {tab === 'watchlist' && !q && !type ? 'Your watchlist is empty. Use the star on a card to add one.' : 'Nothing matches these filters.'}
@@ -234,7 +251,7 @@ export default function Market() {
           </ul>
         )}
 
-        <Pager page={current} pages={pages} total={total} onPage={goToPage} />
+        {!isMap && <Pager page={current} pages={pages} total={total} onPage={goToPage} />}
 
         <p className="text-label text-muted">
           View only. Prices come from scraped Magicbricks listings and are not live. Yield is an estimate from median rent and price.
