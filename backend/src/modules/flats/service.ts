@@ -6,6 +6,7 @@ import {
   gte,
   lte,
   inArray,
+  isNotNull,
   sql,
   desc,
   asc,
@@ -155,7 +156,8 @@ export class FlatsService {
     const offset = Math.max(params.offset || 0, 0);
 
     const mode = params.mode === 'rent' ? 'rent' : 'buy';
-    const conditions = [eq(societies.city, city)];
+    // Only societies whose project page was scraped (they have coordinates); list-stage stubs have no detail.
+    const conditions = [eq(societies.city, city), isNotNull(societies.lat)];
 
     if (params.q) {
       const search = `%${params.q.trim()}%`;

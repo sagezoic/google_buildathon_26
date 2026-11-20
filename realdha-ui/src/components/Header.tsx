@@ -1,60 +1,21 @@
-import { useState, useRef, useEffect } from 'react'
-import {
-  Search,
-  Check,
-  Upload,
-} from 'lucide-react'
-import type { Scenario } from '../data/scenarios'
+import { Search, Upload } from 'lucide-react'
+import type { AppView } from './App'
 
 interface HeaderProps {
-  currentView: 'landing' | 'search' | 'passport' | 'upload'
-  scenario: Scenario
-  scenarios: Scenario[]
-  onNavigate: (view: 'landing' | 'search' | 'passport' | 'upload') => void
-  onSwitch: (s: Scenario) => void
+  currentView: AppView
+  searchQuery: string
+  onSearchChange: (q: string) => void
+  onNavigate: (view: AppView) => void
   onOpenUpload: () => void
-  onOpenShare: () => void
-  onOpenTour: () => void
 }
 
 export function Header({
   currentView,
-  scenario,
-  scenarios,
+  searchQuery,
+  onSearchChange,
   onNavigate,
-  onSwitch,
   onOpenUpload,
 }: HeaderProps) {
-  const [searchOpen, setSearchOpen] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
-  const searchRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
-        setSearchOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
-
-  const filteredScenarios = scenarios.filter(
-    (s) =>
-      s.realdhaId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.project.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (s.streetAddress && s.streetAddress.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      s.unit.toLowerCase().includes(searchTerm.toLowerCase())
-  )
-
-  const handleSelectScenarioFromSearch = (s: Scenario) => {
-    onSwitch(s)
-    onNavigate('passport')
-    setSearchOpen(false)
-    setSearchTerm('')
-  }
-
   return (
     <header className="lofty-header">
       <div className="lofty-header-inner">
@@ -81,7 +42,7 @@ export function Header({
           <nav className="lofty-nav-links">
             <button
               type="button"
-              className={`lofty-nav-link ${currentView === 'search' || currentView === 'passport' ? 'active' : ''}`}
+              className={`lofty-nav-link ${currentView === 'search' || currentView === 'passport' || currentView === 'society' ? 'active' : ''}`}
               onClick={() => onNavigate('search')}
             >
               Marketplace
@@ -103,58 +64,22 @@ export function Header({
           </nav>
         </div>
 
-        {/* CENTER: Rounded Search Bar (Screenshot 2 Reference) */}
-        <div className="lofty-header-center" ref={searchRef}>
-          <div
-            className="lofty-header-search-wrap"
-            onClick={() => setSearchOpen(true)}
-          >
+        {/* CENTER: search drives the marketplace query */}
+        <div className="lofty-header-center">
+          <div className="lofty-header-search-wrap">
             <Search size={16} className="lofty-search-icon" />
             <input
               type="text"
               className="lofty-header-search-input"
-              value={searchOpen ? searchTerm : ''}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search address or city"
-              aria-label="Search address or city"
-              onFocus={() => setSearchOpen(true)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  onNavigate('search')
-                  setSearchOpen(false)
-                }
+              value={searchQuery}
+              onChange={(e) => {
+                onSearchChange(e.target.value)
+                if (currentView !== 'search') onNavigate('search')
               }}
+              placeholder="Search society, developer or locality"
+              aria-label="Search society, developer or locality"
             />
           </div>
-
-          {searchOpen && (
-            <div className="lofty-search-dropdown">
-              <div className="search-dropdown-heading">
-                <span>Verified Properties in Maharashtra ({scenarios.length})</span>
-              </div>
-              <div className="search-dropdown-results">
-                {filteredScenarios.map((s) => (
-                  <div
-                    key={s.id}
-                    className={`dropdown-row ${s.id === scenario.id ? 'active' : ''}`}
-                    onClick={() => handleSelectScenarioFromSearch(s)}
-                  >
-                    <div className="row-info">
-                      <strong className="row-address">{s.streetAddress || s.unit}</strong>
-                      <span className="row-sub">{s.cityStateZip || `${s.project}, ${s.location}`}</span>
-                      <small className="row-id n">{s.realdhaId}</small>
-                    </div>
-                    <div className="row-meta">
-                      <span className={`status-pill ${s.stamp.type}`}>
-                        {s.stamp.title.split('·')[0]}
-                      </span>
-                      {s.id === scenario.id && <Check size={14} className="text-indigo" />}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
 
         {/* RIGHT: Log In & Sign Up (Screenshot 2 Reference) */}

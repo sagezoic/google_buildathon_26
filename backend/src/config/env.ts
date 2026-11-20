@@ -21,7 +21,7 @@ function parseEnv(): EnvConfig {
   const gcpProjectId = process.env.GCP_PROJECT_ID || process.env.GOOGLE_CLOUD_PROJECT || 'trusty-bearing-515217-f0';
   const gcsBucketName = process.env.GCS_BUCKET_NAME || 'realdha-storage-trusty-bearing-515217-f0';
   const googleAppCredentials = process.env.GOOGLE_APPLICATION_CREDENTIALS;
-  const gcpServiceAccountKey = process.env.GCP_SERVICE_ACCOUNT_KEY;
+  const gcpServiceAccountKey = process.env.GCP_SERVICE_ACCOUNT_KEY || process.env.GCP_SERVICE_ACCOUNT_KEY_BASE64;
   const gcsClientEmail = process.env.GCS_CLIENT_EMAIL;
   const gcsPrivateKey = process.env.GCS_PRIVATE_KEY ? process.env.GCS_PRIVATE_KEY.replace(/\\n/g, '\n') : undefined;
 

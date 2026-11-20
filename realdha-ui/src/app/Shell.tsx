@@ -126,7 +126,8 @@ export function Screen({ id, layout = 'app', role, children, className, noTabs, 
   const def = screenById(id)
   const r = role ?? def?.role ?? 'owner'
   return (
-    <div className="flex min-h-dvh flex-col bg-canvas text-text">
+    // h-dvh + overflow-y-auto: legacy-aliases.css locks html/body/#root to overflow:hidden, so each screen scrolls itself.
+    <div className="flex h-dvh flex-col overflow-y-auto bg-canvas text-text">
       {layout === 'auth' ? (
         <>
           <header className="flex items-center justify-between px-4 py-4 md:px-12 md:py-5">

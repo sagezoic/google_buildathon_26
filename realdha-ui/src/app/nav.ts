@@ -1,6 +1,24 @@
 import { SCREENS, type Role, type ScreenDef } from './screens'
 
-export const path = (id: string) => `/${id.toLowerCase()}`
+export function path(id: string, params?: Record<string, string>): string {
+  const s = screenById(id)
+  if (!s) return `/${id.toLowerCase()}`
+  let p = s.path
+  if (params) {
+    for (const [k, v] of Object.entries(params)) {
+      p = p.replace(`:${k}`, v)
+    }
+  }
+  return p
+    .replace(':propertyId', 'RA-PUN-001-A-18-04')
+    .replace(':recordId', 'RA-LON-004-P-112-2')
+    .replace(':docId', '7_12_extract')
+    .replace(':areaId', 'baner')
+    .replace(':unitId', 'A-1804')
+    .replace(':shareToken', 'sample-token')
+    .replace(':code', '404')
+    .replace(':id', 'RA-LON-004-P-112-2')
+}
 
 export function screenIndex(id: string) {
   return SCREENS.findIndex((s) => s.id === id)

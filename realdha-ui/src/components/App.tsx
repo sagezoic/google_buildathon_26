@@ -9,21 +9,29 @@ import { ShareModal } from './ShareModal'
 import { TourModal } from './TourModal'
 import { LandingPage } from './LandingPage'
 import { PropertySearch } from './PropertySearch'
+import { SocietyDetail } from './SocietyDetail'
 import { UploadVerifyFlow } from './UploadVerifyFlow'
 import type { Scenario, DocumentRecord } from '../data/scenarios'
 import '../App.css'
 
-export type AppView = 'landing' | 'search' | 'passport' | 'upload'
+export type AppView = 'landing' | 'search' | 'passport' | 'upload' | 'society'
 
 export function App() {
+  const [selectedSocietyId, setSelectedSocietyId] = useState<string | null>(() => {
+    if (typeof window === 'undefined') return null
+    return new URLSearchParams(window.location.search).get('society')
+  })
+  const [searchQuery, setSearchQuery] = useState('')
+
   const [currentView, setCurrentView] = useState<AppView>(() => {
     if (typeof window === 'undefined') return 'search'
     const params = new URLSearchParams(window.location.search)
     const viewParam = params.get('view')
+    if (viewParam === 'society' && params.get('society')) return 'society'
     if (viewParam === 'passport' || viewParam === 'search' || viewParam === 'upload' || viewParam === 'landing') {
       return viewParam as AppView
     }
-    return 'search' // Default to Marketplace view matching Screenshot 2
+    return 'search' // Default to the Marketplace view
   })
 
   const [activeScenario, setActiveScenario] = useState<Scenario>(() => {
@@ -53,6 +61,18 @@ export function App() {
     if (typeof window !== 'undefined') {
       const url = new URL(window.location.href)
       url.searchParams.set('view', view)
+      if (view !== 'society') url.searchParams.delete('society')
+      window.history.replaceState({}, '', url.toString())
+    }
+  }
+
+  const handleOpenSociety = (id: string) => {
+    setSelectedSocietyId(id)
+    setCurrentView('society')
+    if (typeof window !== 'undefined') {
+      const url = new URL(window.location.href)
+      url.searchParams.set('view', 'society')
+      url.searchParams.set('society', id)
       window.history.replaceState({}, '', url.toString())
     }
   }
@@ -71,25 +91,27 @@ export function App() {
       {/* Universal Lofty Header */}
       <Header
         currentView={currentView}
-        scenario={activeScenario}
-        scenarios={scenarios}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
         onNavigate={handleNavigate}
-        onSwitch={handleSwitchScenario}
         onOpenUpload={() => setIsUploadOpen(true)}
-        onOpenShare={() => setIsShareOpen(true)}
-        onOpenTour={() => setIsTourOpen(true)}
       />
 
-      {/* VIEW 1: Property Marketplace & Search (Screenshot 2 Reference) */}
+      {/* VIEW 1: Marketplace, backed by the Flat Finder API */}
       {currentView === 'search' && (
         <main className="view-container view-search-container">
           <PropertySearch
-            scenarios={scenarios}
-            activeScenario={activeScenario}
-            onSelectScenario={handleSwitchScenario}
-            onNavigate={handleNavigate}
+            searchQuery={searchQuery}
+            onOpenSociety={handleOpenSociety}
             onOpenAssistant={() => setIsAssistantOpen(true)}
           />
+        </main>
+      )}
+
+      {/* VIEW 1b: Society detail from the API */}
+      {currentView === 'society' && selectedSocietyId && (
+        <main className="view-container view-society-container">
+          <SocietyDetail societyId={selectedSocietyId} onBack={() => handleNavigate('search')} />
         </main>
       )}
 
