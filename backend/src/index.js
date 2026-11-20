@@ -1,57 +1,7 @@
-import express from 'express';
-import cors from 'cors';
+import app from './app.js';
 
-const app = express();
 const port = parseInt(process.env.PORT, 10) || 8080;
 const environment = process.env.NODE_ENV || 'development';
-
-// Middleware
-app.use(cors());
-app.use(express.json());
-
-// Cloud Run Liveness / Readiness health check
-app.get('/health', (req, res) => {
-  res.status(200).json({
-    status: 'healthy',
-    service: 'realdha-backend',
-    environment,
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString()
-  });
-});
-
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    status: 'healthy',
-    service: 'realdha-backend',
-    environment,
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString()
-  });
-});
-
-// Sample API info endpoint
-app.get('/api/info', (req, res) => {
-  res.status(200).json({
-    service: 'realdha-backend',
-    version: '1.0.0',
-    description: 'Realdha Backend API running on Google Cloud Run'
-  });
-});
-
-// Root welcome endpoint
-app.get('/', (req, res) => {
-  res.status(200).json({
-    message: 'Welcome to Realdha Backend API',
-    status: 'active',
-    environment,
-    endpoints: {
-      health: '/health',
-      api_health: '/api/health',
-      info: '/api/info'
-    }
-  });
-});
 
 // Start HTTP server
 const server = app.listen(port, '0.0.0.0', () => {
@@ -76,4 +26,4 @@ const gracefulShutdown = (signal) => {
 process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
 process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
-export default app;
+export default server;
