@@ -1,6 +1,62 @@
 {
   "version": 2,
   "skills": {
+    "agent-platform-inference": {
+      "source": "google/skills",
+      "commit": "219a8ff487ad03c6f0c5edd6c5622b68ccbaf553",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/agent-platform-inference/SKILL.md",
+      "computedHash": "8b9c051876e23498da51af41a46f48ac2c8acce4dd675c5f02873ed63e87477c"
+    },
+    "agent-platform-prompt-management": {
+      "source": "google/skills",
+      "commit": "219a8ff487ad03c6f0c5edd6c5622b68ccbaf553",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/agent-platform-prompt-management/SKILL.md",
+      "computedHash": "0038f8a1d9461481f3582a9910affffd9b6fca0516cdcb590325e35ad86e3ed4"
+    },
+    "agent-platform-rag-engine-management": {
+      "source": "google/skills",
+      "commit": "219a8ff487ad03c6f0c5edd6c5622b68ccbaf553",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/agent-platform-rag-engine-management/SKILL.md",
+      "computedHash": "020f7f18b2f5167ee09205c314e9a834e70672483269e3997b6f8bc7b1f618bb"
+    },
+    "alloydb-basics": {
+      "source": "google/skills",
+      "commit": "219a8ff487ad03c6f0c5edd6c5622b68ccbaf553",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/alloydb-basics/SKILL.md",
+      "computedHash": "4cc0669d0f3c430e0d948197456fc97efd77f72e7ea0bff6ccf280c393b2ece4"
+    },
+    "api-gateway-backend-security-and-rate-limiting": {
+      "source": "google/skills",
+      "commit": "219a8ff487ad03c6f0c5edd6c5622b68ccbaf553",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/api-gateway-backend-security-and-rate-limiting/SKILL.md",
+      "computedHash": "0a20221f0273d01b958de4f2bb3880700467c9d5869d7ebc0529dc10d318653a"
+    },
+    "api-gateway-openapi-spec-authoring": {
+      "source": "google/skills",
+      "commit": "219a8ff487ad03c6f0c5edd6c5622b68ccbaf553",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/api-gateway-openapi-spec-authoring/SKILL.md",
+      "computedHash": "34f199d9c49889b8bf5f1de4d3f02857d5c5bd897913fa5e15597aab3dc0c3c3"
+    },
+    "bigquery-ai-ml": {
+      "source": "google/skills",
+      "commit": "219a8ff487ad03c6f0c5edd6c5622b68ccbaf553",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/bigquery-ai-ml/SKILL.md",
+      "computedHash": "3a8e56e97e8bdd151741026ce997fceafa2567f499a05c045c75e07606b478ce"
+    },
+    "bigquery-basics": {
+      "source": "google/skills",
+      "commit": "219a8ff487ad03c6f0c5edd6c5622b68ccbaf553",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/bigquery-basics/SKILL.md",
+      "computedHash": "985c8b675a5f8187a585da4af49bdfaaa3a29cb32ad35de3c53b013daaff3e25"
+    },
     "clerk": {
       "source": "clerk/skills",
       "commit": "78092a74297dac3fb2c64efab3dbe86b581eaea8",
@@ -42,6 +98,55 @@
       "sourceType": "github",
       "skillPath": "skills/clerk-webhooks/SKILL.md",
       "computedHash": "b50cef6155462607f633da76c99f761a80eeae52819c6ba0b4ce0293561f165f"
+    },
+    "cloud-databases-onboarding": {
+      "source": "google/skills",
+      "commit": "219a8ff487ad03c6f0c5edd6c5622b68ccbaf553",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/cloud-databases-onboarding/SKILL.md",
+      "computedHash": "59c7b8d9b93b5cf810b88c8fca8c3b8f263d3f527ae0e3ff1c2c76ba2d6a4413"
+    },
+    "gcloud": {
+      "source": "google/skills",
+      "commit": "219a8ff487ad03c6f0c5edd6c5622b68ccbaf553",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gcloud/SKILL.md",
+      "computedHash": "ad29fb77d1e07f1401bfab1c023d016915d09b2b1fd37c2a9d7c92c6d732e55c"
+    },
+    "gemini-agents-api": {
+      "source": "google/skills",
+      "commit": "219a8ff487ad03c6f0c5edd6c5622b68ccbaf553",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gemini-agents-api/SKILL.md",
+      "computedHash": "e21f71db5075aa32cf53e06dbb846d2cbd3a398d49b6ad60714b8dfbd1261ade"
+    },
+    "gemini-api": {
+      "source": "google/skills",
+      "commit": "219a8ff487ad03c6f0c5edd6c5622b68ccbaf553",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gemini-api/SKILL.md",
+      "computedHash": "56789692d566b9fc75b6e8dd09ece8e53f03a74299cd25d6d264ecd5830b0ef3"
+    },
+    "gemini-interactions-api": {
+      "source": "google/skills",
+      "commit": "219a8ff487ad03c6f0c5edd6c5622b68ccbaf553",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gemini-interactions-api/SKILL.md",
+      "computedHash": "e44900529abf52b0e3403ad6cf91a7d74aefb660091a37d0a4c48e628a32bb3b"
+    },
+    "gemini-live-api": {
+      "source": "google/skills",
+      "commit": "219a8ff487ad03c6f0c5edd6c5622b68ccbaf553",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/gemini-live-api/SKILL.md",
+      "computedHash": "3026dcd7545b0fa0544a0f88dc9b2f77c716a9324ae323ec0769a364b1078bb7"
+    },
+    "google-cicd-terraform": {
+      "source": "google/skills",
+      "commit": "219a8ff487ad03c6f0c5edd6c5622b68ccbaf553",
+      "sourceType": "github",
+      "skillPath": "skills/cloud/google-cicd-terraform/SKILL.md",
+      "computedHash": "78bdae8d09de426dbd53f4a301146a18edd79a15cc62bc81aafb1e3ab2dc3a2b"
     },
     "modern-web-guidance": {
       "source": "GoogleChrome/modern-web-guidance",

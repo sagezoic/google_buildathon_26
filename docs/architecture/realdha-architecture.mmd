@@ -1,0 +1,102 @@
+---
+config:
+  architecture:
+    iconSize: 96
+    nodeSeparation: 140
+    idealEdgeLengthMultiplier: 2.3
+---
+architecture-beta
+    group gcp(cloud)[Google Cloud]
+    group users_g(internet)[Users]
+    group chain_g(cloud)[Blockchain]
+    group pay_g(internet)[Payments]
+    group clerk_g(internet)[Authentication]
+    group dep_g(cloud)[Deployment]
+    group edge_g(cloud)[Edge and Security] in gcp
+    group run_g(cloud)[Cloud Run] in gcp
+    group ai_g(cloud)[Google AI] in gcp
+    group data_g(database)[Data and Messaging] in gcp
+    group wrk_g(cloud)[Cloud Run Worker] in gcp
+
+    service users(rd:users)[Buyers and Lenders] in users_g
+    service eth(rd:eth)[Ethereum] in chain_g
+    service pay(rd:pay)[Razorpay Gateway] in pay_g
+    service clerk(rd:clerk)[Clerk] in clerk_g
+    junction jt
+
+    service iam(rd:iam)[Cloud IAM] in edge_g
+    service cdn(rd:cdn)[Cloud CDN] in edge_g
+    service armor(rd:armor)[Cloud Armor] in edge_g
+    service worker(rd:signer)[Chain Worker] in wrk_g
+
+    service ui(rd:ui)[React Web App] in run_g
+    service api(rd:api)[Bun Elysia API] in run_g
+    service gh(rd:gh)[GitHub Actions] in dep_g
+    service tf(rd:tf)[Terraform] in dep_g
+
+    service docai(rd:docai)[Document AI] in ai_g
+    service trans(rd:trans)[Cloud Translation] in ai_g
+    service gemini(rd:gemini)[Gemini] in ai_g
+
+    service gcs(rd:gcs)[Cloud Storage] in data_g
+    service fs(rd:fs)[Firestore] in data_g
+    service bq(rd:bq)[BigQuery] in data_g
+    service sql(rd:sql)[Cloud SQL] in data_g
+    service valkey(rd:valkey)[Memorystore Valkey] in data_g
+    service pubsub(rd:pubsub)[Google Pub Sub] in data_g
+    junction j1 in gcp
+    junction jg in gcp
+    junction jf in gcp
+    junction jh in gcp
+    junction jp in gcp
+    junction jr in gcp
+    junction j2 in gcp
+    junction j3 in gcp
+
+    users:R --> L:armor
+    pay:R <--> L:jt
+    clerk:L <--> R:jt
+    jt:B <--> T:ui
+    armor:T --> B:cdn
+    cdn:R --> L:ui
+    ui:B --> T:api
+    gh:R --> L:tf
+    tf:B --> T:jt{group}
+    pubsub:R --> L:worker
+    worker:R --> L:eth
+
+    api:R -- L:j2
+    j2:T -- B:j1
+    j2:B -- T:j3
+    j1:T -- B:jg
+    jg:T --> B:gemini
+    jp:L -- R:jg
+    jp:R -- L:jr
+    jr:T --> B:trans
+    j1:R --> L:pubsub
+    j2:R -- L:jf
+    jf:R --> L:gcs
+    jf:B -- T:jh
+    jh:R --> L:fs
+    j3:R --> L:valkey
+    j3:B --> T:sql
+    gcs:T --> B:pubsub
+    pubsub:T -- B:jp
+    jp:T --> B:docai
+    sql:R --> L:bq
+
+    align row pay jt clerk gemini docai trans
+    align row users armor api j2 jf gcs
+    align row jh fs
+    align column jf jh
+    align row j3 valkey
+    align row cdn ui j1 pubsub worker eth
+    align row iam sql bq
+    align column pay users
+    align column cdn armor iam
+    align column tf jt ui api
+    align row gh tf
+    align column gemini jg j1 j2 j3 sql
+    align row jg jp jr
+    align column trans jr
+    align column docai jp pubsub gcs fs valkey bq

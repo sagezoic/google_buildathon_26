@@ -1,0 +1,220 @@
+import {
+  pgTable,
+  text,
+  integer,
+  doublePrecision,
+  timestamp,
+  jsonb,
+  serial,
+  index,
+} from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+
+export const societies = pgTable(
+  'societies',
+  {
+    id: text('id').primaryKey(), // mb_<psmid>
+    city: text('city').notNull(),
+    name: text('name').notNull(),
+    developer: text('developer'),
+    locality: text('locality'),
+    pincode: text('pincode'),
+    lat: doublePrecision('lat'),
+    lng: doublePrecision('lng'),
+    kind: text('kind'), // apartment | builder floor | villa | plot | commercial | other
+    status: text('status'),
+    possession: text('possession'),
+    rera_id: text('rera_id'),
+    units: integer('units'),
+    towers: integer('towers'),
+    acres: doublePrecision('acres'),
+    price_min: doublePrecision('price_min'),
+    price_max: doublePrecision('price_max'),
+    psf_now: doublePrecision('psf_now'),
+    amenities: text('amenities').array(),
+    config_text: text('config_text'),
+    url: text('url'),
+    brochure_url: text('brochure_url'),
+    images: jsonb('images').$type<Array<{ thumb: string; full: string }>>(),
+    rating: doublePrecision('rating'),
+    rating_count: integer('rating_count'),
+    review_count: integer('review_count'),
+    ratings: jsonb('ratings').$type<Record<string, number>>(),
+    locality_rating: doublePrecision('locality_rating'),
+    trend: jsonb('trend').$type<Array<[string, number]>>(),
+    description: text('description'),
+    nearby: jsonb('nearby').$type<Record<string, { m: number; name?: string; n?: number }>>(),
+    score: doublePrecision('score'),
+    score_parts: jsonb('score_parts').$type<Record<string, number>>(),
+    scraped_at: timestamp('scraped_at', { withTimezone: true }),
+    updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow(),
+  },
+  (table) => [
+    index('societies_city_locality_idx').on(table.city, table.locality),
+    index('societies_city_kind_idx').on(table.city, table.kind),
+    index('societies_city_price_min_idx').on(table.city, table.price_min),
+  ]
+);
+
+export const unitTypes = pgTable(
+  'unit_types',
+  {
+    id: serial('id').primaryKey(),
+    society_id: text('society_id')
+      .notNull()
+      .references(() => societies.id, { onDelete: 'cascade' }),
+    bhk: integer('bhk'),
+    label: text('label'),
+    size_sqft: doublePrecision('size_sqft'),
+    price_min: doublePrecision('price_min'),
+    price_max: doublePrecision('price_max'),
+    plan_images: jsonb('plan_images').$type<string[]>(),
+  },
+  (table) => [
+    index('unit_types_society_id_idx').on(table.society_id),
+  ]
+);
+
+export const listings = pgTable(
+  'listings',
+  {
+    id: serial('id').primaryKey(),
+    society_id: text('society_id')
+      .notNull()
+      .references(() => societies.id, { onDelete: 'cascade' }),
+    mode: text('mode').notNull(), // 'sale' | 'rent'
+    bhk: integer('bhk'),
+    price: doublePrecision('price'),
+    sqft: doublePrecision('sqft'),
+    psf: doublePrecision('psf'),
+    furnished: text('furnished'),
+    floor: text('floor'),
+    posted_at: text('posted_at'),
+  },
+  (table) => [
+    index('listings_society_id_idx').on(table.society_id),
+    index('listings_society_mode_idx').on(table.society_id, table.mode),
+  ]
+);
+
+export const bhkPrices = pgTable(
+  'bhk_prices',
+  {
+    id: serial('id').primaryKey(),
+    society_id: text('society_id')
+      .notNull()
+      .references(() => societies.id, { onDelete: 'cascade' }),
+    bhk: integer('bhk').notNull(),
+    buy_median: doublePrecision('buy_median'),
+    buy_min: doublePrecision('buy_min'),
+    buy_max: doublePrecision('buy_max'),
+    buy_n: integer('buy_n'),
+    rent_median: doublePrecision('rent_median'),
+    rent_min: doublePrecision('rent_min'),
+    rent_max: doublePrecision('rent_max'),
+    rent_n: integer('rent_n'),
+    psf: doublePrecision('psf'),
+    flags: jsonb('flags').$type<Record<string, string>>(),
+  },
+  (table) => [
+    index('bhk_prices_society_id_idx').on(table.society_id),
+  ]
+);
+
+export const reviews = pgTable(
+  'reviews',
+  {
+    id: serial('id').primaryKey(),
+    society_id: text('society_id')
+      .notNull()
+      .references(() => societies.id, { onDelete: 'cascade' }),
+    title: text('title'),
+    text: text('text').notNull(),
+    date: text('date'),
+    author: text('author'),
+    rating: doublePrecision('rating'),
+  },
+  (table) => [
+    index('reviews_society_id_idx').on(table.society_id),
+  ]
+);
+
+export const pois = pgTable(
+  'pois',
+  {
+    id: serial('id').primaryKey(),
+    city: text('city').notNull(),
+    type: text('type').notNull(), // park | metro | rail | school | hospital | shopping
+    name: text('name'),
+    lat: doublePrecision('lat').notNull(),
+    lng: doublePrecision('lng').notNull(),
+  },
+  (table) => [
+    index('pois_city_type_idx').on(table.city, table.type),
+  ]
+);
+
+export const scrapeRuns = pgTable(
+  'scrape_runs',
+  {
+    id: text('id').primaryKey(),
+    city: text('city').notNull(),
+    stage: text('stage').notNull(), // list | projects | osm | build | all
+    started_at: timestamp('started_at', { withTimezone: true }).defaultNow().notNull(),
+    finished_at: timestamp('finished_at', { withTimezone: true }),
+    counts: jsonb('counts').$type<Record<string, number>>(),
+    error: text('error'),
+  }
+);
+
+// Relations
+export const societiesRelations = relations(societies, ({ many }) => ({
+  unitTypes: many(unitTypes),
+  listings: many(listings),
+  bhkPrices: many(bhkPrices),
+  reviews: many(reviews),
+}));
+
+export const unitTypesRelations = relations(unitTypes, ({ one }) => ({
+  society: one(societies, {
+    fields: [unitTypes.society_id],
+    references: [societies.id],
+  }),
+}));
+
+export const listingsRelations = relations(listings, ({ one }) => ({
+  society: one(societies, {
+    fields: [listings.society_id],
+    references: [societies.id],
+  }),
+}));
+
+export const bhkPricesRelations = relations(bhkPrices, ({ one }) => ({
+  society: one(societies, {
+    fields: [bhkPrices.society_id],
+    references: [societies.id],
+  }),
+}));
+
+export const reviewsRelations = relations(reviews, ({ one }) => ({
+  society: one(societies, {
+    fields: [reviews.society_id],
+    references: [societies.id],
+  }),
+}));
+
+// Types
+export type Society = typeof societies.$inferSelect;
+export type NewSociety = typeof societies.$inferInsert;
+export type UnitType = typeof unitTypes.$inferSelect;
+export type NewUnitType = typeof unitTypes.$inferInsert;
+export type Listing = typeof listings.$inferSelect;
+export type NewListing = typeof listings.$inferInsert;
+export type BhkPrice = typeof bhkPrices.$inferSelect;
+export type NewBhkPrice = typeof bhkPrices.$inferInsert;
+export type Review = typeof reviews.$inferSelect;
+export type NewReview = typeof reviews.$inferInsert;
+export type Poi = typeof pois.$inferSelect;
+export type NewPoi = typeof pois.$inferInsert;
+export type ScrapeRun = typeof scrapeRuns.$inferSelect;
+export type NewScrapeRun = typeof scrapeRuns.$inferInsert;

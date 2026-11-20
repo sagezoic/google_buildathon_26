@@ -3,6 +3,7 @@ import { cors } from '@elysiajs/cors';
 import { swagger } from '@elysiajs/swagger';
 import { healthRoutes } from './routes/health';
 import { infoRoutes } from './routes/info';
+import { flatsRoutes } from './modules/flats/routes';
 
 export const app = new Elysia()
   // Global CORS middleware
@@ -20,6 +21,7 @@ export const app = new Elysia()
         tags: [
           { name: 'Health', description: 'Health check and probe endpoints' },
           { name: 'General', description: 'General service info and root endpoints' },
+          { name: 'Flats', description: 'Flat Finder society search, localities, and details' },
         ],
       },
     })
@@ -54,6 +56,7 @@ export const app = new Elysia()
   })
   // Mount routes
   .use(healthRoutes)
-  .use(infoRoutes);
+  .use(infoRoutes)
+  .use(flatsRoutes);
 
 export default app;
