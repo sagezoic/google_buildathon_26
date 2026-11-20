@@ -4,6 +4,7 @@ import { swagger } from '@elysiajs/swagger';
 import { healthRoutes } from './routes/health';
 import { infoRoutes } from './routes/info';
 import { flatsRoutes } from './modules/flats/routes';
+import { storageRoutes } from './routes/storage';
 
 export const app = new Elysia()
   // Global CORS middleware
@@ -22,6 +23,7 @@ export const app = new Elysia()
           { name: 'Health', description: 'Health check and probe endpoints' },
           { name: 'General', description: 'General service info and root endpoints' },
           { name: 'Flats', description: 'Flat Finder society search, localities, and details' },
+          { name: 'Storage', description: 'Google Cloud Storage operations, signed URLs, and file management' },
         ],
       },
     })
@@ -57,6 +59,7 @@ export const app = new Elysia()
   // Mount routes
   .use(healthRoutes)
   .use(infoRoutes)
-  .use(flatsRoutes);
+  .use(flatsRoutes)
+  .use(storageRoutes);
 
 export default app;
