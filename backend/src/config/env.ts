@@ -11,6 +11,10 @@ export interface EnvConfig {
   GCP_SERVICE_ACCOUNT_KEY?: string;
   GCS_CLIENT_EMAIL?: string;
   GCS_PRIVATE_KEY?: string;
+  DOCAI_LOCATION: string;
+  DOCAI_PROCESSOR_ID?: string;
+  TRANSLATE_LOCATION: string;
+  MAX_UPLOAD_MB: number;
 }
 
 function parseEnv(): EnvConfig {
@@ -27,7 +31,13 @@ function parseEnv(): EnvConfig {
   const gcsClientEmail = process.env.GCS_CLIENT_EMAIL;
   const gcsPrivateKey = process.env.GCS_PRIVATE_KEY ? process.env.GCS_PRIVATE_KEY.replace(/\\n/g, '\n') : undefined;
 
+  const maxUploadMb = parseInt(process.env.MAX_UPLOAD_MB || '20', 10);
+
   return {
+    DOCAI_LOCATION: process.env.DOCAI_LOCATION || 'us',
+    DOCAI_PROCESSOR_ID: process.env.DOCAI_PROCESSOR_ID,
+    TRANSLATE_LOCATION: process.env.TRANSLATE_LOCATION || 'global',
+    MAX_UPLOAD_MB: Number.isNaN(maxUploadMb) ? 20 : maxUploadMb,
     PORT: Number.isNaN(port) ? 8080 : port,
     HOST: host,
     NODE_ENV: nodeEnv,

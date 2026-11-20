@@ -10,7 +10,9 @@ locals {
       "cloudresourcemanager.googleapis.com",
       "run.googleapis.com",
       "artifactregistry.googleapis.com",
-      "iam.googleapis.com"
+      "iam.googleapis.com",
+      "documentai.googleapis.com",
+      "translate.googleapis.com"
     ] : [],
     var.enable_apis && var.deploy_database ? [
       "sqladmin.googleapis.com",

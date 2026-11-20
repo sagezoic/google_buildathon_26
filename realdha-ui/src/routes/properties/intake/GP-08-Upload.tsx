@@ -11,6 +11,7 @@ import { Stepper } from '../../../components/ui/stepper'
 import { NATIVE, STEPS, uploadDocs, type StoredDoc } from '../../../data/fixtures/property-intake'
 import { checkFile, fileSize, propertyPlace, TYPE_LABEL, usePropertyDocuments, usePropertyDraft } from '../../../lib/property-store'
 import { cn } from '../../../lib/cn'
+import { deleteDocument, uploadDocument } from '../../../lib/property-api'
 
 const ACCEPT = '.pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png'
 
@@ -29,21 +30,44 @@ export default function Upload() {
   const [errors, setErrors] = useState<string[]>([])
 
   const pick = (id: string) => { target.current = id; input.current?.click() }
-  const accept = (id: string, files: FileList | null) => {
+  /** Slots with an upload in flight, so their buttons can show progress. */
+  const [uploading, setUploading] = useState<string[]>([])
+  const busy = uploading.length > 0
+  const accept = async (id: string, files: FileList | null) => {
     if (!files?.length) return
     const bad: string[] = []
     const good: StoredDoc[] = []
+    const valid: File[] = []
     Array.from(id === 'extra' ? files : [files[0]]).forEach((f) => {
       const why = checkFile(f)
       if (why) bad.push(why)
-      else good.push({ slot: id, file: f.name, size: fileSize(f.size), status: 'uploaded' })
+      else valid.push(f)
     })
     setErrors(bad)
+    if (valid.length) setUploading((u) => [...u, id])
+    for (const f of valid) {
+      if (!draft.id) { good.push({ slot: id, file: f.name, size: fileSize(f.size), status: 'uploaded' }); continue }
+      try {
+        const d = await uploadDocument(draft.id, id, f)
+        good.push({ slot: id, file: d.filename, size: fileSize(d.size), id: d.id, status: 'uploaded' })
+      } catch (e) {
+        bad.push(`${f.name}: ${e instanceof Error ? e.message : 'upload failed.'}`)
+      }
+    }
+    if (valid.length) setUploading((u) => u.filter((_, i) => i !== u.indexOf(id)))
+    setErrors([...bad])
     if (good.length) setDocs((d) => (id === 'extra' ? [...d, ...good] : [...d.filter((x) => x.slot !== id), ...good]))
   }
-  const onChange = (e: ChangeEvent<HTMLInputElement>) => { accept(target.current, e.target.files); e.target.value = '' }
-  const onDrop = (e: DragEvent) => { e.preventDefault(); setOver(false); accept('extra', e.dataTransfer.files) }
-  const removeExtra = (i: number) => setDocs((d) => { const ex = d.filter((x) => x.slot === 'extra'); const gone = ex[i]; return d.filter((x) => x !== gone) })
+  const onChange = (e: ChangeEvent<HTMLInputElement>) => { void accept(target.current, e.target.files); e.target.value = '' }
+  const onDrop = (e: DragEvent) => { e.preventDefault(); setOver(false); void accept('extra', e.dataTransfer.files) }
+  const removeExtra = async (i: number) => {
+    const gone = docs.filter((x) => x.slot === 'extra')[i]
+    if (!gone) return
+    if (gone.id && draft.id) {
+      try { await deleteDocument(draft.id, gone.id) } catch (e) { setErrors([`${gone.file}: ${e instanceof Error ? e.message : 'could not remove it.'}`]); return }
+    }
+    setDocs((d) => d.filter((x) => x !== gone))
+  }
 
   const bySlot = (id: string) => docs.find((d) => d.slot === id)
   const extras = docs.filter((d) => d.slot === 'extra')
@@ -52,6 +76,7 @@ export default function Upload() {
   const meta = (d: StoredDoc) => (d.pages ? `${d.file} · ${d.pages} page${d.pages > 1 ? 's' : ''} · ${d.size}` : `${d.file} · ${d.size}`)
   const mobileMeta = (d: StoredDoc) => (d.langs ? `${d.langs.join(', ')} detected · ${d.pages} page${d.pages! > 1 ? 's' : ''}` : `${d.file} · ${d.size}`)
   const next = () => {
+    if (busy) { setErrors(['Wait for the upload to finish.']); return }
     if (!docs.length) { setErrors(['Add at least one document to check.']); return }
     setErrors([])
     setDraft((x) => ({ ...x, saved: true, stage: x.stage === 'checked' ? 'checked' : 'documents' }))
@@ -100,8 +125,8 @@ export default function Upload() {
                       </span>
                     )}
                     {ok ? <Uploaded /> : <Missing />}
-                    <Button size="sm" variant={ok ? 'secondary' : 'primary'} className="h-9 px-3.5" onClick={() => pick(d.id)}>
-                      {ok ? 'Replace' : 'Upload'}<span className="sr-only"> {d.name}</span>
+                    <Button size="sm" variant={ok ? 'secondary' : 'primary'} className="h-9 px-3.5" disabled={uploading.includes(d.id)} onClick={() => pick(d.id)}>
+                      {uploading.includes(d.id) ? 'Uploading…' : ok ? 'Replace' : 'Upload'}<span className="sr-only"> {d.name}</span>
                     </Button>
                   </li>
                 )
@@ -160,7 +185,7 @@ export default function Upload() {
                 {ok ? <Uploaded /> : <Missing />}
               </div>
               <div className="text-label leading-[17px] text-muted">{p ? mobileMeta(p) : d.mobileMeta}</div>
-              <Button size="sm" variant="secondary" className="min-h-11 self-start" onClick={() => pick(d.id)}>{ok ? 'Replace' : 'Upload'}<span className="sr-only"> {d.name}</span></Button>
+              <Button size="sm" variant="secondary" className="min-h-11 self-start" disabled={uploading.includes(d.id)} onClick={() => pick(d.id)}>{uploading.includes(d.id) ? 'Uploading…' : ok ? 'Replace' : 'Upload'}<span className="sr-only"> {d.name}</span></Button>
             </Card>
           )
         })}

@@ -167,7 +167,60 @@ export const scrapeRuns = pgTable(
   }
 );
 
+export const properties = pgTable('properties', {
+  id: text('id').primaryKey(), // prop_<uuid>
+  type: text('type').notNull(), // apartment | plot | commercial
+  gat: text('gat'),
+  village: text('village'),
+  taluka: text('taluka'),
+  district: text('district'),
+  address: text('address'),
+  lat: doublePrecision('lat'),
+  lng: doublePrecision('lng'),
+  area: text('area'),
+  area_unit: text('area_unit'),
+  stage: text('stage').notNull().default('details'), // details | documents | checked
+  created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+});
+
+export const propertyDocuments = pgTable(
+  'property_documents',
+  {
+    id: text('id').primaryKey(), // doc_<uuid>
+    property_id: text('property_id')
+      .notNull()
+      .references(() => properties.id, { onDelete: 'cascade' }),
+    slot: text('slot').notNull(), // extract | card | na | mutation | deed | agreement | extra
+    filename: text('filename').notNull(),
+    mime: text('mime').notNull(),
+    size: integer('size').notNull(),
+    gcs_path: text('gcs_path').notNull(),
+    status: text('status').notNull().default('uploaded'), // uploaded | processing | processed | failed
+    pages: integer('pages'),
+    detected_lang: text('detected_lang'),
+    original_text: text('original_text'),
+    translated_text: text('translated_text'),
+    fields: jsonb('fields').$type<Record<string, unknown>>(),
+    error: text('error'),
+    created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index('property_documents_property_id_idx').on(table.property_id)]
+);
+
 // Relations
+export const propertiesRelations = relations(properties, ({ many }) => ({
+  documents: many(propertyDocuments),
+}));
+
+export const propertyDocumentsRelations = relations(propertyDocuments, ({ one }) => ({
+  property: one(properties, {
+    fields: [propertyDocuments.property_id],
+    references: [properties.id],
+  }),
+}));
+
 export const societiesRelations = relations(societies, ({ many }) => ({
   unitTypes: many(unitTypes),
   listings: many(listings),
@@ -218,3 +271,7 @@ export type Poi = typeof pois.$inferSelect;
 export type NewPoi = typeof pois.$inferInsert;
 export type ScrapeRun = typeof scrapeRuns.$inferSelect;
 export type NewScrapeRun = typeof scrapeRuns.$inferInsert;
+export type Property = typeof properties.$inferSelect;
+export type NewProperty = typeof properties.$inferInsert;
+export type PropertyDocument = typeof propertyDocuments.$inferSelect;
+export type NewPropertyDocument = typeof propertyDocuments.$inferInsert;

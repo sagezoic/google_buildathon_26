@@ -1,4 +1,5 @@
 import { usePersistentState } from '../app/persist'
+import { createProperty, updateProperty, type PropertyPayload } from './property-api'
 import type { AreaUnit } from './plot-shape'
 import { plot, seedDocuments, type PropertyType, type Resolution, type StoredDoc } from '../data/fixtures/property-intake'
 
@@ -9,6 +10,8 @@ export interface GeoPin { lng: number; lat: number }
 export const isGeoPin = (p: unknown): p is GeoPin => typeof (p as GeoPin)?.lng === 'number' && typeof (p as GeoPin)?.lat === 'number'
 
 export interface PropertyDraft {
+  /** Server property id, set once the draft has been saved to the API. */
+  id?: string
   type: PropertyType
   gat: string
   village: string
@@ -43,6 +46,22 @@ export const usePropertyFindings = () => usePersistentState<StoredFindings>('pro
 
 export const propertyTitle = (d: PropertyDraft) => `${d.village} ${TYPE_LABEL[d.type]} ${d.gat}`.replace(/\s+/g, ' ').trim()
 export const propertyPlace = (d: PropertyDraft) => [d.village, d.taluka, d.district].filter(Boolean).join(', ')
+
+/** Creates the property on the server on first save, updates it afterwards. Returns the server id. */
+export async function syncDraft(d: PropertyDraft): Promise<string> {
+  const payload: PropertyPayload = {
+    type: d.type, gat: d.gat, village: d.village, taluka: d.taluka, district: d.district, address: d.address,
+    area: d.area, area_unit: d.areaUnit, stage: d.stage,
+    ...(isGeoPin(d.pin) ? { lat: d.pin.lat, lng: d.pin.lng } : {}),
+  }
+  if (d.id) {
+    try { return (await updateProperty(d.id, payload)).id } catch (e) {
+      // The server may have lost this id (fresh database): fall through and create it again.
+      if (!/not found/i.test(e instanceof Error ? e.message : '')) throw e
+    }
+  }
+  return (await createProperty(payload)).id
+}
 
 export function fileSize(b: number) { return b >= 1e6 ? `${(b / 1e6).toFixed(1)} MB` : `${Math.max(1, Math.round(b / 1e3))} KB` }
 

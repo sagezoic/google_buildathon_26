@@ -73,3 +73,7 @@ db_authorized_networks = [
     cidr = "0.0.0.0/0"
   }
 ]
+
+# Document AI OCR processor location and the existing property-documents bucket
+docai_location  = "us"
+gcs_bucket_name = "" # e.g. realdha-storage-<project-id>; leave empty to skip bucket IAM

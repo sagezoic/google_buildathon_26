@@ -1,4 +1,4 @@
-import { Building2, CircleCheck, Map as MapIcon, Search, Store, type LucideIcon } from 'lucide-react'
+import { Building2, CircleAlert, CircleCheck, Map as MapIcon, Search, Store, type LucideIcon } from 'lucide-react'
 import { useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
 import { Screen } from '../../../app/Shell'
@@ -12,7 +12,7 @@ import { Stepper } from '../../../components/ui/stepper'
 import { STEPS, type PropertyType } from '../../../data/fixtures/property-intake'
 import { cn } from '../../../lib/cn'
 import { AREA_UNITS, parseArea, plotFeature, type AreaUnit } from '../../../lib/plot-shape'
-import { defaultDraft, isGeoPin, usePropertyDraft, type GeoPin, type PropertyDraft } from '../../../lib/property-store'
+import { defaultDraft, isGeoPin, syncDraft, usePropertyDocuments, usePropertyDraft, type GeoPin, type PropertyDraft } from '../../../lib/property-store'
 
 /** Demo state `pin-dragged`: the pin sits a little south-east of home. */
 const DRAGGED_BY = { lng: 0.0005, lat: -0.0004 }
@@ -108,11 +108,14 @@ export default function AddProperty() {
   const [state] = useDemoState(['plot', 'pin-dragged'] as const)
   const navigate = useNavigate()
   const [draft, setDraft] = usePropertyDraft()
+  const [, setDocs] = usePropertyDocuments()
   const [mv, setMv] = useState(() => [draft.village, draft.taluka].filter(Boolean).join(', '))
   const [query, setQuery] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [seen, setSeen] = useState<Record<string, boolean>>({})
   const [notice, setNotice] = useState('')
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const root = useRef<HTMLDivElement>(null)
 
   // Drafts saved before the live map hold a percent-based `{ x, y }` pin and no area: fall back to the sample values.
@@ -137,13 +140,26 @@ export default function AddProperty() {
     const bad = Array.from(root.current?.querySelectorAll<HTMLElement>('[aria-invalid="true"]') ?? []).find((el) => el.offsetParent !== null)
     bad?.focus()
   }, 0)
-  const save = (next: boolean) => {
+  const save = async (next: boolean) => {
+    if (saving) return
     setSubmitted(true)
     const blocking = next ? Object.keys(errs).length > 0 : !!(errs.gat || errs.village)
     if (blocking) { setNotice(''); focusFirst(); return }
-    setDraft((d) => ({ ...d, saved: true }))
-    if (next) navigate(path('GP-08'))
-    else setNotice('Draft saved. Find it on your home screen.')
+    setSaveError('')
+    setSaving(true)
+    try {
+      const id = await syncDraft({ ...draft, area, areaUnit, pin, saved: true })
+      // A new server property starts with no documents: the demo seed rows are not on the server.
+      if (id !== draft.id) setDocs([])
+      setDraft((d) => ({ ...d, saved: true, id }))
+      if (next) navigate(path('GP-08'))
+      else setNotice('Draft saved. Find it on your home screen.')
+    } catch (e) {
+      setNotice('')
+      setSaveError(e instanceof Error ? e.message : 'Could not save the draft. Try again.')
+    } finally {
+      setSaving(false)
+    }
   }
   const mobileVillage = (v: string) => {
     setMv(v)
@@ -157,7 +173,12 @@ export default function AddProperty() {
     if (!/^\d/.test(q)) setMv([q, draft.taluka].filter(Boolean).join(', '))
     setQuery('')
   }
-  const notes = <p role="status" aria-live="polite" className="flex items-center gap-1.5 text-label text-success-ink empty:hidden">{notice && <><CircleCheck className="size-3.5" aria-hidden />{notice}</>}</p>
+  const notes = (
+    <>
+      <p role="status" aria-live="polite" className="flex items-center gap-1.5 text-label text-success-ink empty:hidden">{notice && <><CircleCheck className="size-3.5" aria-hidden />{notice}</>}</p>
+      <p role="alert" className="flex items-center gap-1.5 text-label text-danger-ink empty:hidden">{saveError && <><CircleAlert className="size-3.5 flex-none" aria-hidden />{saveError}</>}</p>
+    </>
+  )
   const type = draft.type
   const setType = (t: PropertyType) => set({ type: t })
 

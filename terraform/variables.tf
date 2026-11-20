@@ -252,3 +252,15 @@ variable "db_authorized_networks" {
     }
   ]
 }
+
+variable "docai_location" {
+  description = "Document AI location for the OCR processor (multi-region: us or eu). Keep in the US."
+  type        = string
+  default     = "us"
+}
+
+variable "gcs_bucket_name" {
+  description = "Existing Cloud Storage bucket for uploaded property documents (created outside Terraform). Leave empty to skip the bucket IAM binding and the GCS_BUCKET_NAME env var."
+  type        = string
+  default     = ""
+}
