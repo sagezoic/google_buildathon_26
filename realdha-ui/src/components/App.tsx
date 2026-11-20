@@ -38,6 +38,7 @@ export function App() {
   })
 
   const [selectedDoc, setSelectedDoc] = useState<DocumentRecord | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
   const [isUploadOpen, setIsUploadOpen] = useState(false)
   const [isShareOpen, setIsShareOpen] = useState(false)
   const [isAssistantOpen, setIsAssistantOpen] = useState(false)
@@ -78,6 +79,8 @@ export function App() {
         onOpenUpload={() => setIsUploadOpen(true)}
         onOpenShare={() => setIsShareOpen(true)}
         onOpenTour={() => setIsTourOpen(true)}
+        searchQuery={searchQuery}
+        onSearchQueryChange={setSearchQuery}
       />
 
       {/* VIEW 1: Property Marketplace & Search (Screenshot 2 Reference) */}
@@ -89,6 +92,8 @@ export function App() {
             onSelectScenario={handleSwitchScenario}
             onNavigate={handleNavigate}
             onOpenAssistant={() => setIsAssistantOpen(true)}
+            searchQuery={searchQuery}
+            onSearchQueryChange={setSearchQuery}
           />
         </main>
       )}

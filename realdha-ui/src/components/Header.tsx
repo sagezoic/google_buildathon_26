@@ -15,6 +15,8 @@ interface HeaderProps {
   onOpenUpload: () => void
   onOpenShare: () => void
   onOpenTour: () => void
+  searchQuery?: string
+  onSearchQueryChange?: (q: string) => void
 }
 
 export function Header({
@@ -24,10 +26,22 @@ export function Header({
   onNavigate,
   onSwitch,
   onOpenUpload,
+  searchQuery = '',
+  onSearchQueryChange,
 }: HeaderProps) {
   const [searchOpen, setSearchOpen] = useState(false)
-  const [searchTerm, setSearchTerm] = useState('')
+  const [localSearchTerm, setLocalSearchTerm] = useState('')
   const searchRef = useRef<HTMLDivElement>(null)
+
+  const activeSearchValue = onSearchQueryChange ? searchQuery : localSearchTerm
+
+  const handleSearchChange = (val: string) => {
+    if (onSearchQueryChange) {
+      onSearchQueryChange(val)
+    } else {
+      setLocalSearchTerm(val)
+    }
+  }
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -41,18 +55,18 @@ export function Header({
 
   const filteredScenarios = scenarios.filter(
     (s) =>
-      s.realdhaId.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.project.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      s.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (s.streetAddress && s.streetAddress.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      s.unit.toLowerCase().includes(searchTerm.toLowerCase())
+      s.realdhaId.toLowerCase().includes(activeSearchValue.toLowerCase()) ||
+      s.project.toLowerCase().includes(activeSearchValue.toLowerCase()) ||
+      s.location.toLowerCase().includes(activeSearchValue.toLowerCase()) ||
+      (s.streetAddress && s.streetAddress.toLowerCase().includes(activeSearchValue.toLowerCase())) ||
+      s.unit.toLowerCase().includes(activeSearchValue.toLowerCase())
   )
 
   const handleSelectScenarioFromSearch = (s: Scenario) => {
     onSwitch(s)
     onNavigate('passport')
     setSearchOpen(false)
-    setSearchTerm('')
+    handleSearchChange('')
   }
 
   return (
@@ -113,10 +127,10 @@ export function Header({
             <input
               type="text"
               className="lofty-header-search-input"
-              value={searchOpen ? searchTerm : ''}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search address or city"
-              aria-label="Search address or city"
+              value={activeSearchValue}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              placeholder="Search address, locality, or REALDHA ID..."
+              aria-label="Search address, locality, or REALDHA ID"
               onFocus={() => setSearchOpen(true)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
