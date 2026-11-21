@@ -48,6 +48,9 @@ Configure the following under **GitHub Repository > Settings > Secrets and varia
 | `GCP_SA_KEY` | *Alternative* | Base64 or plain JSON key for Service Account (if not using WIF) | `{"type": "service_account", ...}` |
 | `GCS_TF_STATE_BUCKET` | *Optional* | GCS Bucket name for shared Terraform state storage | `my-tf-state-bucket` |
 | `DB_PASSWORD` | **Recommended** | Cloud SQL password for the `realdha` user, passed as `TF_VAR_db_password`. Pins the password so a lost Terraform state can't rotate it and break the backend with `password authentication failed`. If unset, Terraform generates a random one. Use letters and digits only (it is embedded unescaped in `DATABASE_URL`). | `openssl rand -hex 16` |
+| `CHAIN_RPC_URL` | *Optional* | JSON-RPC URL of the chain for property tokens; stored in Secret Manager (`TF_VAR_chain_rpc_url`). See `docs/blockchain.md`. | `https://sepolia.infura.io/v3/...` |
+| `CHAIN_ADMIN_TOKEN` | *Optional* | Bearer token required to approve/anchor a property | `openssl rand -hex 32` |
+| `CHAIN_OWNER_SALT` | *Optional* | Salt for on-chain owner references. Never change after tokens exist. | `openssl rand -hex 32` |
 
 ### Variables (`Repository variables`, Optional)
 

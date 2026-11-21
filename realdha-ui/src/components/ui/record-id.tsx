@@ -6,7 +6,7 @@ import { cn } from '../../lib/cn'
 export function RecordId({ id, className, copyable }: { id: string; className?: string; copyable?: boolean }) {
   const [done, setDone] = useState(false)
   const body = <span className="font-mono font-medium">{id}</span>
-  const base = 'inline-flex items-center gap-2 rounded-control border border-line bg-sunken px-2 py-1 text-small'
+  const base = 'inline-flex items-center gap-2 rounded-control px-1.5 py-0.5 -mx-1.5 text-small text-muted'
   if (!copyable) return <span className={cn(base, className)}>{body}</span>
   return (
     <button

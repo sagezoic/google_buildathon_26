@@ -79,3 +79,13 @@ create_docai_processor = true # set to false if creating outside Terraform or la
 docai_processor_id     = ""   # specify existing processor ID if already created
 docai_location         = "us"
 gcs_bucket_name        = ""   # e.g. realdha-storage-<project-id>; leave empty to skip bucket IAM
+
+# Blockchain property tokens (see docs/blockchain.md). The registrar key is created in Cloud KMS automatically.
+enable_chain           = true
+chain_network          = "sepolia"
+chain_contract_address = ""   # fill in after `bun run chain:deploy`
+chain_explorer_url     = "https://sepolia.etherscan.io"
+chain_public_api_url   = ""   # backend Cloud Run URL, used in token metadata links
+chain_rpc_url          = ""   # secret; better passed as TF_VAR_chain_rpc_url
+chain_admin_token      = ""   # secret; TF_VAR_chain_admin_token
+chain_owner_salt       = ""   # secret; TF_VAR_chain_owner_salt

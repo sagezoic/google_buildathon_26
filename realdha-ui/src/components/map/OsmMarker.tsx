@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
 import * as maplibregl from 'maplibre-gl'
 import { cn } from '../../lib/cn'
@@ -19,18 +19,17 @@ export default function OsmMarker({
 }: MarkerProps) {
   const { map, ready } = useOsmMap()
   const markerRef = useRef<maplibregl.Marker | null>(null)
-  const elementRef = useRef<HTMLDivElement>(document.createElement('div'))
+  const [el] = useState(() => document.createElement('div'))
 
-  const liveRef = useRef({ position, onDragEnd, onClick })
+  const liveRef = useRef({ position, onDragEnd, onClick, ariaLabel, className })
   useEffect(() => {
-    liveRef.current = { position, onDragEnd, onClick }
+    liveRef.current = { position, onDragEnd, onClick, ariaLabel, className }
   })
 
   // Initialize MapLibre Marker
   useEffect(() => {
     if (!map || !ready) return
 
-    const el = elementRef.current
     el.className = cn('cursor-pointer focus-visible:outline-none', className)
 
     const initialPos = toLngLat(position)
@@ -86,7 +85,7 @@ export default function OsmMarker({
       marker.remove()
       markerRef.current = null
     }
-  }, [map, ready, draggable])
+  }, [map, ready, draggable, el, className, position, onClick, ariaLabel])
 
   // Update position if changed externally
   useEffect(() => {
@@ -118,6 +117,6 @@ export default function OsmMarker({
         </svg>
       </div>
     ),
-    elementRef.current
+    el
   )
 }

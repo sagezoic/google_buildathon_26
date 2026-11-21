@@ -51,6 +51,15 @@ export default function OsmPolygonEditor({
   const [isDrawing, setIsDrawing] = useState(polygon.length < 3)
   const [activeVertex, setActiveVertex] = useState<number | null>(null)
 
+  const prevPolygonRef = useRef(polygon)
+  if (prevPolygonRef.current !== polygon) {
+    prevPolygonRef.current = polygon
+    if (polygon.length >= 3 && JSON.stringify(polygon) !== JSON.stringify(points)) {
+      setPoints(polygon)
+      setIsDrawing(false)
+    }
+  }
+
   const vertexMarkersRef = useRef<maplibregl.Marker[]>([])
   const midpointMarkersRef = useRef<maplibregl.Marker[]>([])
   const pinMarkerRef = useRef<maplibregl.Marker | null>(null)
@@ -59,14 +68,6 @@ export default function OsmPolygonEditor({
   useEffect(() => {
     liveRef.current = { points, onChange, onPinChange, editable, isDrawing }
   })
-
-  // Sync external polygon changes if different
-  useEffect(() => {
-    if (polygon.length >= 3 && JSON.stringify(polygon) !== JSON.stringify(points)) {
-      setPoints(polygon)
-      setIsDrawing(false)
-    }
-  }, [polygon])
 
   // Setup MapLibre GeoJSON Source and Layers
   useEffect(() => {
@@ -77,7 +78,7 @@ export default function OsmPolygonEditor({
       properties: {},
       geometry: {
         type: 'Polygon',
-        coordinates: points.length >= 3 ? [[...points, points[0]]] : [],
+        coordinates: [],
       },
     }
 
@@ -129,7 +130,7 @@ export default function OsmPolygonEditor({
       if (map.getLayer(LINE_LAYER)) map.removeLayer(LINE_LAYER)
       if (map.getSource(SOURCE_ID)) map.removeSource(SOURCE_ID)
     }
-  }, [map, ready])
+  }, [map, ready, color])
 
   // Update GeoJSON source when points change
   useEffect(() => {

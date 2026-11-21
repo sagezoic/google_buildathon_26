@@ -11,6 +11,7 @@ import { VerdictBanner } from '../../../components/ui/verdict-banner'
 import { hashes, tx } from '../../../data/fixtures/anchoring'
 import type { SignedOff } from '../../../data/fixtures/lawyer'
 import { dayStamp, logAudit, stamp } from '../../../lib/audit'
+import { DEMO_PLOT_ID, approveProperty, chainEnabled } from '../../../lib/chain-api'
 import { readShared, useSharedState, writeShared } from '../../../lib/shared-state'
 
 type Status = 'approve' | 'pending' | 'confirmed'
@@ -39,6 +40,12 @@ export default function Anchoring() {
   const [approved, setApproved] = useSharedState<boolean>('anchor.approved', false)
   const [signed] = useSharedState<SignedOff | null>('lawyer.signedOff', null)
   const [copied, setCopied] = useState(false)
+  // When the backend has a ledger, "Approve and anchor" really anchors the demo plot; otherwise the sample flow runs.
+  const [live, setLive] = useState(false)
+  const [accessToken, setAccessToken] = useState(() => sessionStorage.getItem('lawyer.accessToken') ?? '')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState('')
+  useEffect(() => { void chainEnabled().then(setLive) }, [])
   const state: Status = forced ?? persisted
 
   // Pending moves to confirmed on its own after a few seconds, also after a reload. A forced ?state= is left alone.
@@ -54,7 +61,25 @@ export default function Anchoring() {
     return () => window.clearTimeout(id)
   }, [forced, persisted, submittedAt])
 
+  const approveLive = async () => {
+    if (!approved || busy) return
+    setBusy(true); setErr('')
+    try {
+      sessionStorage.setItem('lawyer.accessToken', accessToken)
+      const t = await approveProperty(DEMO_PLOT_ID, signed?.by ?? 'Adv. Meera Joshi', accessToken)
+      writeShared('anchor.txHash', t.txHash ?? '', '')
+      writeShared('anchor.submittedAt', Date.parse(t.approvedAt), 0)
+      writeShared('anchor.confirmedAt', Date.now(), 0)
+      writeShared<Status>('anchor.status', 'confirmed', 'approve')
+      logAudit('Realdha', `Anchored ${t.docCount} document fingerprints on ${t.network} (version ${t.version})`)
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Anchoring failed.')
+    } finally {
+      setBusy(false)
+    }
+  }
   const approve = () => {
+    if (live) return void approveLive()
     if (!approved) return
     writeShared('anchor.txHash', newHash(), '')
     writeShared('anchor.submittedAt', Date.now(), 0)
@@ -95,9 +120,17 @@ export default function Anchoring() {
                 <input type="checkbox" checked={approved} onChange={(e) => setApproved(e.target.checked)} className="mt-0.5 size-5 flex-none accent-primary max-md:size-6" />
                 <span>I approve putting these 5 document fingerprints on-chain.</span>
               </label>
+              {live && (
+                <label className="flex flex-col gap-1 text-chip">
+                  <span className="font-medium">Lawyer access token</span>
+                  <input type="password" autoComplete="off" value={accessToken} onChange={(e) => setAccessToken(e.target.value)} className="h-10 rounded-control border border-line-strong bg-field px-3 text-small" />
+                  <span className="text-muted">Kept in this tab only. Needed to write to the chain.</span>
+                </label>
+              )}
+              {err && <p role="alert" className="text-chip text-danger-ink">{err}</p>}
               <p className="text-chip text-muted">Network: {tx.network}. Test network only; nothing here has legal or monetary effect.</p>
               <div className="flex-1" />
-              <Button size="lg" block disabled={!approved} onClick={approve}>Approve and anchor</Button>
+              <Button size="lg" block disabled={!approved || busy} onClick={approve}>{busy ? 'Anchoring…' : 'Approve and anchor'}</Button>
               <Link to={path('GP-14')} className="inline-flex min-h-11 items-center justify-center text-small font-medium">Not now</Link>
             </Card>
           )}

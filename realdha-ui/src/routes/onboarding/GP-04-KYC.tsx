@@ -8,7 +8,6 @@ import { Screen } from '../../app/Shell'
 import { path } from '../../app/nav'
 import { Button } from '../../components/ui/button'
 import { Field } from '../../components/ui/field'
-import { Pill } from '../../components/ui/pill'
 import { prakash } from '../../data/fixtures/identity'
 
 /** GP-04 · KYC. Desktop: single card with consent. Phone and tablet: shorter copy, consent inline. */
@@ -72,7 +71,6 @@ export default function KYC() {
             <span className="h-px flex-1 bg-line" />then<span className="h-px flex-1 bg-line" />
           </div>
           <Button size="lg" block variant="secondary" onClick={verify} loading={busy} disabled={locked} icon={<ShieldCheck className="size-[18px]" aria-hidden />} className="xl:font-medium max-xl:bg-primary max-xl:text-on-primary max-xl:border-primary">Verify Aadhaar with DigiLocker</Button>
-          <div className="flex justify-center max-xl:hidden"><Pill tone="info">Demo: DigiLocker is mocked. No real Aadhaar data is used.</Pill></div>
           <label className="flex cursor-pointer items-start gap-2.5 rounded-[8px] border border-line bg-canvas px-3.5 py-3 text-chip max-xl:hidden">
             <input type="checkbox" checked={consent} onChange={(e) => { setConsent(e.target.checked); setConsentErr(false) }} aria-invalid={consentErr || undefined} aria-describedby={consentErr ? 'consent-err' : undefined} className="peer sr-only" />
             <span aria-hidden className={`mt-0.5 flex size-[18px] flex-none items-center justify-center rounded-[4px] border ${consent ? 'border-primary bg-primary text-on-primary' : 'border-line-strong bg-field'} peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-focus`}>{consent && <Check className="size-3.5" />}</span>

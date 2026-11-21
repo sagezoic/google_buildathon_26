@@ -270,7 +270,7 @@ export default function Review() {
                   )
                 }
                 return (
-                  <li key={f.id} className="flex flex-col gap-2 border-b border-line border-l-4 border-l-warning bg-warning-tint/40 py-4 pr-[18px] pl-3.5">
+                  <li key={f.id} className="flex flex-col gap-2 border-b border-line bg-warning-tint/60 px-[18px] py-4">
                     <div className="flex items-center justify-between"><span className="text-label text-muted">{f.title}</span><SeverityPill tone={f.tone}>{f.badge}</SeverityPill></div>
                     {f.compare ? (
                       <div className="flex gap-5">{f.compare.map((c) => <div key={c.k}><div className="text-label text-muted">{c.k}</div><div className="text-body font-semibold">{c.v}</div></div>)}</div>

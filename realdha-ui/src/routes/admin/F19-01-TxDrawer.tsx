@@ -70,7 +70,7 @@ export default function TxDrawer() {
         <Drawer open={!!sel} onOpenChange={(o) => { if (!o) close() }} title="Transaction detail" wide className="md:w-[480px]">
           {sel && (
             <div className="flex flex-1 flex-col gap-3 overflow-y-auto px-5 py-4">
-              <div className="flex gap-2"><StatusPill s={sel.status} /><Pill tone="chain" className="xl:hidden">Sepolia testnet</Pill></div>
+              <div className="flex gap-2"><StatusPill s={sel.status} /></div>
               <div className="max-xl:hidden">
                 <Row k="Record">{sel.record}</Row><Row k="Type">{sel.kind}</Row><Row k="Network">Sepolia testnet</Row>
                 <Row k="Submitted">{sel.submitted}</Row><Row k="Gas used">{sel.status === 'pending' ? '—' : gas(sel.hash)}</Row>

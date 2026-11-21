@@ -171,7 +171,7 @@ function SocietyTile({
 
           <div className="pointer-events-none absolute inset-x-2.5 top-2.5 flex items-center justify-between gap-1.5">
             {primaryBadge ? (
-              <Pill tone={isReady ? 'success' : 'brand'}>
+              <Pill tone={isReady ? 'success' : 'brand'} className="rounded-control bg-surface px-2 py-1 shadow-e1">
                 {primaryBadge}
               </Pill>
             ) : <span />}

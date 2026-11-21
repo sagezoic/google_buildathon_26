@@ -12,7 +12,11 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "bun run src/db/migrate.ts",
     "db:studio": "drizzle-kit studio",
-    "scrape": "bun run src/scraper/run.ts"
+    "scrape": "bun run src/scraper/run.ts",
+    "chain:compile": "bun scripts/compile-contract.ts",
+    "chain:deploy": "bun scripts/deploy-contract.ts",
+    "chain:seed-demo": "bun scripts/seed-demo-tokens.ts",
+    "chain:address": "bun scripts/kms-address.ts"
   },
   "keywords": [
     "realdha",
@@ -27,14 +31,18 @@
     "@elysiajs/cors": "^1.4.3",
     "@elysiajs/swagger": "^1.3.1",
     "@google-cloud/documentai": "^10.2.0",
+    "@google-cloud/kms": "^6.3.0",
     "@google-cloud/storage": "^9.0.0",
     "@google-cloud/translate": "^10.3.0",
     "drizzle-orm": "^0.45.4",
-    "elysia": "^1.4.32"
+    "elysia": "^1.4.32",
+    "ethers": "^6"
   },
   "devDependencies": {
     "@types/bun": "^1.4.5",
     "drizzle-kit": "^0.31.11",
+    "ganache": "^7.9.2",
+    "solc": "^0.8.39",
     "typescript": "^7.0.2"
   }
 }

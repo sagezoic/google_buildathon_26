@@ -1,20 +1,17 @@
 import { X } from 'lucide-react'
-import { useState } from 'react'
 import { Screen } from '../../app/Shell'
 import { Card } from '../../components/ui/card'
 import { Pill } from '../../components/ui/pill'
-import { EMPTY_ERROR, SearchBar, useRecent, useRunSearch, useSearch } from '../parts/search'
+import { PlaceSearch } from '../../components/place-search'
+import { useRecent, useRunSearch } from '../parts/search'
 
 const isId = (s: string) => /^RA-/i.test(s)
 const TRY = ['Baner', 'Wakad', 'Hinjewadi', 'RA-PUN-001-A-18-04']
 
 /** F08-01 · Search home. The query persists (`f08.search`); recent searches (`f08.recent`) can be run, removed or cleared. */
 export default function SearchHome() {
-  const [search, setSearch] = useSearch()
   const [recent, setRecent] = useRecent()
-  const run = useRunSearch()
-  const [error, setError] = useState('')
-  const go = (q: string) => (q.trim() ? run(q) : setError(EMPTY_ERROR))
+  const go = useRunSearch()
 
   return (
     <Screen id="F08-01">
@@ -22,13 +19,12 @@ export default function SearchHome() {
         <div className="flex w-full max-w-[760px] flex-col gap-4 md:gap-5">
           <div className="text-center md:pt-9">
             <h1 className="text-h1 max-md:text-left md:text-[34px] md:leading-[42px]">Find a verified property</h1>
-            <p className="mt-2 text-control leading-[22px] text-muted max-md:hidden">Search by Realdha ID, locality or address.</p>
+            <p className="mt-2 text-control leading-[22px] text-muted max-md:hidden">Pick a locality from OpenStreetMap, or enter a Realdha ID.</p>
           </div>
-          <SearchBar
-            size="big" value={search.q} error={error}
+          <PlaceSearch
+            variant="composer"
             placeholder="Property ID, locality or address"
-            onChange={(v) => { setSearch((s) => ({ ...s, q: v })); setError('') }}
-            onSubmit={() => go(search.q)}
+            onSubmit={(q) => go(q)}
           />
           <div className="flex flex-wrap items-center gap-2 md:justify-center">
             <span className="text-chip text-muted max-md:hidden">Try:</span>

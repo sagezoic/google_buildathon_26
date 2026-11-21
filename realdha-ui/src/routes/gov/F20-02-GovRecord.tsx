@@ -21,7 +21,6 @@ export default function GovRecordScreen() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <RecordId id={record.id} copyable />
-            <Pill tone="info">Read-only</Pill>
             <SampleData />
           </div>
           <div className="flex flex-wrap gap-2">

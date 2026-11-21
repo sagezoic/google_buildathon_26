@@ -193,12 +193,12 @@ export default function WatchlistScreen() {
                         <span className="text-h2 font-bold text-text tracking-tight">{item.priceLabel}</span>
                         <span
                           className={cn(
-                            'inline-flex items-center gap-1 rounded-pill px-2 py-0.5 text-label font-semibold',
+                            'inline-flex items-center gap-1 text-label font-semibold',
                             item.deltaTone === 'up'
-                              ? 'bg-success-tint text-success-ink'
+                              ? 'text-success-ink'
                               : item.deltaTone === 'down'
-                              ? 'bg-danger-tint text-danger-ink'
-                              : 'bg-skeleton text-muted'
+                              ? 'text-danger-ink'
+                              : 'text-muted'
                           )}
                         >
                           {item.deltaTone === 'up' ? (
@@ -208,7 +208,7 @@ export default function WatchlistScreen() {
                           ) : null}
                           {item.delta}
                         </span>
-                        <span className="inline-flex items-center gap-1 rounded-pill border border-line bg-sunken px-2.5 py-0.5 text-label text-muted">
+                        <span className="inline-flex items-center gap-1 text-label text-muted">
                           Rent yield: <strong className="font-semibold text-text">{item.yieldLabel}</strong>
                         </span>
                       </div>
@@ -296,12 +296,12 @@ export default function WatchlistScreen() {
                         </div>
                         <span
                           className={cn(
-                            'inline-flex items-center gap-1 rounded-pill px-1.5 py-0.5 text-chip font-semibold',
+                            'inline-flex items-center gap-1 text-chip font-semibold',
                             item.deltaTone === 'up'
-                              ? 'bg-success-tint text-success-ink'
+                              ? 'text-success-ink'
                               : item.deltaTone === 'down'
-                              ? 'bg-danger-tint text-danger-ink'
-                              : 'bg-skeleton text-muted'
+                              ? 'text-danger-ink'
+                              : 'text-muted'
                           )}
                         >
                           {item.deltaTone === 'up' ? (

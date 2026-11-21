@@ -4,7 +4,6 @@ import { path } from '../../../app/nav'
 import { usePersistentState } from '../../../app/persist'
 import { Button } from '../../../components/ui/button'
 import { Card } from '../../../components/ui/card'
-import { Pill } from '../../../components/ui/pill'
 
 /** F13-05 · No call slots available state. */
 export default function NoSlotsScreen() {
@@ -19,7 +18,6 @@ export default function NoSlotsScreen() {
         <h1 className="text-h1 font-bold text-text">Choose a slot</h1>
 
         <Card className="flex flex-col items-start gap-4 p-6 xl:p-8">
-          <Pill tone="neutral">No slots available</Pill>
           <h2 className="text-h2 font-semibold text-text">
             No call slots in the next 14 days
           </h2>

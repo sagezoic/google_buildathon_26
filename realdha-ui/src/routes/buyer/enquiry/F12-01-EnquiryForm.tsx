@@ -7,7 +7,6 @@ import { usePersistentState } from '../../../app/persist'
 import { Button } from '../../../components/ui/button'
 import { Card } from '../../../components/ui/card'
 import { Field } from '../../../components/ui/field'
-import { Pill } from '../../../components/ui/pill'
 import { RecordId } from '../../../components/ui/record-id'
 import { Switch } from '../../../components/ui/switch'
 import { TextareaField } from '../../../components/ui/textarea'
@@ -68,7 +67,6 @@ export default function EnquiryForm() {
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-control bg-sunken px-3 py-3">
             <RecordId id={unit.id} />
             <span className="text-small max-xl:hidden">{unit.bhk} · {unit.carpet} · {inr(unit.price)}</span>
-            <Pill>Prefilled</Pill>
           </div>
           <form noValidate onSubmit={submit} className="flex flex-col gap-4">
             <div className="grid gap-4 xl:grid-cols-2">

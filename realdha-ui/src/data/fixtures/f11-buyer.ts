@@ -38,8 +38,12 @@ export type Reply =
 export interface Turn { id: string; q: string; a: Reply }
 
 const MISSING: Omit<Extract<Reply, { kind: 'missing' }>, 'kind'> = { text: "I can't find this in the documents. Ask the developer to confirm.", note: 'No source found in the uploaded documents.' }
-export function assistantReply(q: string): Reply {
+/** `area` is the place picked in search (name + how many verified records match it); area questions answer from it. */
+export function assistantReply(q: string, area?: { name: string; records: number }): Reply {
   const t = q.toLowerCase()
+  if (area && /(near|nearby|around|area|locality|verified|here)/.test(t)) {
+    return { kind: 'cited', text: area.records ? `Realdha has ${area.records} verified record${area.records === 1 ? '' : 's'} matching ${area.name}. Open Search to see them on the map.` : `Realdha has no verified records for ${area.name} yet.`, cites: [`Realdha records · ${area.name}`] }
+  }
   if (/(own|title|legal|lawyer)/.test(t)) return { kind: 'refuse', text: 'I cannot say who legally owns this. Please ask a lawyer.' }
   if (/(clubhouse|possession)/.test(t)) return { kind: 'cited', text: 'Yes. The brochure lists a 6,000 sq ft clubhouse in Tower C. Possession is December 2027 per the RERA registration.', cites: ['Brochure · p4', 'RERA registration · p1'] }
   if (/parking/.test(t)) return { kind: 'cited', text: 'The agreement lists one covered parking slot (P-118).', cites: ['Agreement for sale · page 4'] }

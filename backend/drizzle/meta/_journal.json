@@ -15,6 +15,13 @@
       "when": 1795217351738,
       "tag": "0001_clear_shockwave",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795224519752,
+      "tag": "0002_violet_overlord",
+      "breakpoints": true
     }
   ]
 }

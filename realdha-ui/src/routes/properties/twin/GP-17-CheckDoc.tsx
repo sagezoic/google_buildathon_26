@@ -9,6 +9,7 @@ import { Button } from '../../../components/ui/button'
 import { Modal } from '../../../components/ui/modal'
 import { CHECK, compareFile, type CheckRecord } from '../../../data/fixtures/twin'
 import { useTwinRecord } from '../../../lib/twin-store'
+import { DEMO_PLOT_ID, shortHash, verifyFile } from '../../../lib/chain-api'
 import { cn } from '../../../lib/cn'
 import { TwinPage } from '../../parts/TwinPage'
 
@@ -32,7 +33,7 @@ export default function CheckDoc() {
   const [forced] = useDemoState(STATES)
   const [params, setParams] = useSearchParams()
   const [checks, setChecks] = usePersistentState<CheckRecord[]>('twin.checks', [])
-  const { proof } = useTwinRecord()
+  const { proof, token } = useTwinRecord()
   const [current, setCurrent] = useState<{ file: string; size: number; result: 'matches' | 'changed'; doc: string; fingerprint: string; anchoredHash: string }>()
   const [error, setError] = useState('')
   // An explicit ?state= shows the drawn frame state; otherwise the state follows the real check.
@@ -42,16 +43,29 @@ export default function CheckDoc() {
   const navigate = useNavigate()
   const close = () => void navigate(path('GP-16'))
 
-  const pick = (f?: File) => {
+  const SLOT_DOC: Record<string, string> = { extract: '7/12 extract', card: 'Property card', na: 'NA order', mutation: 'Mutation entry 2291', deed: 'Sale deed' }
+  const pick = async (f?: File) => {
     if (!f) return
     if (!/\.(pdf|jpe?g|png)$/i.test(f.name)) return setError('Use a PDF, JPG or PNG file.')
     if (f.size > 20 * 1024 * 1024) return setError('This file is over 20 MB.')
     if (f.size === 0) return setError('This file is empty.')
     setError('')
-    const c = compareFile(f.name, f.size)
     const at = new Date().toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
-    setCurrent({ file: f.name, size: f.size, result: c.result, doc: c.doc.name, fingerprint: c.yourFingerprint, anchoredHash: c.doc.hash })
-    setChecks((prev) => [{ id: `${Date.now()}`, file: f.name, size: f.size, doc: c.doc.name, result: c.result, fingerprint: c.yourFingerprint, at }, ...prev].slice(0, 20))
+    let rec: { result: 'matches' | 'changed'; doc: string; fingerprint: string; anchoredHash: string }
+    if (token) {
+      // Real check: the server hashes the file and compares it with the on-chain record.
+      try {
+        const v = await verifyFile(f, DEMO_PLOT_ID)
+        rec = { result: v.verdict === 'match' ? 'matches' : 'changed', doc: (v.slot && SLOT_DOC[v.slot]) || 'Anchored documents', fingerprint: shortHash(v.sha256), anchoredHash: shortHash(token.docRoot) }
+      } catch (e) {
+        return setError(e instanceof Error ? e.message : 'The check could not be completed.')
+      }
+    } else {
+      const c = compareFile(f.name, f.size)
+      rec = { result: c.result, doc: c.doc.name, fingerprint: c.yourFingerprint, anchoredHash: c.doc.hash }
+    }
+    setCurrent({ file: f.name, size: f.size, ...rec })
+    setChecks((prev) => [{ id: `${Date.now()}`, file: f.name, size: f.size, doc: rec.doc, result: rec.result, fingerprint: rec.fingerprint, at }, ...prev].slice(0, 20))
     setParams((p) => { const n = new URLSearchParams(p); n.delete('state'); return n }, { replace: true })
   }
   const again = () => {
@@ -66,12 +80,12 @@ export default function CheckDoc() {
         {state === 'drop' && (
           <>
             <p className="text-small text-muted">Drop a copy of a document. We compare its fingerprint with the one anchored on-chain. The file is not stored.</p>
-            <input ref={input} type="file" accept=".pdf,.jpg,.jpeg,.png" className="sr-only" tabIndex={-1} aria-label="Choose a file" onChange={(e) => pick(e.target.files?.[0])} />
+            <input ref={input} type="file" accept=".pdf,.jpg,.jpeg,.png" className="sr-only" tabIndex={-1} aria-label="Choose a file" onChange={(e) => void pick(e.target.files?.[0])} />
             <button
               type="button"
               onClick={() => input.current?.click()}
               onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => { e.preventDefault(); pick(e.dataTransfer.files[0]) }}
+              onDrop={(e) => { e.preventDefault(); void pick(e.dataTransfer.files[0]) }}
               className="flex min-h-[220px] flex-1 cursor-pointer flex-col items-center justify-center gap-1.5 rounded-card border-[1.5px] border-dashed border-line-strong bg-sunken px-4 text-center hover:bg-primary-tint"
             >
               <FileUp className="size-7 text-muted" aria-hidden />
@@ -107,7 +121,7 @@ export default function CheckDoc() {
               { k: 'Fingerprint', v: current?.fingerprint ?? CHECK.match.fingerprint, mono: true, chain: true },
               { k: 'Anchored', v: current ? `${proof.network} · ${proof.anchored}` : CHECK.match.anchored },
             ]} />
-            <a href="https://sepolia.etherscan.io/" target="_blank" rel="noopener noreferrer" className="text-small font-medium text-chain-ink underline">View on explorer ↗</a>
+            <a href={proof.explorerUrl ?? 'https://sepolia.etherscan.io/'} target="_blank" rel="noopener noreferrer" className="text-small font-medium text-chain-ink underline">View on explorer ↗</a>
             <div className="flex-1" />
             <Button to={path('GP-16')}>Done</Button>
           </div>

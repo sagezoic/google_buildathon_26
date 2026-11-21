@@ -5,12 +5,10 @@ import { path } from '../../app/nav'
 import { useDemoState } from '../../app/useDemoState'
 import { Button } from '../../components/ui/button'
 import { Card } from '../../components/ui/card'
-import { Pill } from '../../components/ui/pill'
-import { cn } from '../../lib/cn'
 
 /** F08-03 · No results and invalid ID states. */
 export default function NoResultsInvalidScreen() {
-  const [state, setState] = useDemoState(['no-results', 'invalid-id'] as const)
+  const [state] = useDemoState(['no-results', 'invalid-id'] as const)
   const navigate = useNavigate()
 
   const handleResetFilters = () => {
@@ -25,30 +23,10 @@ export default function NoResultsInvalidScreen() {
             <ArrowLeft className="size-4" />
             <span>Back to search</span>
           </Link>
-          <div className="flex items-center gap-2">
-            <span className="text-label text-muted">Demo state:</span>
-            <div className="flex rounded-control border border-line bg-surface p-0.5 text-chip font-medium">
-              <button
-                type="button"
-                onClick={() => setState('no-results')}
-                className={cn('rounded-[4px] px-3 py-1 transition-colors', state === 'no-results' ? 'bg-primary text-on-primary' : 'text-muted hover:text-text')}
-              >
-                State A · No results
-              </button>
-              <button
-                type="button"
-                onClick={() => setState('invalid-id')}
-                className={cn('rounded-[4px] px-3 py-1 transition-colors', state === 'invalid-id' ? 'bg-primary text-on-primary' : 'text-muted hover:text-text')}
-              >
-                State B · Invalid ID
-              </button>
-            </div>
-          </div>
         </div>
 
         {state === 'no-results' ? (
           <Card className="flex flex-col items-start gap-4 p-6 xl:p-8">
-            <Pill tone="neutral">No results</Pill>
             <h2 className="text-h1 font-semibold text-text">
               Nothing matches "Baner, 5 BHK, under ₹50 L"
             </h2>

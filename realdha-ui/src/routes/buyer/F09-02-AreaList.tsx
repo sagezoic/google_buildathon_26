@@ -102,7 +102,7 @@ export default function AreaListScreen() {
                           <div className="flex items-center gap-3">
                             <img src={thumb} alt="" className="size-11 rounded-control object-cover bg-sunken" />
                             <div>
-                              <div className="font-semibold text-text">{proj.name}</div>
+                              <div className="font-semibold text-text">{proj.name.replace(' · New launch', '')}</div>
                               <div className="text-overline text-muted">{proj.sub}</div>
                             </div>
                           </div>
