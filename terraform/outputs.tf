@@ -221,3 +221,22 @@ output "chain_registrar_kms_key" {
   description = "Cloud KMS key version that signs on-chain property token writes (derive its Ethereum address with `bun run chain:address`)"
   value       = local.chain_kms_key_version
 }
+
+# ------------------------------------------------------------------------------
+# Google Cloud Memorystore for Valkey Outputs
+# ------------------------------------------------------------------------------
+
+output "valkey_instance_id" {
+  description = "Identifier of the Memorystore for Valkey instance"
+  value       = length(google_memorystore_instance.valkey) > 0 ? google_memorystore_instance.valkey[0].instance_id : ""
+}
+
+output "valkey_host" {
+  description = "IP address / host endpoint for connecting to Valkey"
+  value       = local.valkey_host
+}
+
+output "valkey_port" {
+  description = "Port for connecting to Valkey"
+  value       = local.valkey_port
+}

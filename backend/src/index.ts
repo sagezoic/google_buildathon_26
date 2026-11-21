@@ -1,5 +1,6 @@
 import { app } from './app';
 import { env } from './config/env';
+import { cacheService } from './services/cache';
 
 // Start listening on configured host and port
 const server = app.listen({
@@ -17,6 +18,7 @@ const gracefulShutdown = async (signal: string) => {
   console.log(`[realdha-backend] ${signal} received: stopping server gracefully...`);
   try {
     app.stop();
+    await cacheService.close();
     console.log('[realdha-backend] Server stopped successfully.');
     process.exit(0);
   } catch (err) {

@@ -111,3 +111,16 @@ chain_public_api_url   = ""   # backend Cloud Run URL, used in token metadata li
 chain_rpc_url          = ""   # secret; better passed as TF_VAR_chain_rpc_url
 chain_admin_token      = ""   # secret; TF_VAR_chain_admin_token
 chain_owner_salt       = ""   # secret; TF_VAR_chain_owner_salt
+
+# ------------------------------------------------------------------------------
+# Google Cloud Memorystore for Valkey Caching
+# ------------------------------------------------------------------------------
+enable_valkey              = true
+valkey_instance_id         = ""                  # empty = realdha-valkey-<environment>
+valkey_node_type           = "SHARED_CORE_NANO"  # SHARED_CORE_NANO (dev/hackathon), STANDARD_SMALL, HIGHMEM_MEDIUM
+valkey_shard_count         = 1
+valkey_replica_count       = 0                   # 0 for single-node (cost-effective), 1+ for HA replica
+valkey_engine_version      = "VALKEY_8_0"        # VALKEY_8_0 or VALKEY_7_2
+valkey_deletion_protection = false
+valkey_network             = "default"           # VPC network for PSC endpoints
+valkey_url                 = ""                  # Optional custom/external Valkey URL (e.g. redis://host:6379)

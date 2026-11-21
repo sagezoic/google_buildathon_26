@@ -42,6 +42,7 @@ Terraform (`cd terraform`):
 - Read config only through `src/config/env.ts`, not `process.env` directly. Cloud Run supplies `PORT` (default 8080).
 - Keep `/health` stable: it is the Cloud Run probe.
 - Gemini (Vertex AI) code is in `src/modules/ai/` (document checks, property chat) and `src/services/gemini.ts`. Models and location come from `VERTEX_LOCATION`, `GEMINI_VERIFY_MODEL` and `GEMINI_CHAT_MODEL`, set by Terraform (`terraform/vertex.tf`). Tests stub `GeminiService.generateJson`; never call Vertex from tests.
+- Caching is managed via `src/services/cache.ts` using Google Cloud Memorystore for Valkey (`ioredis` with seamless in-memory fallback and pattern invalidation), configured via `VALKEY_HOST`, `VALKEY_PORT`, `VALKEY_URL`, set by Terraform (`terraform/valkey.tf`).
 - Blockchain code is in `src/modules/chain/` (contract in `backend/contracts/`). Recompile with `bun run chain:compile` after editing the `.sol` and commit the JSON. Chain tests run an in-process ganache and need a database.
 - Tests are in `backend/test/*.test.ts`, using `bun:test` against the exported `app`. Fixtures are in `backend/test/fixtures/`. Add a test with every route.
 - ESM only (`"type": "module"`). Use `bun`, not npm/yarn, in `backend/`.

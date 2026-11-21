@@ -26,7 +26,33 @@ import {
 } from '../../db/schema';
 import { distM } from '../../scraper/build/geo';
 import { CITIES } from '../../scraper/cities';
+import { cacheService } from '../../services/cache';
 import { SAMPLE_SOCIETIES, findSampleSociety } from './sample-societies';
+
+function serializeFilterParams(p: SocietyFilterParams): string {
+  const parts: string[] = [];
+  if (p.city) parts.push(`c=${p.city.toLowerCase()}`);
+  if (p.q) parts.push(`q=${encodeURIComponent(p.q.trim().toLowerCase())}`);
+  if (p.locality) parts.push(`loc=${encodeURIComponent(p.locality.trim().toLowerCase())}`);
+  if (p.bhk && p.bhk.length > 0) parts.push(`bhk=${[...p.bhk].sort().join(',')}`);
+  if (p.kind && p.kind.length > 0) parts.push(`kind=${[...p.kind].sort().join(',')}`);
+  if (p.mode) parts.push(`m=${p.mode}`);
+  if (p.minPrice !== undefined) parts.push(`minP=${p.minPrice}`);
+  if (p.maxPrice !== undefined) parts.push(`maxP=${p.maxPrice}`);
+  if (p.minRent !== undefined) parts.push(`minR=${p.minRent}`);
+  if (p.maxRent !== undefined) parts.push(`maxR=${p.maxRent}`);
+  if (p.minSqft !== undefined) parts.push(`minSq=${p.minSqft}`);
+  if (p.maxSqft !== undefined) parts.push(`maxSq=${p.maxSqft}`);
+  if (p.ready !== undefined) parts.push(`r=${p.ready}`);
+  if (p.amenities && p.amenities.length > 0) parts.push(`am=${[...p.amenities].sort().join(',')}`);
+  if (p.near && p.near.length > 0) parts.push(`near=${[...p.near].sort().join(',')}`);
+  if (p.minRating !== undefined) parts.push(`rat=${p.minRating}`);
+  if (p.sort) parts.push(`s=${p.sort}`);
+  if (p.lat !== undefined && p.lng !== undefined) parts.push(`geo=${p.lat.toFixed(4)},${p.lng.toFixed(4)},${p.radiusKm ?? 10}`);
+  parts.push(`lim=${p.limit ?? 20}`);
+  parts.push(`off=${p.offset ?? 0}`);
+  return parts.join('&');
+}
 
 export interface SocietyFilterParams {
   city?: string;
@@ -119,39 +145,41 @@ export class FlatsService {
    * Get all supported cities with their society counts.
    */
   static async getCities(): Promise<CitySummary[]> {
-    try {
-      const db = getDb();
-      const rows = await db
-        .select({
-          city: societies.city,
-          count: sql<number>`cast(count(${societies.id}) as int)`,
-        })
-        .from(societies)
-        .groupBy(societies.city);
+    return cacheService.wrap('flats:cities', 3600, async () => {
+      try {
+        const db = getDb();
+        const rows = await db
+          .select({
+            city: societies.city,
+            count: sql<number>`cast(count(${societies.id}) as int)`,
+          })
+          .from(societies)
+          .groupBy(societies.city);
 
-      const countsMap = new Map<string, number>();
-      for (const r of rows) {
-        countsMap.set(r.city.toLowerCase(), r.count);
+        const countsMap = new Map<string, number>();
+        for (const r of rows) {
+          countsMap.set(r.city.toLowerCase(), r.count);
+        }
+
+        const out: CitySummary[] = [];
+        for (const [slug, conf] of Object.entries(CITIES)) {
+          out.push({
+            slug,
+            name: conf.name,
+            societies_count: countsMap.get(slug) || 0,
+            center: conf.center,
+            zoom: conf.zoom ?? 11,
+          });
+        }
+
+        return out;
+      } catch {
+        return [
+          { slug: 'pune', name: 'Pune', societies_count: 40, center: [73.8567, 18.5204], zoom: 11 },
+          { slug: 'gurgaon', name: 'Gurugram', societies_count: 2708, center: [77.0266, 28.4595], zoom: 11 },
+        ];
       }
-
-      const out: CitySummary[] = [];
-      for (const [slug, conf] of Object.entries(CITIES)) {
-        out.push({
-          slug,
-          name: conf.name,
-          societies_count: countsMap.get(slug) || 0,
-          center: conf.center,
-          zoom: conf.zoom ?? 11,
-        });
-      }
-
-      return out;
-    } catch {
-      return [
-        { slug: 'pune', name: 'Pune', societies_count: 40, center: [73.8567, 18.5204], zoom: 11 },
-        { slug: 'gurgaon', name: 'Gurugram', societies_count: 2708, center: [77.0266, 28.4595], zoom: 11 },
-      ];
-    }
+    });
   }
 
   /**
@@ -163,7 +191,9 @@ export class FlatsService {
     limit: number;
     offset: number;
   }> {
-    const city = (params.city || 'pune').toLowerCase();
+    const cacheKey = `flats:societies:${serializeFilterParams(params)}`;
+    return cacheService.wrap(cacheKey, 300, async () => {
+      const city = (params.city || 'pune').toLowerCase();
     const limit = Math.min(Math.max(params.limit || 20, 1), 100);
     const offset = Math.max(params.offset || 0, 0);
     const mode = params.mode === 'rent' ? 'rent' : 'buy';
@@ -460,108 +490,113 @@ export class FlatsService {
         offset,
       };
     }
+    });
   }
 
   /**
    * Get single society with full relational details.
    */
   static async getSocietyById(id: string): Promise<FullSocietyDetail | null> {
-    try {
-      const db = getDb();
-      const soc = await db.query.societies.findFirst({
-        where: eq(societies.id, id),
-        with: {
-          unitTypes: true,
-          bhkPrices: true,
-          listings: true,
-          reviews: true,
-        },
-      });
+    return cacheService.wrap(`flats:society:${id}`, 900, async () => {
+      try {
+        const db = getDb();
+        const soc = await db.query.societies.findFirst({
+          where: eq(societies.id, id),
+          with: {
+            unitTypes: true,
+            bhkPrices: true,
+            listings: true,
+            reviews: true,
+          },
+        });
 
-      if (soc) {
-        const prices: Record<number, { buy_median?: number | null; rent_median?: number | null; psf?: number | null }> = {};
-        for (const bp of (soc.bhkPrices || [])) {
-          prices[bp.bhk] = {
-            buy_median: bp.buy_median,
-            rent_median: bp.rent_median,
-            psf: bp.psf,
+        if (soc) {
+          const prices: Record<number, { buy_median?: number | null; rent_median?: number | null; psf?: number | null }> = {};
+          for (const bp of (soc.bhkPrices || [])) {
+            prices[bp.bhk] = {
+              buy_median: bp.buy_median,
+              rent_median: bp.rent_median,
+              psf: bp.psf,
+            };
+          }
+          return {
+            ...soc,
+            prices,
+            unit_types: soc.unitTypes || [],
+            bhk_prices: soc.bhkPrices || [],
+            listings: soc.listings || [],
+            reviews: soc.reviews || [],
           };
         }
-        return {
-          ...soc,
-          prices,
-          unit_types: soc.unitTypes || [],
-          bhk_prices: soc.bhkPrices || [],
-          listings: soc.listings || [],
-          reviews: soc.reviews || [],
-        };
+      } catch {
+        // Database not configured or unreachable; fallback to sample dataset below
       }
-    } catch {
-      // Database not configured or unreachable; fallback to sample dataset below
-    }
 
-    const sample = findSampleSociety(id);
-    if (sample) return sample;
-    return null;
+      const sample = findSampleSociety(id);
+      if (sample) return sample;
+      return null;
+    });
   }
 
   /**
    * Get localities for a city with society counts and median pricing.
    */
   static async getLocalities(citySlug = 'pune'): Promise<LocalitySummary[]> {
-    const db = getDb();
     const city = citySlug.toLowerCase();
+    return cacheService.wrap(`flats:localities:${city}`, 1800, async () => {
+      const db = getDb();
 
-    const socList = await db
-      .select({
-        locality: societies.locality,
-        price_min: societies.price_min,
-        price_max: societies.price_max,
-        psf_now: societies.psf_now,
-      })
-      .from(societies)
-      .where(and(eq(societies.city, city), sql`${societies.locality} is not null`));
+      const socList = await db
+        .select({
+          locality: societies.locality,
+          price_min: societies.price_min,
+          price_max: societies.price_max,
+          psf_now: societies.psf_now,
+        })
+        .from(societies)
+        .where(and(eq(societies.city, city), sql`${societies.locality} is not null`));
 
-    const byLoc = new Map<
-      string,
-      { count: number; prices: number[]; psfs: number[] }
-    >();
+      const byLoc = new Map<
+        string,
+        { count: number; prices: number[]; psfs: number[] }
+      >();
 
-    for (const s of socList) {
-      const loc = s.locality!;
-      const entry = byLoc.get(loc) || { count: 0, prices: [], psfs: [] };
-      entry.count++;
-      if (s.price_min) entry.prices.push(s.price_min);
-      if (s.price_max) entry.prices.push(s.price_max);
-      if (s.psf_now) entry.psfs.push(s.psf_now);
-      byLoc.set(loc, entry);
-    }
+      for (const s of socList) {
+        const loc = s.locality!;
+        const entry = byLoc.get(loc) || { count: 0, prices: [], psfs: [] };
+        entry.count++;
+        if (s.price_min) entry.prices.push(s.price_min);
+        if (s.price_max) entry.prices.push(s.price_max);
+        if (s.psf_now) entry.psfs.push(s.psf_now);
+        byLoc.set(loc, entry);
+      }
 
-    const out: LocalitySummary[] = [];
-    for (const [loc, data] of byLoc.entries()) {
-      data.prices.sort((a, b) => a - b);
-      data.psfs.sort((a, b) => a - b);
+      const out: LocalitySummary[] = [];
+      for (const [loc, data] of byLoc.entries()) {
+        data.prices.sort((a, b) => a - b);
+        data.psfs.sort((a, b) => a - b);
 
-      const medianPrice =
-        data.prices.length > 0
-          ? data.prices[Math.floor(data.prices.length / 2)]
-          : null;
-      const medianPsf =
-        data.psfs.length > 0
-          ? data.psfs[Math.floor(data.psfs.length / 2)]
-          : null;
+        const medianPrice =
+          data.prices.length > 0
+            ? data.prices[Math.floor(data.prices.length / 2)]
+            : null;
+        const medianPsf =
+          data.psfs.length > 0
+            ? data.psfs[Math.floor(data.psfs.length / 2)]
+            : null;
 
-      out.push({
-        locality: loc,
-        city,
-        societies_count: data.count,
-        median_price: medianPrice,
-        median_psf: medianPsf,
-      });
-    }
+        out.push({
+          locality: loc,
+          city,
+          societies_count: data.count,
+          median_price: medianPrice,
+          median_psf: medianPsf,
+        });
+      }
 
-    out.sort((a, b) => b.societies_count - a.societies_count);
-    return out;
+      out.sort((a, b) => b.societies_count - a.societies_count);
+      return out;
+    });
   }
 
   /**
@@ -570,24 +605,27 @@ export class FlatsService {
   static async compareSocieties(ids: string[]): Promise<FullSocietyDetail[]> {
     const validIds = ids.slice(0, 5);
     if (validIds.length === 0) return [];
+    const sorted = [...validIds].sort().join(',');
 
-    const db = getDb();
-    const results = await db.query.societies.findMany({
-      where: inArray(societies.id, validIds),
-      with: {
-        unitTypes: true,
-        bhkPrices: true,
-        listings: true,
-        reviews: true,
-      },
+    return cacheService.wrap(`flats:compare:${sorted}`, 900, async () => {
+      const db = getDb();
+      const results = await db.query.societies.findMany({
+        where: inArray(societies.id, validIds),
+        with: {
+          unitTypes: true,
+          bhkPrices: true,
+          listings: true,
+          reviews: true,
+        },
+      });
+
+      return results.map((soc) => ({
+        ...soc,
+        unit_types: soc.unitTypes || [],
+        bhk_prices: soc.bhkPrices || [],
+        listings: soc.listings || [],
+        reviews: soc.reviews || [],
+      }));
     });
-
-    return results.map((soc) => ({
-      ...soc,
-      unit_types: soc.unitTypes || [],
-      bhk_prices: soc.bhkPrices || [],
-      listings: soc.listings || [],
-      reviews: soc.reviews || [],
-    }));
   }
 }

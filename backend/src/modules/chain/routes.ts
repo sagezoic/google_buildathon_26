@@ -2,6 +2,7 @@ import { timingSafeEqual } from 'node:crypto';
 import { Elysia, t } from 'elysia';
 import { env } from '../../config/env';
 import { ApiError } from '../../lib/errors';
+import { cacheService } from '../../services/cache';
 import { chainStatus } from './ledger';
 import { ChainService } from './service';
 
@@ -61,7 +62,7 @@ function requireAdmin(authorization: string | undefined) {
 
 export const chainRoutes = new Elysia({ prefix: '/api/chain' })
   /** GET /api/chain/status: network, contract, registrar address and gas balance. */
-  .get('/status', () => chainStatus(), {
+  .get('/status', () => cacheService.wrap('chain:status', 30, () => chainStatus()), {
     detail: { summary: 'Ledger status', tags: ['Chain'] },
     response: t.Union([
       t.Object({ configured: t.Literal(false), network: t.String() }),
@@ -78,6 +79,7 @@ export const chainRoutes = new Elysia({ prefix: '/api/chain' })
     async ({ params, body, headers }) => {
       requireAdmin(headers.authorization);
       const { token, changed } = await ChainService.approve(params.id, body);
+      await cacheService.del(`chain:token:${params.id}`);
       return { changed, token };
     },
     {
@@ -94,7 +96,7 @@ export const chainRoutes = new Elysia({ prefix: '/api/chain' })
   )
 
   /** GET /api/chain/properties/:id: the token, its history, and the live on-chain record. */
-  .get('/properties/:id', ({ params }) => ChainService.getToken(params.id), {
+  .get('/properties/:id', ({ params }) => cacheService.wrap(`chain:token:${params.id}`, 120, () => ChainService.getToken(params.id)), {
     params: t.Object({ id: t.String() }),
     detail: { summary: 'Get the property token with its live on-chain record', tags: ['Chain'] },
     response: t.Object({ token: TokenDto, onChain: t.Union([OnChainDto, t.Null()]) }),
