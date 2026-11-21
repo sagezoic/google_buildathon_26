@@ -139,8 +139,8 @@ jobs:
 
       - name: Enable Core Bootstrap GCP APIs
         run: |
-          echo "Enabling Cloud Resource Manager, Service Usage, and Cloud SQL Admin APIs..."
-          gcloud services enable cloudresourcemanager.googleapis.com serviceusage.googleapis.com sqladmin.googleapis.com --project="${{ env.GCP_PROJECT_ID }}"
+          echo "Enabling Cloud Resource Manager, Service Usage, Cloud SQL Admin, and Document AI APIs..."
+          gcloud services enable cloudresourcemanager.googleapis.com serviceusage.googleapis.com sqladmin.googleapis.com documentai.googleapis.com --project="${{ env.GCP_PROJECT_ID }}"
 
       - name: Configure Docker for Google Artifact Registry
         run: |
@@ -198,15 +198,12 @@ jobs:
               "projects/${{ env.GCP_PROJECT_ID }}/locations/${{ env.GCP_REGION }}/repositories/realdha-backend" || true
           fi
 
-          # Adopt existing Document AI OCR processor if already created in GCP
-          DOCAI_PROC=$(gcloud documentai processors list --location=us --project="${{ env.GCP_PROJECT_ID }}" --filter="displayName='realdha-document-ocr'" --format="value(name)" 2>/dev/null | head -n 1)
+          # Detect and adopt existing Document AI OCR processor to prevent 409 Conflict
+          DOCAI_PROC=$(gcloud documentai processors list --location=us --project="${{ env.GCP_PROJECT_ID }}" --format=json 2>/dev/null | jq -r '.[]? | select(.displayName=="realdha-document-ocr" or .display_name=="realdha-document-ocr") | .name' | head -n 1)
           if [ -n "$DOCAI_PROC" ]; then
-            echo "Adopting existing Document AI processor $DOCAI_PROC into state..."
-            terraform import -input=false \
-              -var="project_id=${{ env.GCP_PROJECT_ID }}" \
-              -var="region=${{ env.GCP_REGION }}" \
-              'google_document_ai_processor.ocr[0]' \
-              "$DOCAI_PROC" || true
+            DOCAI_ID=$(basename "$DOCAI_PROC")
+            echo "Found existing Document AI processor: $DOCAI_ID ($DOCAI_PROC)"
+            echo "TF_VAR_docai_processor_id=$DOCAI_ID" >> $GITHUB_ENV
           fi
 
       # Bootstrap Phase: Ensure APIs and Artifact Registry repositories exist before image push
