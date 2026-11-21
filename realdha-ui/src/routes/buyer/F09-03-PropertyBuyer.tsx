@@ -4,6 +4,7 @@ import { useParams, useSearchParams } from 'react-router'
 import { Screen } from '../../app/Shell'
 import { path } from '../../app/nav'
 import { usePersistentState } from '../../app/persist'
+import { useT } from '../../app/i18n'
 import { Button } from '../../components/ui/button'
 import { Card } from '../../components/ui/card'
 import { Pill } from '../../components/ui/pill'
@@ -62,6 +63,7 @@ const VIEW = {
 
 /** F09-03 · Single property buyer view. Shows Villa 7 (with the 360° tour) or unit A-1804. */
 export default function PropertyBuyerScreen() {
+  const t = useT()
   const routeParams = useParams()
   const [query] = useSearchParams()
   const requested = query.get('id') ?? query.get('record') ?? query.get('unit') ?? routeParams.id
@@ -90,14 +92,14 @@ export default function PropertyBuyerScreen() {
         {/* Breadcrumbs & Actions */}
         <div className="flex flex-wrap items-center justify-between gap-3 text-small text-muted">
           <nav aria-label="Breadcrumb">
-            Baner › {view.crumb[0]} › <b className="text-text">{view.crumb[1]}</b>
+            {t('Baner')} › {t(view.crumb[0])} › <b className="text-text">{t(view.crumb[1])}</b>
           </nav>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" to={path('F11-03')} icon={<MessageSquare className="size-4" />}>
-              Ask AI about this property
+              {t('Ask AI about this property')}
             </Button>
             <Button variant="ghost" size="sm" to={`${path('F07-01')}?record=${view.id}`} icon={<Share2 className="size-4" />}>
-              Share
+              {t('Share')}
             </Button>
           </div>
         </div>
@@ -111,7 +113,7 @@ export default function PropertyBuyerScreen() {
                 onClick={() => setActiveMedia('photos')}
                 className={cn('flex items-center gap-1.5 rounded-[4px] px-3 py-1.5 transition-colors', activeMedia === 'photos' ? 'bg-primary text-on-primary' : 'text-muted hover:text-text')}
               >
-                <Eye className="size-3.5" /> Photos ({photos.length})
+                <Eye className="size-3.5" /> {t('Photos')} ({photos.length})
               </button>
               {isVilla ? (
                 <button
@@ -119,7 +121,7 @@ export default function PropertyBuyerScreen() {
                   onClick={() => setActiveMedia('tour')}
                   className={cn('flex items-center gap-1.5 rounded-[4px] px-3 py-1.5 transition-colors', activeMedia === 'tour' ? 'bg-primary text-on-primary' : 'text-muted hover:text-text')}
                 >
-                  <Rotate3d className="size-3.5" /> 360° Tour
+                  <Rotate3d className="size-3.5" /> {t('360° Tour')}
                 </button>
               ) : (
                 <button
@@ -127,7 +129,7 @@ export default function PropertyBuyerScreen() {
                   onClick={() => setActiveMedia('floorplan')}
                   className={cn('flex items-center gap-1.5 rounded-[4px] px-3 py-1.5 transition-colors', activeMedia === 'floorplan' ? 'bg-primary text-on-primary' : 'text-muted hover:text-text')}
                 >
-                  <Layers className="size-3.5" /> Floor Plan & Walkthrough
+                  <Layers className="size-3.5" /> {t('Floor Plan & Walkthrough')}
                 </button>
               )}
               <button
@@ -135,10 +137,10 @@ export default function PropertyBuyerScreen() {
                 onClick={() => setActiveMedia('map')}
                 className={cn('flex items-center gap-1.5 rounded-[4px] px-3 py-1.5 transition-colors', activeMedia === 'map' ? 'bg-primary text-on-primary' : 'text-muted hover:text-text')}
               >
-                <MapPin className="size-3.5" /> Neighborhood Map
+                <MapPin className="size-3.5" /> {t('Neighborhood Map')}
               </button>
             </div>
-            <span className="text-label text-muted max-md:hidden">{view.mediaNote}</span>
+            <span className="text-label text-muted max-md:hidden">{t(view.mediaNote)}</span>
           </div>
 
           {activeMedia === 'photos' ? (
@@ -151,7 +153,7 @@ export default function PropertyBuyerScreen() {
                   className="size-full object-cover transition-all duration-300"
                 />
                 <div className="absolute bottom-3 left-3 rounded-control bg-surface/90 px-2.5 py-1 text-label font-semibold text-text shadow-e1 backdrop-blur-xs">
-                  Photo {activePhotoIdx + 1} of {photos.length}
+                  {t('Photo {0} of {1}', activePhotoIdx + 1, photos.length)}
                 </div>
               </div>
               {/* Thumbnail Grid */}
@@ -174,21 +176,21 @@ export default function PropertyBuyerScreen() {
               <svg viewBox="0 0 700 360" className="max-h-[320px] w-full max-w-[620px]" fill="none" xmlns="http://www.w3.org/2000/svg">
                 {/* Master Bed */}
                 <rect x="40" y="40" width="220" height="150" rx="4" className="fill-canvas stroke-line-strong" strokeWidth="2" />
-                <text x="150" y="110" textAnchor="middle" className="fill-text text-sm font-semibold">Master Bedroom</text>
-                <text x="150" y="130" textAnchor="middle" className="fill-muted text-xs">14' x 12' · Wooden Floor</text>
+                <text x="150" y="110" textAnchor="middle" className="fill-text text-sm font-semibold">{t('Master Bedroom')}</text>
+                <text x="150" y="130" textAnchor="middle" className="fill-muted text-xs">{t("14' x 12' · Wooden Floor")}</text>
                 {/* Living & Dining */}
                 <rect x="280" y="40" width="360" height="200" rx="4" className="fill-canvas stroke-line-strong" strokeWidth="2" />
-                <text x="460" y="130" textAnchor="middle" className="fill-text text-base font-semibold">Living & Dining Hall</text>
-                <text x="460" y="152" textAnchor="middle" className="fill-muted text-xs">22' x 16' · Marble Tiles</text>
+                <text x="460" y="130" textAnchor="middle" className="fill-text text-base font-semibold">{t('Living & Dining Hall')}</text>
+                <text x="460" y="152" textAnchor="middle" className="fill-muted text-xs">{t("22' x 16' · Marble Tiles")}</text>
                 {/* Hill Balcony */}
                 <rect x="280" y="250" width="360" height="70" rx="4" className="fill-primary/10 stroke-primary" strokeWidth="2" strokeDasharray="4 4" />
-                <text x="460" y="290" textAnchor="middle" className="fill-primary text-xs font-semibold">Private Balcony · Unobstructed Hill View (18th Floor)</text>
+                <text x="460" y="290" textAnchor="middle" className="fill-primary text-xs font-semibold">{t('Private Balcony · Unobstructed Hill View (18th Floor)')}</text>
                 {/* Kitchen */}
                 <rect x="40" y="200" width="220" height="120" rx="4" className="fill-canvas stroke-line-strong" strokeWidth="2" />
-                <text x="150" y="255" textAnchor="middle" className="fill-text text-sm font-semibold">Modular Kitchen</text>
-                <text x="150" y="275" textAnchor="middle" className="fill-muted text-xs">10' x 8' · Dry Balcony</text>
+                <text x="150" y="255" textAnchor="middle" className="fill-text text-sm font-semibold">{t('Modular Kitchen')}</text>
+                <text x="150" y="275" textAnchor="middle" className="fill-muted text-xs">{t("10' x 8' · Dry Balcony")}</text>
               </svg>
-              <div className="mt-2 text-label text-muted">Architectural Sanctioned Plan · Unit A-1804 (1,180 sq ft carpet)</div>
+              <div className="mt-2 text-label text-muted">{t('Architectural Sanctioned Plan · Unit A-1804 (1,180 sq ft carpet)')}</div>
             </div>
           ) : activeMedia === 'tour' ? (
             <Tour360 height="460px" />
@@ -198,7 +200,7 @@ export default function PropertyBuyerScreen() {
                 <OsmMarker position={view.mapCenter}>
                   <div className="flex flex-col items-center">
                     <div className="rounded-control border-2 border-white bg-primary px-2.5 py-1 text-chip font-bold text-on-primary shadow-e2 whitespace-nowrap">
-                      {view.mapLabel}
+                      {t(view.mapLabel)}
                     </div>
                     <div className="size-2 -translate-y-1 rotate-45 border-r border-b border-white bg-primary" />
                   </div>
@@ -213,14 +215,14 @@ export default function PropertyBuyerScreen() {
                 ].map((item) => (
                   <OsmMarker key={item.name} position={item.coord}>
                     <div className="flex items-center gap-1 rounded-pill border border-line bg-surface/95 px-2 py-0.5 text-[10px] font-medium text-text shadow-sm backdrop-blur-xs whitespace-nowrap">
-                      <span>{item.name}</span>
+                      <span>{t(item.name)}</span>
                       <span className="text-muted">· {item.dist}</span>
                     </div>
                   </OsmMarker>
                 ))}
 
                 <div className="absolute bottom-3 left-3 z-10 rounded-control border border-line bg-surface/90 px-3 py-1.5 text-label font-medium text-text shadow-e1 backdrop-blur-xs">
-                  {view.mapCaption}
+                  {t(view.mapCaption)}
                 </div>
               </OsmMap>
             </div>
@@ -234,25 +236,25 @@ export default function PropertyBuyerScreen() {
               <div className="flex flex-wrap items-center gap-2.5">
                 <RecordId id={view.id} copyable />
                 <Pill tone="success" icon={<Check className="size-3.5" />}>
-                  Lawyer Signed Off
+                  {t('Lawyer Signed Off')}
                 </Pill>
                 <Pill tone="chain" icon={<ShieldCheck className="size-3.5" />}>
-                  Anchored on-chain
+                  {t('Anchored on-chain')}
                 </Pill>
-                <Pill tone="brand" icon={<Sparkles className="size-3.5" />}>MahaRERA Sanctioned</Pill>
+                <Pill tone="brand" icon={<Sparkles className="size-3.5" />}>{t('MahaRERA Sanctioned')}</Pill>
               </div>
-              <h1 className="text-h1 font-bold text-text">{view.heading}</h1>
-              <p className="text-body text-muted">{view.address}</p>
+              <h1 className="text-h1 font-bold text-text">{t(view.heading)}</h1>
+              <p className="text-body text-muted">{t(view.address)}</p>
             </div>
 
             {/* Overview Card */}
             <Card className="flex flex-col gap-4">
-              <h2 className="text-h2 font-semibold text-text">Property Specifications</h2>
+              <h2 className="text-h2 font-semibold text-text">{t('Property Specifications')}</h2>
               <div className="grid grid-cols-2 gap-4 border-t border-line pt-4 sm:grid-cols-4">
                 {view.specs.map(([label, value]) => (
                   <div key={label}>
-                    <span className="text-label text-muted">{label}</span>
-                    <div className={cn('text-body font-semibold', label === 'MahaRERA ID' && 'font-mono')}>{value}</div>
+                    <span className="text-label text-muted">{t(label)}</span>
+                    <div className={cn('text-body font-semibold', label === 'MahaRERA ID' && 'font-mono')}>{t(value)}</div>
                   </div>
                 ))}
               </div>
@@ -261,41 +263,41 @@ export default function PropertyBuyerScreen() {
             {/* 30-Year Chain of Title Verification */}
             <Card className="flex flex-col gap-4">
               <div className="flex items-center justify-between">
-                <h2 className="text-h2 font-semibold text-text">30-Year Title Chain & Legal Status</h2>
-                <Pill tone="chain" icon={<ShieldCheck className="size-3.5" />}>Chain Complete</Pill>
+                <h2 className="text-h2 font-semibold text-text">{t('30-Year Title Chain & Legal Status')}</h2>
+                <Pill tone="chain" icon={<ShieldCheck className="size-3.5" />}>{t('Chain Complete')}</Pill>
               </div>
               <div className="flex flex-col divide-y divide-line">
                 <div className="flex items-center justify-between py-2.5">
                   <div>
-                    <div className="text-body font-medium">MahaRERA Sanctioned Plan & Registration</div>
-                    <div className="text-chip text-muted">Registration certificate verified against MahaRERA portal</div>
+                    <div className="text-body font-medium">{t('MahaRERA Sanctioned Plan & Registration')}</div>
+                    <div className="text-chip text-muted">{t('Registration certificate verified against MahaRERA portal')}</div>
                   </div>
-                  <Pill tone="success" icon={<Check className="size-3" />}>Verified</Pill>
+                  <Pill tone="success" icon={<Check className="size-3" />}>{t('Verified')}</Pill>
                 </div>
                 <div className="flex items-center justify-between py-2.5">
                   <div>
-                    <div className="text-body font-medium">Occupancy Certificate (OC)</div>
-                    <div className="text-chip text-muted">Issued by PMC Pune Municipal Corporation</div>
+                    <div className="text-body font-medium">{t('Occupancy Certificate (OC)')}</div>
+                    <div className="text-chip text-muted">{t('Issued by PMC Pune Municipal Corporation')}</div>
                   </div>
-                  <Pill tone="success" icon={<Check className="size-3" />}>Verified</Pill>
+                  <Pill tone="success" icon={<Check className="size-3" />}>{t('Verified')}</Pill>
                 </div>
                 <div className="flex items-center justify-between py-2.5">
                   <div>
-                    <div className="text-body font-medium">{view.mutation}</div>
-                    <div className="text-chip text-muted">Maharashtra Revenue Department · 7/12 land title clear</div>
+                    <div className="text-body font-medium">{t(view.mutation)}</div>
+                    <div className="text-chip text-muted">{t('Maharashtra Revenue Department · 7/12 land title clear')}</div>
                   </div>
-                  <Pill tone="success" icon={<Check className="size-3" />}>No Encumbrance</Pill>
+                  <Pill tone="success" icon={<Check className="size-3" />}>{t('No Encumbrance')}</Pill>
                 </div>
                 <div className="flex items-center justify-between py-2.5">
                   <div>
-                    <div className="text-body font-medium">Advocate Legal Search Report</div>
-                    <div className="text-chip text-muted">Adv. Meera Joshi · Signed off 18 Nov 2026</div>
+                    <div className="text-body font-medium">{t('Advocate Legal Search Report')}</div>
+                    <div className="text-chip text-muted">{t('Adv. Meera Joshi · Signed off 18 Nov 2026')}</div>
                   </div>
-                  <Pill tone="success" icon={<Check className="size-3" />}>Signed Off</Pill>
+                  <Pill tone="success" icon={<Check className="size-3" />}>{t('Signed Off')}</Pill>
                 </div>
               </div>
               <div className="rounded-control bg-canvas p-3 text-small text-muted">
-                Anchored to Ethereum Sepolia Ledger via Google Cloud KMS. SHA-256 fingerprint: <span className="font-mono text-text">{view.fingerprint}</span>
+                {t('Anchored to Ethereum Sepolia Ledger via Google Cloud KMS. SHA-256 fingerprint:')} <span className="font-mono text-text">{view.fingerprint}</span>
               </div>
             </Card>
           </div>
@@ -304,17 +306,17 @@ export default function PropertyBuyerScreen() {
           <div className="flex flex-col gap-4 xl:col-span-4">
             <Card className="sticky top-6 flex flex-col gap-5 p-6 shadow-e2">
               <div className="flex flex-col">
-                <span className="text-label text-muted">All-inclusive asking price</span>
+                <span className="text-label text-muted">{t('All-inclusive asking price')}</span>
                 <span className="text-h1 font-bold text-text">{view.price}</span>
-                <span className="text-small text-muted">{view.perSqft}</span>
+                <span className="text-small text-muted">{t(view.perSqft)}</span>
               </div>
 
               <div className="flex flex-col gap-2.5">
                 <Button size="lg" to={`${path('F12-01')}?unit=${view.id}`} icon={<Mail className="size-4" />}>
-                  Enquire with builder
+                  {t('Enquire with builder')}
                 </Button>
                 <Button size="lg" variant="secondary" to={`${path('F13-01')}?unit=${view.id}`} icon={<Phone className="size-4" />}>
-                  Book verified visit
+                  {t('Book verified visit')}
                 </Button>
                 <Button
                   size="lg"
@@ -322,7 +324,7 @@ export default function PropertyBuyerScreen() {
                   onClick={toggleShortlist}
                   icon={<Heart className={cn('size-4', isShortlisted && 'fill-danger text-danger')} />}
                 >
-                  {isShortlisted ? 'Saved to shortlist' : 'Add to shortlist'}
+                  {t(isShortlisted ? 'Saved to shortlist' : 'Add to shortlist')}
                 </Button>
                 {!isVilla && (
                   <Button
@@ -331,13 +333,13 @@ export default function PropertyBuyerScreen() {
                     to={path('GP-16')}
                     icon={<Compass className="size-4" />}
                   >
-                    View digital twin passport
+                    {t('View digital twin passport')}
                   </Button>
                 )}
               </div>
 
               <div className="border-t border-line pt-3 text-overline text-muted">
-                Listed by Sahyadri Developers · Direct verified developer inventory · 100% verified documents.
+                {t('Listed by Sahyadri Developers · Direct verified developer inventory · 100% verified documents.')}
               </div>
             </Card>
           </div>

@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useT } from '../../app/i18n'
 import { TOUR_ID } from '../../data/tour'
 import { cn } from '../../lib/cn'
 
@@ -17,6 +18,7 @@ type Tour360Props = {
  * StrictMode's double effect never leave two players behind.
  */
 export function Tour360({ shortId = TOUR_ID, height = '500px', className }: Tour360Props) {
+  const t = useT()
   const hostRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -41,7 +43,7 @@ export function Tour360({ shortId = TOUR_ID, height = '500px', className }: Tour
 
   return (
     <div className={cn('relative min-h-[460px] overflow-hidden rounded-card border border-line bg-sunken', className)}>
-      <div className="absolute inset-0 flex items-center justify-center text-small text-muted">Loading 360° tour…</div>
+      <div className="absolute inset-0 flex items-center justify-center text-small text-muted">{t('Loading 360° tour…')}</div>
       <div ref={hostRef} id={shortId} className="relative size-full min-h-[460px]" />
     </div>
   )
