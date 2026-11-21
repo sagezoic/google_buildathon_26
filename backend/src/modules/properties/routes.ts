@@ -139,6 +139,33 @@ export const propertiesRoutes = new Elysia({ prefix: '/api/properties' })
     response: DocumentDetailDto,
   })
 
+  /** GET /api/properties/:id/documents/:docId/file: the original upload, shown inline. */
+  .get(
+    '/:id/documents/:docId/file',
+    async ({ params }) => {
+      const { content, mime, filename } = await PropertiesService.getDocumentFile(params.id, params.docId);
+      return new Response(new Uint8Array(content), {
+        headers: {
+          'Content-Type': mime,
+          'Content-Length': String(content.length),
+          // `filename*` carries the real name; the plain one is an ASCII fallback.
+          'Content-Disposition': `inline; filename="${filename.replace(/[^\x20-\x7e]|["\\]/g, '_')}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+          'Cache-Control': 'private, max-age=300',
+          'X-Content-Type-Options': 'nosniff',
+        },
+      });
+    },
+    {
+      params: docParams,
+      detail: {
+        summary: 'View original document file',
+        tags: ['Properties'],
+        description: 'Streams the uploaded PDF or image from Cloud Storage with Content-Disposition: inline.',
+      },
+      response: t.Unknown(),
+    },
+  )
+
   /** POST /api/properties/:id/documents/:docId/process: OCR, detect language, translate, extract fields. */
   .post(
     '/:id/documents/:docId/process',
