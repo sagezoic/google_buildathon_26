@@ -39,6 +39,7 @@ Thumbs.db
 # Scraper cache
 .cache/
 backend/.cache/
+.tools/
 # Extra
 references/*
 .superpowers/

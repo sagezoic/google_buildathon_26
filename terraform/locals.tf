@@ -33,11 +33,14 @@ locals {
     var.enable_apis && var.enable_cdn ? [
       "compute.googleapis.com",
       "storage.googleapis.com"
+    ] : [],
+    var.enable_apis && var.enable_valkey ? [
+      "memorystore.googleapis.com"
     ] : []
   )
 
-  # Env vars for the backend from the Pub/Sub, BigQuery, CDN and Gemini modules (keys are known at plan time)
-  backend_data_env = merge(local.pubsub_env, local.bigquery_env, local.cdn_env, local.gemini_env)
+  # Env vars for the backend from the Pub/Sub, BigQuery, CDN, Gemini and Valkey modules (keys are known at plan time)
+  backend_data_env = merge(local.pubsub_env, local.bigquery_env, local.cdn_env, local.gemini_env, local.valkey_env)
 
   artifact_repo_host = "${var.region}-docker.pkg.dev"
 

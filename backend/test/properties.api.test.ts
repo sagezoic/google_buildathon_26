@@ -95,7 +95,7 @@ describe.skipIf(!hasDatabase)('Properties API with database', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toBe('application/pdf');
     expect(res.headers.get('content-disposition')).toContain('inline');
-    expect(new Uint8Array(await res.arrayBuffer())).toEqual(PDF);
+    expect(Buffer.from(await res.arrayBuffer())).toEqual(Buffer.from(PDF));
 
     const missing = await app.handle(new Request(`http://localhost/api/properties/${propertyId}/documents/doc_missing/file`));
     expect(missing.status).toBe(404);

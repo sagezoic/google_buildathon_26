@@ -13,6 +13,7 @@ import {
   type PropertyDocument,
 } from '../../db/schema';
 import { badRequest, notFound } from '../../lib/errors';
+import { cacheService } from '../../services/cache';
 import { GeminiService, ThinkingLevel } from '../../services/gemini';
 import { StorageService } from '../../services/storage';
 import { PropertiesService } from '../properties/service';
@@ -179,6 +180,7 @@ export const AiService = {
       if (!report.findings.length) throw badRequest('Gemini did not return any findings for these documents. Try again.');
 
       const [done] = await finish({ status: 'done', verdict: report.verdict, report: { ...report }, error: null });
+      await cacheService.delByPattern(`ai:checks:*${propertyId}*`);
       return checkDto(done);
     } catch (error) {
       await finish({ status: 'failed', error: error instanceof Error ? error.message : String(error) }).catch(() => {});
@@ -187,12 +189,14 @@ export const AiService = {
   },
 
   async getCheck(propertyId: string, checkId: string): Promise<CheckDto> {
-    const [row] = await getDb()
-      .select()
-      .from(propertyChecks)
-      .where(and(eq(propertyChecks.id, checkId), eq(propertyChecks.property_id, propertyId)));
-    if (!row) throw notFound('Check not found.');
-    return checkDto(row);
+    return cacheService.wrap(`ai:checks:${propertyId}:${checkId}`, 1800, async () => {
+      const [row] = await getDb()
+        .select()
+        .from(propertyChecks)
+        .where(and(eq(propertyChecks.id, checkId), eq(propertyChecks.property_id, propertyId)));
+      if (!row) throw notFound('Check not found.');
+      return checkDto(row);
+    });
   },
 
   /** The newest finished check, or null when the property has none. */
@@ -207,25 +211,30 @@ export const AiService = {
   },
 
   async latestCheckDto(propertyId: string): Promise<CheckDto> {
-    await loadProperty(propertyId);
-    const row = await this.latestCheck(propertyId);
-    if (!row) throw notFound('This property has no finished document check yet.');
-    return checkDto(row);
+    return cacheService.wrap(`ai:checks:latest:${propertyId}`, 600, async () => {
+      await loadProperty(propertyId);
+      const row = await this.latestCheck(propertyId);
+      if (!row) throw notFound('This property has no finished document check yet.');
+      return checkDto(row);
+    });
   },
 
   async listMessages(propertyId: string): Promise<ChatMessageDto[]> {
-    await loadProperty(propertyId);
-    const rows = await getDb()
-      .select()
-      .from(propertyChatMessages)
-      .where(eq(propertyChatMessages.property_id, propertyId))
-      .orderBy(asc(propertyChatMessages.created_at));
-    return rows.map(messageDto);
+    return cacheService.wrap(`ai:chat:${propertyId}`, 300, async () => {
+      await loadProperty(propertyId);
+      const rows = await getDb()
+        .select()
+        .from(propertyChatMessages)
+        .where(eq(propertyChatMessages.property_id, propertyId))
+        .orderBy(asc(propertyChatMessages.created_at));
+      return rows.map(messageDto);
+    });
   },
 
   async clearMessages(propertyId: string): Promise<void> {
     await loadProperty(propertyId);
     await getDb().delete(propertyChatMessages).where(eq(propertyChatMessages.property_id, propertyId));
+    await cacheService.del(`ai:chat:${propertyId}`);
   },
 
   /** Answers a question from the property's processed documents and latest check. Stores both turns. */
@@ -303,6 +312,7 @@ export const AiService = {
         created_at: new Date(q.created_at.getTime() + 1),
       })
       .returning();
+    await cacheService.del(`ai:chat:${propertyId}`);
     return { question: messageDto(q), answer: messageDto(a) };
   },
 };

@@ -427,3 +427,79 @@ variable "chain_public_api_url" {
   type        = string
   default     = ""
 }
+
+# ------------------------------------------------------------------------------
+# Google Cloud Memorystore for Valkey
+# ------------------------------------------------------------------------------
+
+variable "enable_valkey" {
+  description = "Provision Google Cloud Memorystore for Valkey and configure high-performance caching in the backend"
+  type        = bool
+  default     = true
+}
+
+variable "valkey_instance_id" {
+  description = "Instance ID for Memorystore for Valkey. If empty, defaults to realdha-valkey-<environment>."
+  type        = string
+  default     = ""
+}
+
+variable "valkey_node_type" {
+  description = "Machine type for Valkey nodes: SHARED_CORE_NANO (dev/hackathon), STANDARD_SMALL, HIGHMEM_MEDIUM, etc."
+  type        = string
+  default     = "SHARED_CORE_NANO"
+}
+
+variable "valkey_shard_count" {
+  description = "Number of shards for the Memorystore for Valkey instance"
+  type        = number
+  default     = 1
+}
+
+variable "valkey_replica_count" {
+  description = "Number of replicas per shard (0 for non-HA dev/hackathon, 1+ for production)"
+  type        = number
+  default     = 0
+}
+
+variable "valkey_engine_version" {
+  description = "Valkey engine version (e.g. VALKEY_8_0 or VALKEY_7_2)"
+  type        = string
+  default     = "VALKEY_8_0"
+}
+
+variable "valkey_transit_encryption_mode" {
+  description = "In-transit encryption mode: TRANSIT_ENCRYPTION_DISABLED, SERVER_AUTHENTICATION, etc."
+  type        = string
+  default     = "TRANSIT_ENCRYPTION_DISABLED"
+}
+
+variable "valkey_authorization_mode" {
+  description = "Authorization mode: AUTH_DISABLED or IAM_AUTH"
+  type        = string
+  default     = "AUTH_DISABLED"
+}
+
+variable "valkey_deletion_protection" {
+  description = "Whether deletion protection is enabled on the Memorystore for Valkey instance"
+  type        = bool
+  default     = false
+}
+
+variable "valkey_network" {
+  description = "VPC network name for Valkey Private Service Connect (PSC). Defaults to 'default'."
+  type        = string
+  default     = "default"
+}
+
+variable "valkey_network_id" {
+  description = "Explicit full VPC network resource ID for Valkey PSC (takes precedence over valkey_network if provided)."
+  type        = string
+  default     = ""
+}
+
+variable "valkey_url" {
+  description = "Optional external or custom Valkey / Redis URL (used if enable_valkey is false)."
+  type        = string
+  default     = ""
+}

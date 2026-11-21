@@ -18,6 +18,7 @@ Automated CI/CD is provided via **GitHub Actions** located in `.github/workflows
 - **Events (Pub/Sub)**: topics `document-ingest`, `chain-anchor`, `analytics-events` and a `dead-letter` queue (pull subscriptions, 5 delivery attempts). Uploads to `gcs_bucket_name` are announced on `document-ingest`. See `pubsub.tf`.
 - **Analytics (BigQuery)**: dataset `realdha_analytics` (US) with a `pubsub_events` table that `analytics-events` streams into. See `bigquery.tf`.
 - **Static assets (Cloud Storage + Cloud CDN)**: a public `realdha-cdn-<project-id>` bucket behind a global HTTP(S) load balancer with Cloud CDN. HTTP on a reserved IP by default; set `cdn_domain` for a managed certificate and HTTPS. Do not store private documents there. See `cdn.tf`.
+- **In-Memory Caching (Google Memorystore for Valkey)**: Valkey instance (`VALKEY_8_0`) providing ultra-low latency caching for properties, complex flat queries, search filtering, document checks, and blockchain reads. See `valkey.tf`.
 - **Cost Optimization**: Default auto-scaling configured with `min_instances = 0` (scale-to-zero when idle) up to `max_instances = 10`.
 
 ---
@@ -39,6 +40,7 @@ Automated CI/CD is provided via **GitHub Actions** located in `.github/workflows
     ├── pubsub.tf                 # Pub/Sub topics, subscriptions, dead-letter, GCS notification
     ├── bigquery.tf               # BigQuery dataset, events table, Pub/Sub streaming
     ├── cdn.tf                    # Public assets bucket + Cloud CDN load balancer
+    ├── valkey.tf                 # Google Cloud Memorystore for Valkey caching
     ├── vertex.tf                 # Gemini on Vertex AI: backend IAM and model env vars
     ├── outputs.tf                # Service URLs and Docker push commands
     ├── providers.tf              # Google provider configuration

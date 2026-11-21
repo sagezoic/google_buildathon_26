@@ -37,10 +37,12 @@
     "@google/genai": "^3.6.1",
     "drizzle-orm": "^0.45.4",
     "elysia": "^1.4.32",
-    "ethers": "^6"
+    "ethers": "^6",
+    "ioredis": "^6.0.0"
   },
   "devDependencies": {
     "@types/bun": "^1.4.5",
+    "@types/ioredis": "^4.28.10",
     "drizzle-kit": "^0.31.11",
     "ganache": "^7.9.2",
     "solc": "^0.8.39",

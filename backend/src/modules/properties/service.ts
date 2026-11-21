@@ -9,6 +9,7 @@ import {
   type PropertyDocument,
 } from '../../db/schema';
 import { badRequest, notFound, tooLarge } from '../../lib/errors';
+import { cacheService } from '../../services/cache';
 import { DocumentAiService } from '../../services/documentai';
 import { StorageService } from '../../services/storage';
 import { TranslateService } from '../../services/translate';
@@ -70,6 +71,14 @@ const detail = (d: PropertyDocument): DocumentDetail => ({
   translatedText: d.translated_text,
 });
 
+function hydrateProperty(p: Property): Property {
+  return {
+    ...p,
+    created_at: new Date(p.created_at),
+    updated_at: new Date(p.updated_at),
+  };
+}
+
 export const PropertiesService = {
   async create(input: PropertyInput & { type: string }): Promise<Property> {
     const [row] = await getDb()
@@ -86,10 +95,19 @@ export const PropertiesService = {
       .where(eq(properties.id, id))
       .returning();
     if (!row) throw notFound('Property not found.');
+    await cacheService.delByPattern(`properties:${id}*`);
     return row;
   },
 
   async get(id: string): Promise<{ property: Property; documents: DocumentSummary[] }> {
+    const cached = await cacheService.get<{ property: Property; documents: DocumentSummary[] }>(`properties:${id}`);
+    if (cached) {
+      return {
+        property: hydrateProperty(cached.property),
+        documents: cached.documents,
+      };
+    }
+
     const db = getDb();
     const [property] = await db.select().from(properties).where(eq(properties.id, id));
     if (!property) throw notFound('Property not found.');
@@ -98,7 +116,9 @@ export const PropertiesService = {
       .from(propertyDocuments)
       .where(eq(propertyDocuments.property_id, id))
       .orderBy(asc(propertyDocuments.created_at));
-    return { property, documents: docs.map(summary) };
+    const result = { property, documents: docs.map(summary) };
+    await cacheService.set(`properties:${id}`, result, 600);
+    return result;
   },
 
   async addDocument(propertyId: string, slot: string, file: File): Promise<DocumentSummary> {
@@ -139,6 +159,7 @@ export const PropertiesService = {
         console.warn('[properties] Could not delete replaced file', old.gcs_path, e),
       );
     }
+    await cacheService.delByPattern(`properties:${propertyId}*`);
     return summary(row);
   },
 
@@ -148,6 +169,7 @@ export const PropertiesService = {
     await StorageService.deleteFile(doc.gcs_path).catch((e) =>
       console.warn('[properties] Could not delete file', doc.gcs_path, e),
     );
+    await cacheService.delByPattern(`properties:${propertyId}*`);
   },
 
   async findDocument(propertyId: string, docId: string): Promise<PropertyDocument> {
@@ -160,7 +182,9 @@ export const PropertiesService = {
   },
 
   async getDocument(propertyId: string, docId: string): Promise<DocumentDetail> {
-    return detail(await this.findDocument(propertyId, docId));
+    return cacheService.wrap(`properties:${propertyId}:doc:${docId}`, 1800, async () => {
+      return detail(await this.findDocument(propertyId, docId));
+    });
   },
 
   /** The stored original, for viewing in the browser. The MIME type is the sniffed one saved at upload. */

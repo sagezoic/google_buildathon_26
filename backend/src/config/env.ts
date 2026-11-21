@@ -33,6 +33,18 @@ export interface EnvConfig {
   /** Bearer token the lawyer console sends to approve and anchor a property. */
   CHAIN_ADMIN_TOKEN?: string;
   PUBLIC_API_URL?: string;
+  /** Valkey / Redis connection URL (e.g. redis://host:6379). */
+  VALKEY_URL?: string;
+  /** Valkey / Memorystore host IP or hostname. */
+  VALKEY_HOST?: string;
+  /** Valkey port (default 6379). */
+  VALKEY_PORT: number;
+  /** Optional Valkey auth password. */
+  VALKEY_PASSWORD?: string;
+  /** Whether to use TLS encryption for Valkey connections. */
+  VALKEY_TLS: boolean;
+  /** Master toggle for cache usage (default true). */
+  VALKEY_ENABLED: boolean;
 }
 
 function parseEnv(): EnvConfig {
@@ -50,6 +62,9 @@ function parseEnv(): EnvConfig {
   const gcsPrivateKey = process.env.GCS_PRIVATE_KEY ? process.env.GCS_PRIVATE_KEY.replace(/\\n/g, '\n') : undefined;
 
   const maxUploadMb = parseInt(process.env.MAX_UPLOAD_MB || '20', 10);
+  const valkeyPort = parseInt(process.env.VALKEY_PORT || process.env.REDIS_PORT || '6379', 10);
+  const valkeyTls = process.env.VALKEY_TLS === 'true' || process.env.REDIS_TLS === 'true';
+  const valkeyEnabled = process.env.VALKEY_ENABLED !== 'false';
 
   return {
     CHAIN_RPC_URL: process.env.CHAIN_RPC_URL || undefined,
@@ -80,6 +95,12 @@ function parseEnv(): EnvConfig {
     GCP_SERVICE_ACCOUNT_KEY: gcpServiceAccountKey,
     GCS_CLIENT_EMAIL: gcsClientEmail,
     GCS_PRIVATE_KEY: gcsPrivateKey,
+    VALKEY_URL: process.env.VALKEY_URL || process.env.REDIS_URL || undefined,
+    VALKEY_HOST: process.env.VALKEY_HOST || process.env.REDIS_HOST || undefined,
+    VALKEY_PORT: Number.isNaN(valkeyPort) ? 6379 : valkeyPort,
+    VALKEY_PASSWORD: process.env.VALKEY_PASSWORD || process.env.REDIS_PASSWORD || undefined,
+    VALKEY_TLS: valkeyTls,
+    VALKEY_ENABLED: valkeyEnabled,
   };
 }
 

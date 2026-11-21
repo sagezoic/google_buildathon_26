@@ -104,6 +104,8 @@ for ROLE in \
   roles/pubsub.admin \
   roles/bigquery.admin \
   roles/compute.networkAdmin \
+  roles/compute.loadBalancerAdmin \
+  roles/memorystore.admin \
   roles/cloudkms.admin \
   roles/secretmanager.admin
 do
