@@ -10,6 +10,7 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { Layers, MapPin, Satellite } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { collapseAttribution } from './attribution'
 import { toLngLat } from './osm-geometry'
 import { getMapStyle, type MapTheme } from './osm-styles'
 import type { OsmMapProps } from './types'
@@ -85,6 +86,8 @@ export default function OsmMap({
       setFailed(true)
       return
     }
+
+    collapseAttribution(map)
 
     if (!interactive) {
       map.scrollZoom.disable()
