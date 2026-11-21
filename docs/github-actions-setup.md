@@ -103,7 +103,9 @@ for ROLE in \
   roles/documentai.admin \
   roles/pubsub.admin \
   roles/bigquery.admin \
-  roles/compute.networkAdmin
+  roles/compute.networkAdmin \
+  roles/cloudkms.admin \
+  roles/secretmanager.admin
 do
   gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${SA_EMAIL}" \
