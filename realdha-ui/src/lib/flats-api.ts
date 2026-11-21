@@ -48,6 +48,8 @@ export interface SocietyDetailData extends SocietyCard {
   towers: number | null
   acres: number | null
   rating_count: number | null
+  rera_id?: string | null
+  description?: string | null
   nearby: Record<string, { m: number; name?: string; n?: number }> | null
   unit_types: Array<{
     id?: number | string
@@ -103,6 +105,7 @@ export interface SocietyQuery {
   kind?: string
   ready?: boolean
   sort?: FlatSort
+  bhk?: number | number[]
   limit?: number
   offset?: number
 }
@@ -119,8 +122,15 @@ export function fetchSocieties(query: SocietyQuery, signal?: AbortSignal) {
   if (query.q) p.set('q', query.q)
   if (query.mode) p.set('mode', query.mode)
   if (query.kind) p.set('kind', query.kind)
-  if (query.ready) p.set('ready', 'true')
-  if (query.sort) p.set('sort', query.sort)
+  if (query.ready !== undefined) p.set('ready', query.ready ? 'true' : 'false')
+  if (query.bhk != null) {
+    p.set('bhk', Array.isArray(query.bhk) ? query.bhk.join(',') : String(query.bhk))
+  }
+  if (query.sort) {
+    // If in rent mode and sorting by price, send sort=rent to sort by monthly rent
+    const effectiveSort = query.mode === 'rent' && query.sort === 'price' ? 'rent' : query.sort
+    p.set('sort', effectiveSort)
+  }
   p.set('limit', String(query.limit ?? 100))
   if (query.offset) p.set('offset', String(query.offset))
   return getJson<SocietiesResponse>(`/api/flats/societies?${p}`, signal)

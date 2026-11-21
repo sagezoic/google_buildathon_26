@@ -33,15 +33,80 @@ export interface PropRow {
 
 /** The frame's six rows. The plot row (first) is rebuilt from the saved GP-07 draft; the draft row comes from `f03.drafts`. */
 export const SEED_ROWS: PropRow[] = [
-  { id: 'plot', title: 'NA plot, Gat 112/2', sub: 'Kusgaon, Lonavala', mTitle: 'NA plot, Gat 112/2', mSub: 'Kusgaon, Lonavala', recordId: 'RA-LON-004-P-112-2', type: 'Plot', status: 'anchored', updated: 'Today', rank: 100, action: { label: 'Open', to: '/gp-16' } },
-  { id: 'a1804', title: 'A-1804 · 3 BHK', sub: 'Baner Heights, Pune', mTitle: 'A-1804 · 3 BHK', mSub: 'Baner Heights, Pune', recordId: 'RA-PUN-001-A-18-04', type: 'Apartment', status: 'signed', updated: '2 d ago', rank: 80, action: { label: 'Open', to: '/f04-01' } },
-  { id: 'shop03', title: 'Shop 03, Kothrud Arcade', sub: 'Karve Road, Pune', mTitle: 'Shop 03', mSub: 'Kothrud Arcade', recordId: 'RA-PUN-008-S-03-00', type: 'Commercial', status: 'review', updated: '1 d ago', rank: 90, action: { label: 'Open', to: '/gp-16' } },
-  { id: 'alibag', title: 'Plot 45, Alibag', sub: 'Alibag, Raigad', mTitle: 'Plot 45', mSub: 'Alibag, Raigad', recordId: 'RA-ALI-001-P-45-1', type: 'Plot', status: 'clarify', updated: '3 d ago', rank: 70, action: { label: 'Resolve', to: '/gp-12', primary: true } },
-  { id: 'flat902', title: 'Flat 902, Wakad', sub: 'Wakad, Pune', mTitle: 'Flat 902', mSub: 'Wakad, Pune', recordId: 'RA-PUN-006-D-09-02', type: 'Apartment', status: 'checked', updated: '4 d ago', rank: 60, action: { label: 'Open', to: '/gp-16' } },
+  {
+    id: 'plot',
+    title: 'NA plot, Gat 112/2',
+    sub: 'Kusgaon, Lonavala',
+    mTitle: 'NA plot, Gat 112/2',
+    mSub: 'Kusgaon, Lonavala',
+    recordId: 'RA-LON-004-P-112-2',
+    type: 'Plot',
+    status: 'anchored',
+    updated: 'Today',
+    rank: 100,
+    action: { label: 'Open', to: '/properties/RA-LON-004-P-112-2' },
+  },
+  {
+    id: 'a1804',
+    title: 'A-1804 · 3 BHK',
+    sub: 'Baner Heights, Pune',
+    mTitle: 'A-1804 · 3 BHK',
+    mSub: 'Baner Heights, Pune',
+    recordId: 'RA-PUN-001-A-18-04',
+    type: 'Apartment',
+    status: 'signed',
+    updated: '2 d ago',
+    rank: 80,
+    action: { label: 'Open', to: '/properties/RA-PUN-001-A-18-04/apartment' },
+  },
+  {
+    id: 'shop03',
+    title: 'Shop 03, Kothrud Arcade',
+    sub: 'Karve Road, Pune',
+    mTitle: 'Shop 03',
+    mSub: 'Kothrud Arcade',
+    recordId: 'RA-PUN-008-S-03-00',
+    type: 'Commercial',
+    status: 'review',
+    updated: '1 d ago',
+    rank: 90,
+    action: { label: 'Open', to: '/properties/RA-PUN-008-S-03-00' },
+  },
+  {
+    id: 'alibag',
+    title: 'Plot 45, Alibag',
+    sub: 'Alibag, Raigad',
+    mTitle: 'Plot 45',
+    mSub: 'Alibag, Raigad',
+    recordId: 'RA-ALI-001-P-45-1',
+    type: 'Plot',
+    status: 'clarify',
+    updated: '3 d ago',
+    rank: 70,
+    action: { label: 'Resolve', to: '/properties/new/resolve', primary: true },
+  },
+  {
+    id: 'flat902',
+    title: 'Flat 902, Wakad',
+    sub: 'Wakad, Pune',
+    mTitle: 'Flat 902',
+    mSub: 'Wakad, Pune',
+    recordId: 'RA-PUN-006-D-09-02',
+    type: 'Apartment',
+    status: 'checked',
+    updated: '4 d ago',
+    rank: 60,
+    action: { label: 'Open', to: '/properties/RA-PUN-006-D-09-02' },
+  },
 ]
 
 export const STATUS_LABEL: Record<PropStatus, string> = {
-  anchored: 'Anchored on-chain', signed: 'Signed off', review: 'Lawyer review', clarify: 'Needs clarification', checked: 'Documents checked', draft: 'Draft',
+  anchored: 'Anchored on-chain',
+  signed: 'Signed off',
+  review: 'Lawyer review',
+  clarify: 'Needs clarification',
+  checked: 'Documents checked',
+  draft: 'Draft',
 }
 export const SIGNED_STATUSES: PropStatus[] = ['anchored', 'signed']
 
@@ -60,7 +125,7 @@ export interface DraftEntry {
 }
 
 export const SEED_DRAFTS: DraftEntry[] = [
-  { id: 'untitled-plot', kind: 'plot', title: 'Untitled plot', mTitle: 'Untitled plot', sub: 'Step 2 of 4 · Documents', step: 2, savedAt: null, to: '/gp-08' },
+  { id: 'untitled-plot', kind: 'plot', title: 'Untitled plot', mTitle: 'Untitled plot', sub: 'Step 2 of 4 · Documents', step: 2, savedAt: null, to: '/properties/new/upload' },
 ]
 
 export const STEP_LABEL = { 1: 'Property details', 2: 'Documents' } as const

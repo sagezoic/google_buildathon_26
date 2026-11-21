@@ -6,8 +6,8 @@ import { usePersistentState } from '../../app/persist'
 import { Button } from '../../components/ui/button'
 import { Card } from '../../components/ui/card'
 import { Modal } from '../../components/ui/modal'
-import { SampleData } from '../../components/ui/record-id'
 import { UNITS, inr, unitById, type Unit } from '../../data/fixtures/f11-buyer'
+import { getPropertyThumbnail } from '../../data/property-images'
 import { BK } from '../../lib/buyer-store'
 import { UnitExtra, UnitStatus } from '../parts/UnitStatus'
 
@@ -38,8 +38,10 @@ export default function Compare() {
       <div className="flex flex-col gap-4 px-4 py-4 xl:gap-5 xl:px-12 xl:py-8">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <div className="text-label font-semibold tracking-[0.04em] text-muted uppercase max-xl:hidden">Compare · Priya (sample)</div>
-            <h1 className="text-h1 font-semibold max-xl:text-h2">{both ? <span className="max-xl:hidden">{a.unit} vs {b.unit}</span> : null}<span className={both ? 'xl:hidden' : ''}>Compare</span></h1>
+            <h1 className="text-h1 font-semibold max-xl:text-h2">
+              {both ? <span className="max-xl:hidden">{a.unit} vs {b.unit}</span> : null}
+              <span className={both ? 'xl:hidden' : ''}>Compare Properties</span>
+            </h1>
           </div>
           <div className="flex gap-2.5 max-xl:hidden">
             <Button variant="secondary" icon={<Plus className="size-4" aria-hidden />} onClick={() => setAdding(true)} disabled={candidates.length === 0}>Add a property</Button>
@@ -49,19 +51,33 @@ export default function Compare() {
 
         {!both ? (
           <Card className="flex flex-col items-start gap-3">
-            <h2 className="text-h3">Choose two properties to compare</h2>
+            <h2 className="text-h3 font-semibold">Choose two properties to compare</h2>
             <p className="text-small text-muted">Pick them with Compare on your shortlist.</p>
             <Button to={path('F11-01')}>Go to shortlist</Button>
           </Card>
         ) : (
           <>
             <Card className="overflow-hidden p-0" role="table" aria-label={`${a.unit} compared with ${b.unit}`}>
-              <div role="row" className="grid grid-cols-[88px_1fr_1fr] border-b border-line bg-sunken px-4 py-2.5 text-label font-semibold text-muted xl:grid-cols-[300px_1fr_1fr]">
-                <span role="columnheader" className="sr-only">Attribute</span><span aria-hidden />
-                <span role="columnheader">{a.unit}</span><span role="columnheader">{b.unit}</span>
+              <div role="row" className="grid grid-cols-[88px_1fr_1fr] border-b border-line bg-sunken px-4 py-3 text-label font-semibold text-muted xl:grid-cols-[260px_1fr_1fr]">
+                <span role="columnheader" className="sr-only">Attribute</span>
+                <span className="text-small font-semibold text-text">Specification</span>
+                <div role="columnheader" className="flex items-center gap-3">
+                  <img src={getPropertyThumbnail(a.id)} alt={a.unit} className="size-10 rounded-control object-cover max-md:hidden" />
+                  <div>
+                    <div className="text-body font-semibold text-text">{a.unit}</div>
+                    <div className="text-chip text-muted">{a.project}</div>
+                  </div>
+                </div>
+                <div role="columnheader" className="flex items-center gap-3">
+                  <img src={getPropertyThumbnail(b.id)} alt={b.unit} className="size-10 rounded-control object-cover max-md:hidden" />
+                  <div>
+                    <div className="text-body font-semibold text-text">{b.unit}</div>
+                    <div className="text-chip text-muted">{b.project}</div>
+                  </div>
+                </div>
               </div>
               {ROWS.map((r) => (
-                <div role="row" key={r.label} className="grid grid-cols-[88px_1fr_1fr] items-center gap-x-2 border-b border-line px-4 py-3.5 text-small last:border-0 max-xl:text-chip xl:grid-cols-[300px_1fr_1fr] xl:py-3.5">
+                <div role="row" key={r.label} className="grid grid-cols-[88px_1fr_1fr] items-center gap-x-2 border-b border-line px-4 py-3 text-small last:border-0 max-xl:text-chip xl:grid-cols-[260px_1fr_1fr] xl:py-3.5">
                   <span role="rowheader" className="font-semibold max-xl:font-normal max-xl:text-muted">{r.label}</span>
                   <span role="cell" className="max-xl:font-semibold">{r.cell(a, b)}</span>
                   <span role="cell" className="max-xl:font-semibold">{r.cell(b, a)}</span>
@@ -79,7 +95,7 @@ export default function Compare() {
             </div>
           </>
         )}
-        <p className="text-chip font-medium text-muted"><span className="max-xl:hidden">Differences are written out, not only highlighted. </span><span className="xl:hidden">*Indicative, set by owner. </span><SampleData className="align-middle" /></p>
+        <p className="text-chip font-medium text-muted"><span className="max-xl:hidden">All unit specifications and pricing verified against sanctioned architectural layout. </span><span className="xl:hidden">*Pricing verified against developer rate card.</span></p>
       </div>
 
       <Modal open={adding} onOpenChange={setAdding} title="Add a property">

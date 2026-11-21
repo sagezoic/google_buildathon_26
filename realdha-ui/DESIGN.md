@@ -1,35 +1,34 @@
-# Design System: REALDHA (Lofty-Inspired Modern Institutional Dark)
+# Design System: REALDHA (Sovereign Land Registry & Deed Craft)
 
 <!-- impeccable:design-schema 1 -->
 
 ## Visual World
 
-**Midnight Glass & Electric Indigo**
-Inspired by Lofty's world-class real estate investment and property search marketplace, elevated with institutional-grade data density for Indian land records and title verification.
+**Terracotta Brick, Midnight Deed, and Marigold Proof**
+Directly derived from the official Realdha logo emblem in `realdha-ui/public/logo.png`. Replaces generic corporate blues with an authentic, grounded Indian land records palette.
 
 - **Canvas & Surfaces:**
-  - Base Background: `#070A13` (Deep Obsidian / Midnight)
-  - Card & Container Surface: `#0E1426` (Subtle midnight navy)
-  - Translucent Glass Overlays: `rgba(18, 24, 45, 0.75)` with `backdrop-filter: blur(12px)`
-  - Border Stroke: `1px solid rgba(255, 255, 255, 0.09)`
-  - Border Hover: `1px solid rgba(99, 102, 241, 0.45)`
-- **Floating Elevated Action Card (Screenshot 1 Reference):**
-  - Pure crisp white card (`#FFFFFF`) with dark slate typography (`#0F172A`)
-  - Elevated box-shadow: `0 20px 40px -8px rgba(0, 0, 0, 0.45)`
-  - High-conversion contrast against the dark midnight canvas
+  - Light Canvas: `#F5F6F8` (Crisp clean off-white ground)
+  - Light Surface: `#FFFFFF` (Crisp deed cards and panels)
+  - Dark Canvas: `#101924` (Deep obsidian midnight slate from the logo's backing deed folder)
+  - Dark Surface: `#16222F` (Elevated midnight slate card surface)
+  - Hairline Borders: `#D8DDE4` (Light) / `#253446` (Dark)
+  - Line Strong: `#B9C1CC` (Light) / `#62758E` (Dark)
 - **Brand & Accent Colors:**
-  - Primary Electric Indigo: `#5252EE` (Hover: `#4343DB`)
-  - Accent Violet / Glow: `#6366F1` (Hover: `#4F46E5`)
-  - Revenue Stamp Deep Violet: `#4A154B`
-  - Verified Emerald: `#10B981` (Background: `rgba(16, 185, 129, 0.12)`)
-  - Warning / Area Mismatch Amber: `#F59E0B` (Background: `rgba(245, 158, 11, 0.12)`)
-  - Critical / Mortgage Rose Red: `#EF4444` (Background: `rgba(239, 68, 68, 0.12)`)
+  - Primary Brand & Action: `#94382E` (Terracotta Brick / Revenue Stamp, hover: `#752A22`)
+  - Primary Action (Dark Mode): `#C0483A` (Vibrant terracotta fill, hover: `#AD3F32`)
+  - Primary Text (Dark Mode): `#E88B7D` (Accessible terracotta link & active nav text)
+  - On-Chain / Gold Proof: `#B45309` (Marigold Gold / Auspicious Amber checkmark emblem from the logo)
+  - On-Chain (Dark Mode): `#E08B16` (Glow gold seal, ink: `#F7C06D`, tint: `#2B1E0C`)
+  - Verified Emerald: `#1E7A4B` (Background: `#E4F3EA`, ink: `#14573A`)
+  - Warning Amber: `#B45309` (Background: `#FEF3C7`, ink: `#78350F`)
+  - Critical / Danger: `#B42318` (Background: `#FDE9E7`, ink: `#8A1B12`)
 - **Typography Scale:**
-  - Display / Hero Title: `Archivo` 800, 36px–48px, tracking -0.03em
-  - Section Headings: `Archivo` 700–800, 22px–28px, tracking -0.02em
-  - Body Text: `Archivo` 400–500, 14px–16px, line-height 1.55
-  - Tabular Numbers & Codes: `Archivo Narrow` 700 (`.n`), `font-variant-numeric: tabular-nums`
-  - Devanagari Terminology: `Mukta` 700–800 (`.dv`)
+  - Display / Hero Title: `IBM Plex Sans Variable` 600, 36px–44px, tracking -0.02em
+  - Section Headings: `IBM Plex Sans Variable` 600, 22px–28px, tracking -0.01em
+  - Body Text: `IBM Plex Sans Variable` 400–500, 14px–16px, line-height 1.5
+  - Tabular Numbers & Codes: `IBM Plex Mono` 500, `font-variant-numeric: tabular-nums`
+  - Devanagari Terminology: `Noto Sans Devanagari Variable` 500–600 (`:lang(hi)`, `:lang(mr)` line-height 1.7)
 
 ## Core Interface Paradigms
 

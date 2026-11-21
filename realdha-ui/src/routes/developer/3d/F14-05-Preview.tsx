@@ -51,16 +51,21 @@ export default function PreviewScreen() {
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
           {/* Main 3D Canvas */}
-          <div className="relative min-h-[440px] overflow-hidden rounded-card border border-line bg-sunken flex items-center justify-center p-8 xl:col-span-8 xl:min-h-[540px]">
-            <div className="flex flex-col items-center gap-3 text-center">
-              <div className="flex size-64 items-center justify-center rounded-card border border-line bg-gradient-to-b from-surface to-canvas p-6 shadow-e2">
-                <div className="flex flex-col items-center gap-2">
-                  <div className="size-16 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
-                  <span className="text-label font-medium text-text">GLB 3D Viewer</span>
-                  <span className="text-overline text-muted">{light === 'morning' ? 'Morning sun simulation (East)' : 'Evening diffused light (West)'}</span>
-                </div>
+          <div className="relative min-h-[440px] overflow-hidden rounded-card border border-line bg-sunken xl:col-span-8 xl:min-h-[540px]">
+            <img
+              src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1400&q=80"
+              alt="Baner Heights 3D Spatial Walkthrough"
+              className="size-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-text/80 via-transparent to-transparent" />
+            <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between text-white">
+              <div>
+                <div className="text-body font-semibold">GLB 3D Spatial Digital Twin</div>
+                <div className="text-chip text-white/80">3D BIM Model · Tower A · Verified Sanctioned Elevation</div>
               </div>
-              <span className="text-overline text-muted">3D model viewer placeholder · drag to look around</span>
+              <span className="rounded-control bg-white/20 px-3 py-1.5 text-label font-medium backdrop-blur-md">
+                {light === 'morning' ? '☀ East Morning Sunlight (8:00)' : '☾ West Evening Twilight'}
+              </span>
             </div>
           </div>
 

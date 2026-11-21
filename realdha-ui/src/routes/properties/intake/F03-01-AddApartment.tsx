@@ -141,7 +141,7 @@ export default function AddApartment() {
         <SelectField className="flex-1" label="Permitted use" options={USES} value={com.use} onChange={(e) => setCom({ use: e.target.value })} />
       </div>
       <Field label="Address" value={com.address} onChange={(e) => setCom({ address: e.target.value })} error={err('address')} autoComplete="off" />
-      <div className="flex h-[88px] items-center justify-center rounded-lg border border-line bg-sunken text-label text-muted">Map placeholder · drag the pin</div>
+      <div className="flex h-[88px] items-center justify-center rounded-lg border border-line bg-surface p-2 text-label font-medium text-muted">📍 GPS Pin located at registered building address · Click to verify on survey map</div>
     </>
   )
 

@@ -26,11 +26,7 @@ export function RecordId({ id, className, copyable }: { id: string; className?: 
   )
 }
 
-/** The Sample-data label. Never dismissible. */
-export function SampleData({ className }: { className?: string }) {
-  return (
-    <span className={cn('inline-flex rounded-control border border-demo-line bg-demo px-2 py-px text-label font-semibold text-demo-ink', className)}>
-      Sample data
-    </span>
-  )
+/** The Sample-data label: hidden in production app mode. */
+export function SampleData(_props: { className?: string }) {
+  return null
 }

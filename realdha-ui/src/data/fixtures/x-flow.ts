@@ -1,19 +1,109 @@
 import { path } from '../../app/nav'
 
-export interface Listing { id: string; title: string; price: string; to: string }
-export interface Launch { id: string; title: string; sub: string; to: string }
+export interface Listing {
+  id: string
+  title: string
+  locality: string
+  price: string
+  specs: string
+  status: 'anchored' | 'signed' | 'review'
+  to: string
+}
+
+export interface Launch {
+  id: string
+  title: string
+  sub: string
+  price: string
+  rera: string
+  to: string
+}
 
 export const RECENT: Listing[] = [
-  { id: 'RA-PUN-001-A-18-04', title: 'A-1804 · 3 BHK · Baner', price: '₹1,42,00,000', to: path('F09-03') },
-  { id: 'RA-PUN-001-A-17-04', title: 'A-1704 · 3 BHK · Baner', price: '₹1,38,00,000', to: path('F09-03') },
+  {
+    id: 'RA-PUN-001-A-18-04',
+    title: 'A-1804 · Baner Heights',
+    locality: 'Baner, Pune',
+    price: '₹1.42 Cr',
+    specs: '3 BHK · 1,180 sq ft · Hill view',
+    status: 'anchored',
+    to: path('F09-03', { id: 'RA-PUN-001-A-18-04' }),
+  },
+  {
+    id: 'RA-LON-004-P-112-2',
+    title: 'Gat 112/2 NA Plot',
+    locality: 'Kusgaon, Lonavala',
+    price: '₹51.2 L',
+    specs: 'Plot · 4,300 sq ft · Mountain view',
+    status: 'anchored',
+    to: path('GP-16', { id: 'RA-LON-004-P-112-2' }),
+  },
+  {
+    id: 'RA-PUN-016-A-06-03',
+    title: 'A-0603 · Aundh Crest',
+    locality: 'Aundh, Pune',
+    price: '₹1.52 Cr',
+    specs: '3 BHK · 1,260 sq ft · East facing',
+    status: 'signed',
+    to: path('F09-03', { id: 'RA-PUN-016-A-06-03' }),
+  },
+  {
+    id: 'RA-PUN-003-A-07-01',
+    title: 'A-0701 · Balewadi Court',
+    locality: 'Balewadi, Pune',
+    price: '₹1.31 Cr',
+    specs: '3 BHK · 1,320 sq ft · Pool view',
+    status: 'signed',
+    to: path('F09-03', { id: 'RA-PUN-003-A-07-01' }),
+  },
 ]
+
 export const SHORTLIST: Listing[] = [
-  { id: 'RA-PUN-007-B-09-02', title: 'B-0902 · 2 BHK · Skyline', price: '₹1,02,00,000', to: path('F09-03') },
-  { id: 'RA-PUN-003-A-07-01', title: 'A-0701 · 3 BHK · Balewadi', price: '₹1,31,00,000', to: path('F09-03') },
+  {
+    id: 'RA-PUN-007-B-09-02',
+    title: 'B-0902 · Skyline Residency',
+    locality: 'Baner, Pune',
+    price: '₹1.02 Cr',
+    specs: '2 BHK · 910 sq ft · Garden view',
+    status: 'signed',
+    to: path('F09-03', { id: 'RA-PUN-007-B-09-02' }),
+  },
+  {
+    id: 'RA-PUN-001-A-15-03',
+    title: 'A-1503 · Baner Heights',
+    locality: 'Baner, Pune',
+    price: '₹1.38 Cr',
+    specs: '3 BHK · 1,150 sq ft · South facing',
+    status: 'anchored',
+    to: path('F09-03', { id: 'RA-PUN-001-A-15-03' }),
+  },
 ]
+
 export const LAUNCHES: Launch[] = [
-  { id: 'RA-PUN-007', title: 'Skyline Residency', sub: 'Baner · from ₹92 L', to: path('F10-07') },
-  { id: 'RA-PUN-012', title: 'Green Arcade', sub: 'Wakad · from ₹85 L', to: path('F10-07') },
+  {
+    id: 'RA-PUN-007',
+    title: 'Skyline Residency',
+    sub: 'Baner, Pune · Possession Dec 2028',
+    price: 'From ₹92 L',
+    rera: 'P52100012345',
+    to: path('F10-07', { projectId: 'RA-PUN-007' }),
+  },
+  {
+    id: 'RA-PUN-012',
+    title: 'Green Arcade Commercial',
+    sub: 'Wakad, Pune · Possession mid 2027',
+    price: 'From ₹85 L',
+    rera: 'P52100054321',
+    to: path('F10-07', { projectId: 'RA-PUN-012' }),
+  },
+  {
+    id: 'RA-LON-004',
+    title: 'Kusgaon Valley Plots',
+    sub: 'Lonavala Hills · Sanctioned NA',
+    price: 'From ₹48 L',
+    rera: 'P52100098765',
+    to: path('F10-06'),
+  },
 ]
 
 export type NotifTone = 'danger' | 'success' | 'warning'
@@ -25,6 +115,7 @@ export const WIDE_NOTIFS: WideNotif[] = [
   { id: 'w4', tag: 'Reminder', title: 'Call reminder', body: 'Video call at 11:00 tomorrow.', at: '20 Nov, 15:00', to: path('X-01') },
   { id: 'w5', tag: 'Mint', title: 'Mint confirmed', body: '1,000 units minted on Sepolia testnet.', at: '20 Nov, 15:12', to: path('GP-22') },
 ]
+
 export interface NarrowNotif { id: string; tag: string; title: string; at: string; tone: NotifTone; status: string; to: string; action?: string }
 export const NARROW_NOTIFS: NarrowNotif[] = [
   { id: 'm1', tag: 'Check ready', title: 'Report #CK-2026-0412 is ready', at: '10 min ago', tone: 'danger', status: 'STOP', to: path('F05-03') },
@@ -59,10 +150,10 @@ export const TWIN_COPY: Record<'hi' | 'mr', TwinCopy> = {
     apt: { title: 'ए-1804 · 3 बीएचके', lines: ['बानेर हाइट्स, पुणे', 'कारपेट क्षेत्र: 1,180 वर्ग फुट', 'दिशा: पूर्व'], share: 'लिंक साझा करें' },
   },
   mr: {
-    lang: 'mr', tabLabel: 'मरा · Marathi', chip: 'स्वाक्षरीत · ऑन-चेन', title: 'कुसगाव एनए प्लॉट · गट 112/2', place: 'मावळ, पुणे · नमुना डेटा',
-    facts: [{ k: 'क्षेत्रफळ', v: '0.0418 ha' }, { k: 'वापर', v: 'बिनशेती' }], docsTitle: 'कागदपत्रे',
-    docs: [{ n: '7/12 उतारा', h: '0x9f3a…c21e' }, { n: 'मिळकत पत्रिका', h: '0x21fd…9c03' }],
-    actions: ['लिंक शेअर करा', 'कागदपत्र तपासा', 'AI ला विचारा', 'टोकनाइज करा'], note: 'अधिकृत जमीन नोंदणी हाच कायदेशीर अभिलेख आहे.',
-    apt: { title: 'ए-1804 · ३ बीएचके', lines: ['बाणेर हाइट्स, पुणे', 'कार्पेट क्षेत्र: १,१८० चौरस फूट', 'दिशा: पूर्व'], share: 'लिंक शेअर करा' },
+    lang: 'mr', tabLabel: 'मरा · Marathi', chip: 'स्वाक्षरित · ऑन-चेन', title: 'कुसगाव एनए प्लॉट · गट ११२/२', place: 'मावळ, पुणे · नमुना डेटा',
+    facts: [{ k: 'क्षेत्रफळ', v: '०.०४१८ हेक्टर' }, { k: 'वापर', v: 'अकृषिक' }], docsTitle: 'कागदपत्रे',
+    docs: [{ n: '७/१२ उतारा', h: '0x9f3a…c21e' }, { n: 'मालमत्ता पत्रक', h: '0x21fd…9c03' }],
+    actions: ['दुवा सामायिक करा', 'कागदपत्रे तपासा', 'AI ला विचारा', 'टोकनाइझ करा'], note: 'अधिकृत भूमी अभिलेख हाच कायदेशीर दस्तऐवज आहे.',
+    apt: { title: 'ए-१८०४ · ३ बीएचके', lines: ['बाणेर हाइट्स, पुणे', 'कार्पेट क्षेत्र: १,१८० चौ. फूट', 'दिशा: पूर्व'], share: 'दुवा सामायिक करा' },
   },
 }

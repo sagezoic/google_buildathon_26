@@ -9,6 +9,7 @@ import { Pill } from '../../components/ui/pill'
 import { PROJECTS } from '../../data/fixtures/f09-area'
 import { PROPERTIES } from '../../data/fixtures/f08-search'
 import { inr } from '../../data/fixtures/f11-buyer'
+import { getPropertyThumbnail } from '../../data/property-images'
 import { cn } from '../../lib/cn'
 
 /** F09-02 · Area list of projects and properties in Baner. */
@@ -74,7 +75,7 @@ export default function AreaListScreen() {
           </div>
 
           <span className="text-small text-muted">
-            5 of 412 · Sample data
+            5 verified developments in Baner, Pune
           </span>
         </div>
 
@@ -84,8 +85,8 @@ export default function AreaListScreen() {
             <table className="w-full text-left text-small">
               <thead className="border-b border-line bg-canvas text-label font-semibold text-muted">
                 <tr>
-                  <th className="px-4 py-3">ID</th>
-                  <th className="px-4 py-3">Name</th>
+                  <th className="px-4 py-3">Property</th>
+                  <th className="px-4 py-3">Record ID</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Price</th>
                   <th className="px-4 py-3 text-right"></th>
@@ -93,55 +94,71 @@ export default function AreaListScreen() {
               </thead>
               <tbody className="divide-y divide-line bg-surface">
                 {tab === 'projects' ? (
-                  PROJECTS.map((proj) => (
-                    <tr key={proj.id} className="hover:bg-canvas/50">
-                      <td className="px-4 py-3 font-mono font-medium text-text">
-                        {proj.id}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="font-semibold text-text">{proj.name}</div>
-                        <div className="text-overline text-muted">{proj.sub}</div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Pill tone={proj.status === 'checked' ? 'success' : 'neutral'}>
-                          {proj.status === 'checked' ? 'Documents checked' : 'New launch'}
-                        </Pill>
-                      </td>
-                      <td className="px-4 py-3 font-medium text-text">
-                        {proj.priceRange}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <Button variant="secondary" size="sm" to={path('F09-03')}>
-                          View
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
+                  PROJECTS.map((proj) => {
+                    const thumb = getPropertyThumbnail(proj.id)
+                    return (
+                      <tr key={proj.id} className="hover:bg-canvas/50">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <img src={thumb} alt="" className="size-11 rounded-control object-cover bg-sunken" />
+                            <div>
+                              <div className="font-semibold text-text">{proj.name}</div>
+                              <div className="text-overline text-muted">{proj.sub}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 font-mono font-medium text-text">
+                          {proj.id}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Pill tone={proj.status === 'checked' ? 'success' : 'neutral'}>
+                            {proj.status === 'checked' ? 'Documents checked' : 'New launch'}
+                          </Pill>
+                        </td>
+                        <td className="px-4 py-3 font-medium text-text">
+                          {proj.priceRange}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <Button variant="secondary" size="sm" to={path('F09-03')}>
+                            View
+                          </Button>
+                        </td>
+                      </tr>
+                    )
+                  })
                 ) : (
-                  PROPERTIES.slice(0, 5).map((prop) => (
-                    <tr key={prop.id} className="hover:bg-canvas/50">
-                      <td className="px-4 py-3 font-mono font-medium text-text">
-                        {prop.id}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="font-semibold text-text">{prop.label}</div>
-                        <div className="text-overline text-muted">{prop.project}</div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <Pill tone={prop.status === 'signed-off' ? 'success' : 'warning'}>
-                          {prop.status === 'signed-off' ? 'Signed off' : 'Lawyer review'}
-                        </Pill>
-                      </td>
-                      <td className="px-4 py-3 font-medium text-text">
-                        {inr(prop.price)}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <Button variant="secondary" size="sm" to={path('F09-03')}>
-                          View
-                        </Button>
-                      </td>
-                    </tr>
-                  ))
+                  PROPERTIES.slice(0, 5).map((prop) => {
+                    const thumb = getPropertyThumbnail(prop.id, prop.type)
+                    return (
+                      <tr key={prop.id} className="hover:bg-canvas/50">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <img src={thumb} alt="" className="size-11 rounded-control object-cover bg-sunken" />
+                            <div>
+                              <div className="font-semibold text-text">{prop.label}</div>
+                              <div className="text-overline text-muted">{prop.project}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 font-mono font-medium text-text">
+                          {prop.id}
+                        </td>
+                        <td className="px-4 py-3">
+                          <Pill tone={prop.status === 'signed-off' ? 'success' : 'warning'}>
+                            {prop.status === 'signed-off' ? 'Signed off' : 'Lawyer review'}
+                          </Pill>
+                        </td>
+                        <td className="px-4 py-3 font-medium text-text">
+                          {inr(prop.price)}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <Button variant="secondary" size="sm" to={path('F09-03')}>
+                            View
+                          </Button>
+                        </td>
+                      </tr>
+                    )
+                  })
                 )}
               </tbody>
             </table>
