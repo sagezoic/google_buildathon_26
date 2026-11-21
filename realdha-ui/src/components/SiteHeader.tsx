@@ -23,6 +23,7 @@ import { type Role } from '../app/screens'
 import { NAV, INITIALS, path } from '../app/nav'
 import { useActiveRole } from '../app/active-role'
 import { usePrefs, type Lang } from '../app/prefs'
+import { useT } from '../app/i18n'
 import { Button } from './ui/button'
 import { PlaceSearch } from './place-search'
 import { Badge } from './ui/badge'
@@ -115,25 +116,26 @@ const ROLE_GROUPS: { label: string; roles: Role[] }[] = [
 
 /** Always-visible role switcher: shows who the visitor is viewing as and lists every role. */
 function RoleMenu({ role, onPick, onStart }: { role: Role; onPick: (r: Role) => void; onStart: () => void }) {
+  const t = useT()
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        aria-label={`Viewing as ${ROLE_LABEL[role]}. Switch role`}
+        aria-label={`${t('Viewing as')} ${t(ROLE_LABEL[role])}. ${t('Switch role')}`}
         className="hidden h-9 shrink-0 cursor-pointer items-center gap-2 rounded-control border border-line-strong bg-surface px-2.5 text-chip font-medium text-text transition-colors hover:bg-primary-tint md:flex"
       >
         {ROLE_PROFILES[role]?.icon}
-        <span className="max-xl:hidden">Viewing as {ROLE_LABEL[role]}</span>
+        <span className="max-xl:hidden">{t('Viewing as')} {t(ROLE_LABEL[role])}</span>
         <ChevronDown className="size-3 text-muted" aria-hidden />
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-60 p-1.5">
         {ROLE_GROUPS.map((g) => (
           <React.Fragment key={g.label}>
-            <DropdownMenuLabel className="px-2.5 py-1 text-xs font-semibold text-muted">{g.label}</DropdownMenuLabel>
+            <DropdownMenuLabel className="px-2.5 py-1 text-xs font-semibold text-muted">{t(g.label)}</DropdownMenuLabel>
             {g.roles.map((r) => (
               <DropdownMenuItem key={r} onSelect={() => onPick(r)} className="justify-between">
                 <span className="flex items-center gap-2">
                   {ROLE_PROFILES[r]?.icon}
-                  {ROLE_LABEL[r]}
+                  {t(ROLE_LABEL[r])}
                 </span>
                 {role === r && <Check className="size-4 text-primary-text" aria-hidden />}
               </DropdownMenuItem>
@@ -141,7 +143,7 @@ function RoleMenu({ role, onPick, onStart }: { role: Role; onPick: (r: Role) => 
             <DropdownMenuSeparator />
           </React.Fragment>
         ))}
-        <DropdownMenuItem onSelect={onStart}>Choose a role from the start screen</DropdownMenuItem>
+        <DropdownMenuItem onSelect={onStart}>{t('Choose a role from the start screen')}</DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
@@ -155,10 +157,11 @@ const LANGS: { id: Lang; label: string }[] = [
 
 export function LangSwitch({ className }: { className?: string }) {
   const { lang, setLang } = usePrefs()
+  const t = useT()
   return (
     <div
       role="group"
-      aria-label="Language"
+      aria-label={t('Language')}
       className={cn(
         'flex h-8 items-center overflow-hidden rounded-control border border-line-strong bg-surface text-label font-medium shrink-0',
         className,
@@ -187,11 +190,12 @@ export function LangSwitch({ className }: { className?: string }) {
 
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, toggleTheme } = usePrefs()
+  const t = useT()
   return (
     <button
       type="button"
       onClick={toggleTheme}
-      aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+      aria-label={t(theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme')}
       className={cn(
         'inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-control text-muted transition-colors hover:bg-primary-tint hover:text-text',
         className,
@@ -230,6 +234,7 @@ export function SiteHeader({
   onSearch,
 }: SiteHeaderProps) {
   const navigate = useNavigate()
+  const t = useT()
   const [mobileOpen, setMobileOpen] = React.useState(false)
   const runSearch = useRunSearch()
 
@@ -297,7 +302,7 @@ export function SiteHeader({
         {back ? (
           <Link
             to={back}
-            aria-label="Back"
+            aria-label={t('Back')}
             className="inline-flex size-8 shrink-0 items-center justify-center rounded-control text-text transition-colors hover:bg-primary-tint md:hidden"
           >
             <ArrowLeft className="size-5" />
@@ -309,7 +314,7 @@ export function SiteHeader({
               <SheetTrigger asChild>
                 <button
                   type="button"
-                  aria-label="Toggle navigation menu"
+                  aria-label={t('Toggle navigation menu')}
                   className="inline-flex size-8 items-center justify-center rounded-control text-muted transition-colors hover:bg-primary-tint hover:text-text"
                 >
                   <Menu className="size-5" />
@@ -328,7 +333,7 @@ export function SiteHeader({
                     </span>
                   </div>
                   <p className="text-xs text-muted">
-                    One permanent record for every property in India
+                    {t('One permanent record for every property in India')}
                   </p>
                 </SheetHeader>
 
@@ -342,7 +347,7 @@ export function SiteHeader({
                       {currentProfile.name}
                     </div>
                     <div className="truncate text-xs text-muted">
-                      {currentProfile.title}
+                      {t(currentProfile.title)}
                     </div>
                   </div>
                 </div>
@@ -350,7 +355,7 @@ export function SiteHeader({
                 {/* Mobile Navigation Links */}
                 <nav className="flex flex-col gap-1 overflow-y-auto py-2">
                   <div className="px-2 pb-1 text-xs font-semibold tracking-wider text-muted uppercase">
-                    {role} Navigation
+                    {t(role)} {t('Navigation')}
                   </div>
                   {items.map((item) => {
                     const isItemActive = active ? active === item.to : false
@@ -368,7 +373,7 @@ export function SiteHeader({
                           )
                         }
                       >
-                        {item.label}
+                        {t(item.label)}
                       </NavLink>
                     )
                   })}
@@ -378,14 +383,14 @@ export function SiteHeader({
                     onClick={() => setMobileOpen(false)}
                     className="mt-3 flex min-h-11 items-center rounded-control px-3 text-small text-text no-underline hover:bg-primary-tint"
                   >
-                    Choose a role
+                    {t('Choose a role')}
                   </NavLink>
                 </nav>
 
                 {/* Mobile Role Switcher */}
                 <div className="border-t border-line pt-3">
                   <div className="mb-2 text-xs font-semibold text-muted">
-                    Switch role
+                    {t('Switch role')}
                   </div>
                   <div className="grid grid-cols-2 gap-1.5">
                     {(
@@ -410,7 +415,7 @@ export function SiteHeader({
                             : 'border-line bg-surface text-text hover:bg-sunken',
                         )}
                       >
-                        {r}
+                        {t(r)}
                       </button>
                     ))}
                   </div>
@@ -472,7 +477,7 @@ export function SiteHeader({
                 )
               }
             >
-              {item.label}
+              {t(item.label)}
             </NavLink>
           )
         })}
@@ -481,7 +486,7 @@ export function SiteHeader({
       {/* CENTER-RIGHT: Global search (OpenStreetMap places + property IDs) */}
       <PlaceSearch
         variant="header"
-        placeholder="Search a place or ID"
+        placeholder={t('Search a place or ID')}
         onSubmit={handleSearchSubmit}
         className={cn(
           'ml-auto flex-1 max-w-[190px] sm:max-w-[240px] md:max-w-[280px] lg:max-w-[320px] shrink',
@@ -501,7 +506,7 @@ export function SiteHeader({
             icon={<Plus className="size-3.5" />}
             className="h-9 whitespace-nowrap text-chip"
           >
-            Add property
+            {t('Add property')}
           </Button>
         </div>
 
@@ -514,7 +519,7 @@ export function SiteHeader({
         {/* Notifications Bell */}
         <Link
           to={path('X-02')}
-          aria-label={`Notifications, ${unread} unread`}
+          aria-label={`${t('Notifications')}, ${unread} ${t('unread')}`}
           className="relative flex size-8 shrink-0 items-center justify-center rounded-control text-muted transition-colors hover:bg-primary-tint hover:text-text no-underline"
         >
           <Bell className="size-4" aria-hidden />
@@ -541,11 +546,11 @@ export function SiteHeader({
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-text">{currentProfile.name}</span>
                   <Badge variant="brand" className="text-[10px]">
-                    {role}
+                    {t(role)}
                   </Badge>
                 </div>
                 <span className="text-xs font-normal text-muted">
-                  {currentProfile.title}
+                  {t(currentProfile.title)}
                 </span>
               </DropdownMenuLabel>
 
@@ -554,12 +559,12 @@ export function SiteHeader({
               {/* Navigation Shortcuts */}
               <DropdownMenuItem onSelect={() => navigate(path('X-03'))}>
                 <Settings className="size-4 text-muted" />
-                <span>Profile &amp; Settings</span>
+                <span>{t('Profile & Settings')}</span>
               </DropdownMenuItem>
 
               <DropdownMenuItem onSelect={() => navigate(path('F18-01'))}>
                 <Sparkles className="size-4 text-muted" />
-                <span>My Watchlist</span>
+                <span>{t('My Watchlist')}</span>
               </DropdownMenuItem>
 
           
@@ -572,7 +577,7 @@ export function SiteHeader({
                 className="text-danger hover:bg-danger-tint hover:text-danger-ink"
               >
                 <LogOut className="size-4" />
-                <span>Sign Out / Reset</span>
+                <span>{t('Sign Out / Reset')}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
