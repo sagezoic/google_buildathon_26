@@ -198,6 +198,17 @@ jobs:
               "projects/${{ env.GCP_PROJECT_ID }}/locations/${{ env.GCP_REGION }}/repositories/realdha-backend" || true
           fi
 
+          # Adopt existing Document AI OCR processor if already created in GCP
+          DOCAI_PROC=$(gcloud documentai processors list --location=us --project="${{ env.GCP_PROJECT_ID }}" --filter="displayName='realdha-document-ocr'" --format="value(name)" 2>/dev/null | head -n 1)
+          if [ -n "$DOCAI_PROC" ]; then
+            echo "Adopting existing Document AI processor $DOCAI_PROC into state..."
+            terraform import -input=false \
+              -var="project_id=${{ env.GCP_PROJECT_ID }}" \
+              -var="region=${{ env.GCP_REGION }}" \
+              'google_document_ai_processor.ocr[0]' \
+              "$DOCAI_PROC" || true
+          fi
+
       # Bootstrap Phase: Ensure APIs and Artifact Registry repositories exist before image push
       - name: Provision Required APIs & Artifact Registries
         working-directory: terraform
