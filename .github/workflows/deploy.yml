@@ -187,23 +187,31 @@ jobs:
       - name: Adopt Existing Infrastructure into State (Prevent 409 Conflict)
         working-directory: terraform
         run: |
-          # Only import Artifact Registry repositories if they actually exist in GCP
-          if gcloud artifacts repositories describe realdha-ui --location="${{ env.GCP_REGION }}" --project="${{ env.GCP_PROJECT_ID }}" >/dev/null 2>&1; then
-            echo "Adopting existing realdha-ui repository into state..."
-            terraform import -input=false \
-              -var="project_id=${{ env.GCP_PROJECT_ID }}" \
-              -var="region=${{ env.GCP_REGION }}" \
-              'google_artifact_registry_repository.ui[0]' \
-              "projects/${{ env.GCP_PROJECT_ID }}/locations/${{ env.GCP_REGION }}/repositories/realdha-ui" || true
+          # Only import Artifact Registry repositories if they actually exist in GCP and are not already in state
+          if ! terraform state list 'google_artifact_registry_repository.ui[0]' 2>/dev/null | grep -q 'google_artifact_registry_repository.ui'; then
+            if gcloud artifacts repositories describe realdha-ui --location="${{ env.GCP_REGION }}" --project="${{ env.GCP_PROJECT_ID }}" >/dev/null 2>&1; then
+              echo "Adopting existing realdha-ui repository into state..."
+              terraform import -input=false \
+                -var="project_id=${{ env.GCP_PROJECT_ID }}" \
+                -var="region=${{ env.GCP_REGION }}" \
+                'google_artifact_registry_repository.ui[0]' \
+                "projects/${{ env.GCP_PROJECT_ID }}/locations/${{ env.GCP_REGION }}/repositories/realdha-ui" || true
+            fi
+          else
+            echo "google_artifact_registry_repository.ui[0] is already tracked in state."
           fi
 
-          if gcloud artifacts repositories describe realdha-backend --location="${{ env.GCP_REGION }}" --project="${{ env.GCP_PROJECT_ID }}" >/dev/null 2>&1; then
-            echo "Adopting existing realdha-backend repository into state..."
-            terraform import -input=false \
-              -var="project_id=${{ env.GCP_PROJECT_ID }}" \
-              -var="region=${{ env.GCP_REGION }}" \
-              'google_artifact_registry_repository.backend[0]' \
-              "projects/${{ env.GCP_PROJECT_ID }}/locations/${{ env.GCP_REGION }}/repositories/realdha-backend" || true
+          if ! terraform state list 'google_artifact_registry_repository.backend[0]' 2>/dev/null | grep -q 'google_artifact_registry_repository.backend'; then
+            if gcloud artifacts repositories describe realdha-backend --location="${{ env.GCP_REGION }}" --project="${{ env.GCP_PROJECT_ID }}" >/dev/null 2>&1; then
+              echo "Adopting existing realdha-backend repository into state..."
+              terraform import -input=false \
+                -var="project_id=${{ env.GCP_PROJECT_ID }}" \
+                -var="region=${{ env.GCP_REGION }}" \
+                'google_artifact_registry_repository.backend[0]' \
+                "projects/${{ env.GCP_PROJECT_ID }}/locations/${{ env.GCP_REGION }}/repositories/realdha-backend" || true
+            fi
+          else
+            echo "google_artifact_registry_repository.backend[0] is already tracked in state."
           fi
 
           # Detect and adopt existing Document AI OCR processor to prevent 409 Conflict
