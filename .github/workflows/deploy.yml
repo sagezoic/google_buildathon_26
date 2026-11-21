@@ -199,11 +199,20 @@ jobs:
           fi
 
           # Detect and adopt existing Document AI OCR processor to prevent 409 Conflict
-          DOCAI_PROC=$(gcloud documentai processors list --location=us --project="${{ env.GCP_PROJECT_ID }}" --format=json 2>/dev/null | jq -r '.[]? | select(.displayName=="realdha-document-ocr" or .display_name=="realdha-document-ocr") | .name' | head -n 1)
+          # Uses the REST API (gcloud has no GA `documentai` command group).
+          # The Document AI API must be enabled first; the bootstrap step below enables it,
+          # so enable it here too in case this is the first run.
+          gcloud services enable documentai.googleapis.com --project="${{ env.GCP_PROJECT_ID }}" || true
+          DOCAI_TOKEN=$(gcloud auth print-access-token)
+          DOCAI_PROC=$(curl -sS -H "Authorization: Bearer $DOCAI_TOKEN" \
+            "https://us-documentai.googleapis.com/v1/projects/${{ env.GCP_PROJECT_ID }}/locations/us/processors" \
+            | jq -r '.processors[]? | select(.displayName=="realdha-document-ocr") | .name' | head -n 1)
           if [ -n "$DOCAI_PROC" ]; then
             DOCAI_ID=$(basename "$DOCAI_PROC")
             echo "Found existing Document AI processor: $DOCAI_ID ($DOCAI_PROC)"
             echo "TF_VAR_docai_processor_id=$DOCAI_ID" >> $GITHUB_ENV
+          else
+            echo "No existing Document AI processor named realdha-document-ocr; Terraform will create it."
           fi
 
       # Bootstrap Phase: Ensure APIs and Artifact Registry repositories exist before image push
