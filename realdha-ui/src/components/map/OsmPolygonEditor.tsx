@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Feature, Polygon } from 'geojson'
-import { Check, Edit3, Move, Plus, RotateCcw, Trash2 } from 'lucide-react'
+import { Check, Plus, RotateCcw, Trash2 } from 'lucide-react'
 import * as maplibregl from 'maplibre-gl'
 import { cn } from '../../lib/cn'
 import {

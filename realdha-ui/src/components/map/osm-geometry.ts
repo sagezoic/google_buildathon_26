@@ -21,7 +21,6 @@ export const AREA_UNITS: ReadonlyArray<{ value: AreaUnit; label: string; sqm: nu
 
 const R = 6378137 // Earth radius in meters (WGS84)
 const DEG2RAD = Math.PI / 180
-const RAD2DEG = 180 / Math.PI
 
 export const toLngLat = (p: GeoPoint | LngLat): LngLat =>
   Array.isArray(p) ? [p[0], p[1]] : [p.lng, p.lat]

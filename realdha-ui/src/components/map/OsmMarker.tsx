@@ -2,7 +2,7 @@ import { useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import * as maplibregl from 'maplibre-gl'
 import { cn } from '../../lib/cn'
-import { toLngLat, type GeoPoint, type LngLat } from './osm-geometry'
+import { toLngLat } from './osm-geometry'
 import { useOsmMap } from './OsmMap'
 import type { MarkerProps } from './types'
 

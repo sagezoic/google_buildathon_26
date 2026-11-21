@@ -4,14 +4,13 @@ import {
   useEffect,
   useRef,
   useState,
-  type ReactNode,
 } from 'react'
 import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { Layers, MapPin, Satellite } from 'lucide-react'
 import { cn } from '../../lib/cn'
-import { toLngLat, type LngLat } from './osm-geometry'
+import { toLngLat } from './osm-geometry'
 import { getMapStyle, type MapTheme } from './osm-styles'
 import type { OsmMapProps } from './types'
 
