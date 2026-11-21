@@ -12,8 +12,25 @@ export default function ProjectPageScreen() {
     <Screen id="F10-07" role="buyer" back={path('F10-06')} title="Baner Heights">
       <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-6 px-4 py-6 xl:py-8">
         {/* Project Hero banner */}
-        <div className="relative h-64 w-full overflow-hidden rounded-card border border-line bg-sunken flex items-center justify-center text-center text-muted xl:h-80">
-          Project hero image placeholder
+        <div className="relative h-64 w-full overflow-hidden rounded-card border border-line bg-sunken shadow-e2 xl:h-80">
+          <img
+            src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1400&q=80"
+            alt="Baner Heights Luxury High-Rise Project"
+            className="size-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-text/80 via-text/20 to-transparent" />
+          <div className="absolute bottom-6 left-6 right-6 flex flex-wrap items-end justify-between gap-4 text-white">
+            <div className="flex flex-col gap-1">
+              <span className="rounded-control bg-primary px-2.5 py-0.5 text-xs font-semibold text-on-primary w-fit">
+                New Launch · 3 Towers (A, B, C)
+              </span>
+              <span className="text-display font-bold text-white">Baner Heights</span>
+              <span className="text-small text-white/90">Baner Hill Reserve, Baner, Pune · Sahyadri Developers</span>
+            </div>
+            <div className="rounded-control bg-white/20 px-3 py-1.5 text-label font-medium backdrop-blur-md">
+              MahaRERA: P52100012345 · Possession Dec 2027
+            </div>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">

@@ -98,24 +98,46 @@ export default function ApartmentTwinScreen() {
               </div>
 
               {/* Viewer canvas */}
-              <div className="relative flex flex-1 items-center justify-center bg-sunken p-8">
+              <div className="relative flex flex-1 items-center justify-center bg-sunken">
                 {viewMode === 'floor' ? (
-                  <div className="flex flex-col items-center gap-3 text-center">
-                    <div className="flex size-48 items-center justify-center rounded-card border-2 border-dashed border-line bg-surface p-4">
-                      <span className="font-mono text-small text-muted">Floor Plan SVG [Unit A-1804]</span>
-                    </div>
-                    <span className="text-small text-muted">Architectural plan · Approved by PMC</span>
+                  <div className="flex w-full flex-col items-center justify-center p-6">
+                    <svg viewBox="0 0 700 360" className="max-h-[300px] w-full max-w-[620px]" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="40" y="40" width="220" height="150" rx="6" className="fill-surface stroke-line-strong" strokeWidth="2" />
+                      <text x="150" y="110" textAnchor="middle" className="fill-text text-sm font-semibold">Master Bedroom</text>
+                      <text x="150" y="130" textAnchor="middle" className="fill-muted text-xs">14' x 12' · East Window</text>
+
+                      <rect x="280" y="40" width="360" height="200" rx="6" className="fill-surface stroke-line-strong" strokeWidth="2" />
+                      <text x="460" y="130" textAnchor="middle" className="fill-text text-base font-semibold">Living & Dining Area</text>
+                      <text x="460" y="152" textAnchor="middle" className="fill-muted text-xs">22' x 16' · Marble Flooring</text>
+
+                      <rect x="280" y="250" width="360" height="70" rx="6" className="fill-primary/10 stroke-primary" strokeWidth="2" strokeDasharray="4 4" />
+                      <text x="460" y="290" textAnchor="middle" className="fill-primary text-xs font-semibold">Private Balcony · Baner Hill View (18th Floor)</text>
+
+                      <rect x="40" y="200" width="220" height="120" rx="6" className="fill-surface stroke-line-strong" strokeWidth="2" />
+                      <text x="150" y="255" textAnchor="middle" className="fill-text text-sm font-semibold">Modular Kitchen</text>
+                      <text x="150" y="275" textAnchor="middle" className="fill-muted text-xs">10' x 8' · Utility Attached</text>
+                    </svg>
+                    <div className="mt-3 text-chip text-muted">Architectural Sanctioned Plan · Approved by PMC Pune</div>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center gap-3 text-center">
-                    <div className="flex size-64 items-center justify-center rounded-card border border-line bg-gradient-to-b from-surface to-canvas p-6 shadow-e2">
-                      <div className="flex flex-col items-center gap-2">
-                        <div className="size-20 rounded-full border-4 border-primary/20 border-t-primary animate-spin" />
-                        <span className="text-label font-medium text-text">Interactive 3D Walkthrough</span>
-                        <span className="text-overline text-muted">Drag to orbit · Scroll to zoom</span>
+                  <div className="relative size-full min-h-[360px] overflow-hidden">
+                    <img
+                      src={lightTime === 'morning'
+                        ? 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80'
+                        : 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80'}
+                      alt="3D Spatial Walkthrough"
+                      className="size-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-text/70 via-transparent to-transparent" />
+                    <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white">
+                      <div>
+                        <div className="text-body font-semibold">Living Room & Hill-View Balcony</div>
+                        <div className="text-chip text-white/80">3D Photogrammetric Twin · 18th Floor East Panorama</div>
                       </div>
+                      <span className="rounded-control bg-white/20 px-2.5 py-1 text-label font-medium backdrop-blur-md">
+                        {lightTime === 'morning' ? '☀ Morning Sunlight (8:00 - 11:30)' : '☾ Twilight Ambient Lighting'}
+                      </span>
                     </div>
-                    <span className="text-overline text-muted">Placeholder for the 3D model viewer · drag to look around</span>
                   </div>
                 )}
               </div>

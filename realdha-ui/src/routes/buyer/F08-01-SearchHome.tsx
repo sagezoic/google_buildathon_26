@@ -54,7 +54,7 @@ export default function SearchHome() {
               ))}
             </ul>
           </Card>
-          <p className="text-center text-chip text-muted max-md:hidden">IDs look like RA-CITY-ZONE-TYPE-NUMBER. Sample data.</p>
+          <p className="text-center text-chip text-muted max-md:hidden">Standard format: RA-CITY-ZONE-TYPE-NUMBER (e.g. RA-PUN-001-A-18-04)</p>
         </div>
       </div>
     </Screen>

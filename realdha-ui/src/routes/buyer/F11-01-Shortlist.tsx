@@ -5,8 +5,9 @@ import { path } from '../../app/nav'
 import { usePersistentState } from '../../app/persist'
 import { Button } from '../../components/ui/button'
 import { Card } from '../../components/ui/card'
-import { RecordId, SampleData } from '../../components/ui/record-id'
+import { RecordId } from '../../components/ui/record-id'
 import { UNITS, inr, unitById } from '../../data/fixtures/f11-buyer'
+import { getPropertyThumbnail } from '../../data/property-images'
 import { BK } from '../../lib/buyer-store'
 import { cn } from '../../lib/cn'
 import { UnitStatus } from '../parts/UnitStatus'
@@ -48,24 +49,32 @@ export default function Shortlist() {
           <div className="grid gap-3 xl:grid-cols-2 xl:gap-5">
             {items.map((u) => {
               const on = picked.includes(u.id)
+              const thumb = getPropertyThumbnail(u.id)
               return (
-                <Card key={u.id} className={cn('flex flex-col gap-3 p-4 xl:gap-2.5 xl:px-4 xl:py-4', on && 'border-primary')}>
-                  <div className="flex items-center justify-between gap-2">
-                    <RecordId id={u.id} className="max-xl:w-full" />
-                    <span className="text-chip text-muted max-xl:hidden">Added 18 Nov</span>
+                <Card key={u.id} className={cn('flex flex-col gap-3 p-4 xl:gap-3 xl:p-4', on && 'border-primary ring-1 ring-primary')}>
+                  <div className="flex gap-4 max-sm:flex-col">
+                    <img
+                      src={thumb}
+                      alt={u.unit}
+                      className="size-24 rounded-control object-cover bg-sunken max-sm:h-40 max-sm:w-full"
+                    />
+                    <div className="flex flex-1 flex-col gap-1.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <RecordId id={u.id} className="text-label" />
+                        <span className="text-chip text-muted max-xl:hidden">Verified 18 Nov</span>
+                      </div>
+                      <div className="font-semibold text-body">
+                        {u.unit} · {u.bhk} · {u.project}
+                      </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <b className="text-primary">{inr(u.price)}</b>
+                        <UnitStatus unit={u} />
+                      </div>
+                    </div>
                   </div>
-                  <div className="font-semibold max-xl:text-body">
-                    <span className="max-xl:hidden">{u.unit} · {u.bhk} · {u.project}</span>
-                    <span className="xl:hidden">{u.bhk}{u.carpet !== 'Not stated' ? ` · ${u.carpet}` : ''}</span>
-                  </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <b className="max-xl:hidden">{inr(u.price)}</b>
-                    <span className="text-small text-muted xl:hidden">{u.project} · {u.unit} · {inr(u.price)}</span>
-                    <UnitStatus unit={u} />
-                  </div>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 border-t border-line pt-2.5">
                     <Button size="sm" variant="secondary" to={`${path('F09-03')}?unit=${u.id}`} className="max-xl:hidden">Open</Button>
-                    <Button variant="secondary" size="sm" aria-pressed={on} onClick={() => toggle(u.id)} className="max-xl:h-11 max-xl:flex-1">{on ? 'Selected' : 'Compare'}</Button>
+                    <Button variant="secondary" size="sm" aria-pressed={on} onClick={() => toggle(u.id)} className="max-xl:h-11 max-xl:flex-1">{on ? 'Selected for Compare' : 'Compare'}</Button>
                     <Button variant="secondary" size="sm" onClick={() => remove(u.id)} className="max-xl:h-11 max-xl:flex-1">Remove</Button>
                   </div>
                 </Card>
@@ -74,7 +83,6 @@ export default function Shortlist() {
           </div>
         )}
         {items.length > 0 && <Button size="lg" block className="xl:hidden" disabled={!ready} onClick={go}>Compare selected</Button>}
-        <div><SampleData /></div>
       </div>
     </Screen>
   )

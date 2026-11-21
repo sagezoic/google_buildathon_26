@@ -6,20 +6,19 @@ Tokens live in `realdha-ui/src/styles/tokens.css` and reach Tailwind through `@t
 
 ## Direction
 
-**A land registry made modern.** Deep registry blue on cool, quiet greys; white cards with hairline borders instead of shadows. Nothing glows, nothing has a gradient. The blockchain appears only as proof.
-
-Three things every screen keeps:
-
-1. **Registry blue carries action and identity.** Primary buttons, links, the wordmark and the active nav item.
-2. **Seal teal means "anchored" and nothing else.** It is used only for on-chain facts: fingerprints, hashes, the network name, the Anchored pill and the proof panel.
-3. **Status is never colour alone.** Every pill, verdict and error pairs an icon, a word and a colour. Stop, Clarify and Proceed also differ in icon shape (cross in a circle, triangle, check in a circle).
+**Sovereign Land Registry & Deed Craft.**
+Directly derived from the Realdha mark in `realdha-ui/public/logo.png`:
+1. **Terracotta Brick (`#94382E`) carries primary action, brand identity, and legal authority.** Primary buttons, links, the wordmark, and active nav indicators. Directly reflects the warm terracotta roof/house silhouette and folded deed corner in the logo.
+2. **Deep Midnight Slate (`#14202E` / `#16222F`) anchors structure and high-contrast typography.** Derived from the authoritative backing deed folder in the logo.
+3. **Marigold Gold & Amber (`#B45309` / `#E08B16`) means 'verified truth & cryptographic proof'.** Echoing the bold checkmark badge and vertical tabs in the logo, used for on-chain proof panels, verified title chips, and cryptographic hashes.
+4. **Crisp Modern Archival Ground (`#F5F6F8` canvas, `#FFFFFF` cards, `#D8DDE4` hairline borders).** Crisp, clean institutional surfaces reflecting legal precision and modern digital title registries.
 
 Every screen carries two labels that cannot be dismissed: the **DEMO · TESTNET · NOT AN OFFER** bar and a **Sample data** pill.
 
 ### Never
 
 - Gradients, glow, glass or blur as decoration.
-- Teal on anything that is not an on-chain fact.
+- Cold generic blues on primary actions.
 - Status shown by colour alone.
 - Colours outside the tokens. Tailwind's default palette is cleared on purpose, so `bg-blue-500` doesn't exist.
 - Shadows on resting cards beyond E1. Depth comes from borders.
@@ -27,40 +26,40 @@ Every screen carries two labels that cannot be dismissed: the **DEMO · TESTNET 
 
 ## Colour
 
-The colour roles are listed below; components use them, never raw hex values. Light values come from the artifact.
+The colour roles are listed below; components use them, never raw hex values. Light values match the logo-aligned tokens.
 
-| Role | Tailwind | Light | Dark (Graphite) | Use |
+| Role | Tailwind | Light | Dark (Midnight Deed) | Use |
 |---|---|---|---|---|
-| Canvas | `bg-canvas` | #F5F6F8 | #111316 | Page background |
-| Surface | `bg-surface` | #FFFFFF | #1A1D21 | Cards, nav, tables, modals |
-| Sunken | `bg-sunken` | #F5F6F8 | #15171A | Table header, ID chip, disabled field |
-| Field | `bg-field` | #FFFFFF | #15171A | Input background |
-| Line | `border-line` | #D8DDE4 | #2C3036 | Card borders, dividers |
-| Line strong | `border-line-strong` | #B9C1CC | #646B75 | Input and secondary-button borders |
-| Line hover | `border-line-hover` | #4F5B6B | #8F96A0 | Field hover border |
-| Text | `text-text` | #172033 | #E9EBEE | Body and headings |
-| Muted | `text-muted` | #4F5B6B | #A3A9B2 | Secondary text, labels, placeholders |
-| Disabled | `text-disabled` | #6B7685 | #858C96 | Disabled control text |
-| Brand | `text-brand` | #1B3A6B | #9DBDF0 | Wordmark |
-| Primary | `bg-primary` | #1B3A6B | #2F64B8 | Primary button fill |
-| Primary hover | `bg-primary-hover` | #0F2447 | #2A5AA6 | Primary button hover |
-| Primary text | `text-primary-text` | #1B3A6B | #8DB4F0 | Links, secondary/ghost button text, active nav |
+| Canvas | `bg-canvas` | #F5F6F8 | #101924 | Page background |
+| Surface | `bg-surface` | #FFFFFF | #16222F | Cards, nav, tables, modals |
+| Sunken | `bg-sunken` | #F5F6F8 | #121D28 | Table header, ID chip, disabled field |
+| Field | `bg-field` | #FFFFFF | #121D28 | Input background |
+| Line | `border-line` | #D8DDE4 | #253446 | Card borders, dividers |
+| Line strong | `border-line-strong` | #B9C1CC | #62758E | Input and secondary-button borders |
+| Line hover | `border-line-hover` | #4B5768 | #8295AD | Field hover border |
+| Text | `text-text` | #14202E | #EDEFE9 | Body and headings |
+| Muted | `text-muted` | #4B5768 | #9AA7B7 | Secondary text, labels, placeholders |
+| Disabled | `text-disabled` | #6B7685 | #6E7C8E | Disabled control text |
+| Brand | `text-brand` | #94382E | #E88B7D | Wordmark |
+| Primary | `bg-primary` | #94382E | #C0483A | Primary button fill |
+| Primary hover | `bg-primary-hover` | #752A22 | #AD3F32 | Primary button hover |
+| Primary text | `text-primary-text` | #94382E | #E88B7D | Links, secondary/ghost button text, active nav |
 | On primary | `text-on-primary` | #FFFFFF | #FFFFFF | Text on a primary fill |
-| Primary tint | `bg-primary-tint` | #E8EDF5 | #1E2A3D | Selected rows, hover fills, avatar |
-| Focus | `outline-focus` | #2F6FB0 | #7FB1EE | Focus ring |
+| Primary tint | `bg-primary-tint` | #FBF0EE | #2B1D20 | Selected rows, hover fills, avatar |
+| Focus | `outline-focus` | #94382E | #E88B7D | Focus ring |
 
-Dark mode splits **Primary** (the fill) from **Primary text** because no single blue passes 4.5:1 both under white text and on graphite. In light mode they are the same value.
+Dark mode splits **Primary** (the fill) from **Primary text** because no single terracotta passes 4.5:1 both under white text and on midnight slate. In light mode they are the same value.
 
 **Status and on-chain.** Each has a solid colour (borders, icons, filled buttons), a tint (pill and banner fills) and an ink colour (text on the tint).
 
 | Role | Solid · tint · ink, light | Solid · tint · ink, dark |
 |---|---|---|
 | Success | #1E7A4B · #E4F3EA · #14573A | #4CC08A · #142A1F · #92DDB5 |
-| Warning | #8A5700 · #FFF1CF · #5C3A00 | #E0A93B · #2D240F · #F3CD7C |
+| Warning | #B45309 · #FEF3C7 · #78350F | #E0A93B · #2D240F · #F3CD7C |
 | Danger | #B42318 · #FDE9E7 · #8A1B12 | #F07167 · #361816 · #FFB4AB |
 | Info | #1F5F9E · #E3EEFA · #174B80 | #6EA6E6 · #172638 · #A9CBF2 |
-| On-chain | #0F6D66 · #DDF1EE · #0B524C | #46BDB1 · #12292A · #86D9CF |
-| Demo label | #8A5700 line · #FFF1CF fill · #5C3A00 text | #E0A93B · #2D240F · #F3CD7C |
+| On-chain (Gold Seal) | #B45309 · #FDF4E2 · #6D3104 | #E08B16 · #2B1E0C · #F7C06D |
+| Demo label | #B45309 line · #FEF3C7 fill · #78350F text | #E0A93B · #2D240F · #F3CD7C |
 
 Text on a solid status fill uses `text-on-status`: white in light mode, graphite in dark mode.
 

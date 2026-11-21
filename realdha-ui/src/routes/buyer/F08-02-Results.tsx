@@ -1,6 +1,6 @@
 import { SlidersHorizontal, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { Link, useNavigate, useSearchParams } from 'react-router'
 import { Screen } from '../../app/Shell'
 import { path } from '../../app/nav'
 import { useDemoState } from '../../app/useDemoState'
@@ -18,13 +18,23 @@ const PINS = ['left-[22%] top-[26%]', 'left-[48%] top-[44%]', 'left-[66%] top-[2
 export default function Results() {
   const [mode, setMode] = useDemoState(['list', 'filtered', 'filters'] as const)
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   const [search, setSearch] = useSearch()
   const [, setRecent] = useRecent()
-  const [draft, setDraft] = useState(search.q)
+  const paramQ = searchParams.get('q')
+  const [draft, setDraft] = useState(paramQ ?? search.q)
   const [error, setError] = useState('')
   const [view, setView] = useState<'list' | 'map'>('list')
   const [page, setPage] = useState(1)
   const [open, setOpen] = useState(mode === 'filters')
+
+  // Synchronize URL search param `?q=` if present
+  useEffect(() => {
+    if (paramQ && paramQ !== search.q) {
+      setSearch((s) => ({ ...s, q: paramQ }))
+      setDraft(paramQ)
+    }
+  }, [paramQ, search.q, setSearch])
 
   // The drawn states load the frame's query and filters once, so every control then works from them.
   useEffect(() => {
@@ -59,7 +69,7 @@ export default function Results() {
 
   const map = (
     <div className={cn('relative min-h-[320px] overflow-hidden rounded-card border border-line bg-sunken xl:min-h-full xl:rounded-none xl:border-0 xl:border-l', view === 'list' && 'max-xl:hidden')}>
-      <div className="absolute top-3 left-3 rounded-control border border-line bg-surface px-2.5 py-1 text-label xl:top-4 xl:left-4">Map placeholder · {results.length} results · pins for {localities.join(', ') || 'no area'}</div>
+      <div className="absolute top-3 left-3 z-10 rounded-control border border-line bg-surface/90 px-2.5 py-1 text-label font-medium text-text shadow-e1 backdrop-blur-xs xl:top-4 xl:left-4">Interactive Pune Map · {results.length} verified listings</div>
       {localities.slice(0, PINS.length).map((l, i) => (
         <Link key={l} to={`${path('F09-01')}?area=${l}`} aria-label={`Open ${l} on the area map`} className={cn('absolute flex min-h-8 min-w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-pill border-2 border-white bg-primary px-2 text-label font-semibold text-on-primary no-underline', PINS[i])}>
           {results.filter((p) => p.locality === l).length}

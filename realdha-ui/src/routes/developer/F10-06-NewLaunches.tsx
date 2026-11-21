@@ -4,6 +4,7 @@ import { path } from '../../app/nav'
 import { Button } from '../../components/ui/button'
 import { Card } from '../../components/ui/card'
 import { Pill } from '../../components/ui/pill'
+import { getPropertyThumbnail } from '../../data/property-images'
 
 interface LaunchCard {
   id: string
@@ -73,8 +74,14 @@ export default function NewLaunchesScreen() {
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {LAUNCHES.map((launch) => (
             <Card key={launch.id} className="flex flex-col overflow-hidden p-0">
-              <div className="flex h-44 w-full items-center justify-center bg-sunken text-small text-muted">
-                Project image placeholder
+              <div className="relative aspect-[16/10] w-full overflow-hidden bg-sunken">
+                <img
+                  src={getPropertyThumbnail(launch.id)}
+                  alt={launch.name}
+                  loading="lazy"
+                  decoding="async"
+                  className="size-full object-cover transition-transform duration-300 hover:scale-105"
+                />
               </div>
 
               <div className="flex flex-col gap-3 p-5">

@@ -1,20 +1,41 @@
-import { ChevronLeft, ChevronRight, CircleAlert, CircleCheck, Pencil, Search, ShieldCheck, TriangleAlert, CircleDot, type LucideIcon } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  CircleAlert,
+  CircleCheck,
+  CircleDot,
+  Pencil,
+  Plus,
+  Search,
+  ShieldCheck,
+  TriangleAlert,
+  X,
+  type LucideIcon,
+} from 'lucide-react'
 import { useMemo } from 'react'
+import { Link } from 'react-router'
 import { Screen } from '../../app/Shell'
 import { path } from '../../app/nav'
 import { useDemoState } from '../../app/useDemoState'
 import { Button } from '../../components/ui/button'
 import { Card } from '../../components/ui/card'
 import { Pill } from '../../components/ui/pill'
-import { RecordId, SampleData } from '../../components/ui/record-id'
-import { SelectField } from '../../components/ui/select-field'
-import { SEED_ROWS, SIGNED_STATUSES, STATUS_LABEL, type PropRow, type PropStatus } from '../../data/fixtures/f03-properties'
+import { RecordId } from '../../components/ui/record-id'
+import {
+  SEED_ROWS,
+  SIGNED_STATUSES,
+  STATUS_LABEL,
+  type PropRow,
+  type PropStatus,
+} from '../../data/fixtures/f03-properties'
+import { getPropertyThumbnail } from '../../data/property-images'
 import { cn } from '../../lib/cn'
 import { LIST_DEFAULT, useDrafts, useListUi, type ListUi } from '../../lib/f03-store'
 import { usePropertyDraft } from '../../lib/property-store'
 import { useSharedState } from '../../lib/shared-state'
 
-const PAGE = 5
+const PAGE = 8
+
 const TONE: Record<PropStatus, { tone: 'chain' | 'success' | 'info' | 'warning' | 'neutral'; Icon: LucideIcon }> = {
   anchored: { tone: 'chain', Icon: ShieldCheck },
   signed: { tone: 'success', Icon: CircleCheck },
@@ -23,9 +44,9 @@ const TONE: Record<PropStatus, { tone: 'chain' | 'success' | 'info' | 'warning' 
   checked: { tone: 'info', Icon: CircleCheck },
   draft: { tone: 'neutral', Icon: Pencil },
 }
-const TYPES = ['All types', 'Plot', 'Apartment', 'Commercial'] as const
-const SORTS = [{ v: 'recent', l: 'Recently updated' }, { v: 'title', l: 'Name A to Z' }] as const
+
 const ANCHORED = /anchor|signed|confirm|done|complete|minted/i
+
 const ago = (ts: number | null) => {
   if (ts === null) return '5 d ago'
   const m = Math.round((Date.now() - ts) / 60000)
@@ -33,11 +54,15 @@ const ago = (ts: number | null) => {
 }
 
 function StatusPill({ s }: { s: PropStatus }) {
-  const { tone, Icon } = TONE[s]
-  return <Pill tone={tone} icon={<Icon className="size-3.5" />}>{STATUS_LABEL[s]}</Pill>
+  const { tone, Icon } = TONE[s] ?? { tone: 'neutral', Icon: CircleDot }
+  return (
+    <Pill tone={tone} icon={<Icon className="size-3.5" />}>
+      {STATUS_LABEL[s] ?? s}
+    </Pill>
+  )
 }
 
-/** F03-03 · My properties. Lists the GP-07 plot (property.draft), A-1804, the sample rows and saved drafts. Tabs, search, type filter, sort, pagination. */
+/** F03-03 · My properties. Distilled registry view: high-density table on desktop, scannable list on mobile. */
 export default function MyProperties() {
   useDemoState(['all'] as const)
   const [ui, setUi] = useListUi()
@@ -50,13 +75,19 @@ export default function MyProperties() {
   const rows = useMemo<PropRow[]>(() => {
     const [plot, ...rest] = SEED_ROWS
     let status: PropStatus = 'anchored'
-    let action = plot.action
+    let action = { label: 'Open', to: path('GP-16', { id: 'RA-LON-004-P-112-2' }) }
+
     if (draft.saved) {
       if (anchor && ANCHORED.test(anchor)) status = 'anchored'
       else if (signed) status = 'signed'
-      else if (draft.stage === 'checked') { status = 'review' }
-      else { status = 'draft'; action = { label: 'Resume', to: path(draft.stage === 'details' ? 'GP-07' : 'GP-08') } }
+      else if (draft.stage === 'checked') {
+        status = 'review'
+      } else {
+        status = 'draft'
+        action = { label: 'Resume', to: path(draft.stage === 'details' ? 'GP-07' : 'GP-08') }
+      }
     }
+
     const place = draft.village || 'Kusgaon'
     const mine: PropRow = {
       ...plot,
@@ -67,6 +98,21 @@ export default function MyProperties() {
       status,
       action,
     }
+
+    const formattedRest = rest.map((r) => {
+      let resolvedTo = r.action.to
+      if (r.id === 'a1804') resolvedTo = path('F04-01', { id: r.recordId ?? 'RA-PUN-001-A-18-04' })
+      else if (r.id === 'alibag') resolvedTo = path('GP-12')
+      else if (r.recordId) resolvedTo = path('GP-16', { id: r.recordId })
+      return {
+        ...r,
+        action: {
+          ...r.action,
+          to: resolvedTo,
+        },
+      }
+    })
+
     const drs: PropRow[] = drafts.map((d, i) => ({
       id: d.id,
       title: d.title,
@@ -80,116 +126,270 @@ export default function MyProperties() {
       rank: d.savedAt === null ? 50 : 200 + i,
       action: { label: 'Resume', to: path('F03-04') },
     }))
-    return [mine, ...rest, ...drs]
+
+    return [mine, ...formattedRest, ...drs]
   }, [draft, drafts, anchor, signed])
 
-  const inTab = (r: PropRow) => ui.tab === 'all' || (ui.tab === 'signed') === SIGNED_STATUSES.includes(r.status)
+  const inTab = (r: PropRow) =>
+    ui.tab === 'all' || (ui.tab === 'signed' ? SIGNED_STATUSES.includes(r.status) : !SIGNED_STATUSES.includes(r.status))
+
   const q = ui.q.trim().toLowerCase()
   const filtered = rows
     .filter(inTab)
-    .filter((r) => ui.type === 'All types' || r.type === ui.type)
-    .filter((r) => !q || `${r.title} ${r.sub} ${r.recordId ?? ''} ${r.type} ${STATUS_LABEL[r.status]}`.toLowerCase().includes(q))
-    .sort((a, b) => (ui.sort === 'title' ? a.title.localeCompare(b.title) : b.rank - a.rank))
+    .filter(
+      (r) =>
+        !q ||
+        `${r.title} ${r.sub} ${r.recordId ?? ''} ${r.type} ${STATUS_LABEL[r.status]}`.toLowerCase().includes(q)
+    )
+    .sort((a, b) => b.rank - a.rank)
+
   const pages = Math.max(1, Math.ceil(filtered.length / PAGE))
   const page = Math.min(ui.page, pages)
   const shown = filtered.slice((page - 1) * PAGE, page * PAGE)
+
   const signedCount = rows.filter((r) => SIGNED_STATUSES.includes(r.status)).length
+
   const tabs = [
-    { id: 'all', label: `All · ${rows.length}`, m: `All · ${rows.length}` },
-    { id: 'progress', label: `In progress · ${rows.length - signedCount}`, m: 'Progress' },
-    { id: 'signed', label: `Signed off · ${signedCount}`, m: 'Signed' },
+    { id: 'all', label: `All · ${rows.length}`, m: `All (${rows.length})` },
+    { id: 'signed', label: `Signed off · ${signedCount}`, m: `Signed (${signedCount})` },
+    { id: 'progress', label: `In progress · ${rows.length - signedCount}`, m: `In progress (${rows.length - signedCount})` },
   ] as const
-  const filtering = !!q || ui.type !== 'All types'
 
   return (
     <Screen id="F03-03" role="owner">
-      <div className="flex flex-1 flex-col gap-4 px-4 py-5 md:px-8 xl:px-12 xl:py-7">
-        <div className="flex items-center justify-between gap-3">
-          <h1 className="text-h1 max-md:text-[24px] max-md:leading-8">My properties</h1>
-          <Button to={path('GP-07')} size="md" className="max-md:h-11 max-md:px-3.5">
-            <span className="md:hidden">+ Add</span>
-            <span className="max-md:hidden">+ Add property</span>
+      <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-6 px-4 py-6 md:px-8 xl:py-8">
+        {/* Header */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-line pb-4">
+          <div>
+            <h1 className="text-h1 font-bold text-text">My properties</h1>
+            <p className="text-small text-muted">
+              Permanent title records and on-chain verification for your properties.
+            </p>
+          </div>
+
+          <Button to={path('GP-07')} size="md" icon={<Plus className="size-4" />}>
+            Add property
           </Button>
         </div>
 
-        <div role="tablist" aria-label="Properties" className="flex overflow-x-auto border-b border-line">
-          {tabs.map((t) => (
-            <button key={t.id} role="tab" aria-selected={ui.tab === t.id} onClick={() => patch({ tab: t.id, page: 1 })} className={cn('-mb-px min-h-11 cursor-pointer border-b-[3px] px-3.5 text-small whitespace-nowrap', ui.tab === t.id ? 'border-primary font-semibold text-brand' : 'border-transparent font-medium text-muted hover:text-text')}>
-              <span className="xl:hidden">{t.m}</span>
-              <span className="max-xl:hidden">{t.label}</span>
-            </button>
-          ))}
-        </div>
+        {/* Toolbar: Scannable Tabs + Search */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div role="tablist" aria-label="Filter properties by status" className="flex border-b border-line sm:border-b-0">
+            {tabs.map((t) => (
+              <button
+                key={t.id}
+                role="tab"
+                aria-selected={ui.tab === t.id}
+                onClick={() => patch({ tab: t.id, page: 1 })}
+                className={cn(
+                  'cursor-pointer border-b-2 px-3.5 pb-2 text-small whitespace-nowrap transition-colors sm:rounded-control sm:border-0 sm:py-1.5 sm:text-chip',
+                  ui.tab === t.id
+                    ? 'border-primary font-semibold text-brand sm:bg-primary-tint sm:text-on-primary-tint'
+                    : 'border-transparent font-medium text-muted hover:text-text sm:hover:bg-canvas'
+                )}
+              >
+                <span className="sm:hidden">{t.m}</span>
+                <span className="hidden sm:inline">{t.label}</span>
+              </button>
+            ))}
+          </div>
 
-        <div className="flex flex-wrap items-end gap-3">
-          <form role="search" onSubmit={(e) => e.preventDefault()} className="relative min-w-0 flex-1 md:max-w-[360px]">
-            <label htmlFor="prop-search" className="sr-only">Search properties</label>
+          <form role="search" onSubmit={(e) => e.preventDefault()} className="relative w-full sm:w-72">
+            <label htmlFor="prop-search" className="sr-only">
+              Search properties
+            </label>
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
-            <input id="prop-search" type="search" placeholder="Search name, record ID or status" value={ui.q} onChange={(e) => patch({ q: e.target.value, page: 1 })} className="h-control w-full rounded-control border border-line-strong bg-field pr-3 pl-9 text-control text-text outline-none placeholder:text-muted hover:border-line-hover focus:border-focus focus:shadow-[0_0_0_3px_var(--rd-focus-halo)]" />
+            <input
+              id="prop-search"
+              type="search"
+              placeholder="Search properties or ID..."
+              value={ui.q}
+              onChange={(e) => patch({ q: e.target.value, page: 1 })}
+              className="h-9 w-full rounded-control border border-line bg-surface pr-8 pl-9 text-small text-text outline-none placeholder:text-muted focus:border-focus focus:shadow-[0_0_0_3px_var(--rd-focus-halo)]"
+            />
+            {ui.q && (
+              <button
+                type="button"
+                onClick={() => patch({ q: '', page: 1 })}
+                aria-label="Clear search"
+                className="absolute top-1/2 right-2.5 -translate-y-1/2 text-muted hover:text-text"
+              >
+                <X className="size-3.5" />
+              </button>
+            )}
           </form>
-          <SelectField className="w-40" label="Type" options={TYPES} value={ui.type} onChange={(e) => patch({ type: e.target.value, page: 1 })} />
-          <SelectField className="w-48" label="Sort by" options={SORTS.map((s) => s.l)} value={SORTS.find((s) => s.v === ui.sort)!.l} onChange={(e) => patch({ sort: SORTS.find((s) => s.l === e.target.value)!.v })} />
-          {(filtering || ui.tab !== 'all') && <Button variant="ghost" onClick={() => setUi(LIST_DEFAULT)}>Clear filters</Button>}
         </div>
 
-        <div aria-live="polite" className="sr-only">{filtered.length} properties</div>
-
+        {/* Content: Registry Table on Desktop/Tablet, Responsive List on Mobile */}
         {shown.length === 0 ? (
-          <Card className="flex items-center gap-2 text-small text-muted"><CircleAlert className="size-4" aria-hidden />No properties match. Clear the filters to see all.</Card>
+          <Card className="flex flex-col items-center justify-center gap-3 py-16 text-center shadow-e1">
+            <div className="flex size-12 items-center justify-center rounded-full bg-skeleton text-muted">
+              <CircleAlert className="size-6" aria-hidden />
+            </div>
+            <div>
+              <h2 className="text-h3 font-semibold text-text">No properties found</h2>
+              <p className="mt-1 text-small text-muted">
+                {ui.q ? 'No records match your search query.' : 'There are no properties in this view.'}
+              </p>
+            </div>
+            {ui.q ? (
+              <Button variant="secondary" size="sm" onClick={() => setUi(LIST_DEFAULT)}>
+                Clear search
+              </Button>
+            ) : (
+              <Button to={path('GP-07')} size="sm" icon={<Plus className="size-4" />}>
+                Add property
+              </Button>
+            )}
+          </Card>
         ) : (
-          <>
-            {/* 1440 table */}
-            <Card className="overflow-hidden p-0 max-xl:hidden">
+          <Card className="overflow-hidden p-0 shadow-e1">
+            {/* Desktop & Tablet Table (>=640px) */}
+            <div className="hidden sm:block">
               <table className="w-full border-collapse text-small">
                 <thead>
                   <tr className="border-b border-line bg-sunken text-left text-label font-semibold text-muted">
-                    {['Property', 'Record ID', 'Type', 'Status', 'Updated'].map((h) => <th key={h} scope="col" className="px-4 py-2.5 font-semibold">{h}</th>)}
-                    <th scope="col" className="px-4 py-2.5"><span className="sr-only">Action</span></th>
+                    <th scope="col" className="px-5 py-3 font-semibold">
+                      Property
+                    </th>
+                    <th scope="col" className="px-4 py-3 font-semibold">
+                      Record ID
+                    </th>
+                    <th scope="col" className="px-4 py-3 font-semibold">
+                      Status
+                    </th>
+                    <th scope="col" className="px-4 py-3 font-semibold">
+                      Updated
+                    </th>
+                    <th scope="col" className="px-5 py-3 text-right font-semibold">
+                      <span className="sr-only">Action</span>
+                    </th>
                   </tr>
                 </thead>
-                <tbody>
-                  {shown.map((r) => (
-                    <tr key={r.id} className="border-b border-line last:border-b-0">
-                      <td className="px-4 py-3"><b className="font-semibold">{r.title}</b><div className="text-label text-muted">{r.sub}</div></td>
-                      <td className={cn('px-4 py-3 font-mono text-chip', !r.recordId && 'text-muted')}>{r.recordId ?? 'RA-———'}</td>
-                      <td className="px-4 py-3">{r.type}</td>
-                      <td className="px-4 py-3"><StatusPill s={r.status} /></td>
-                      <td className="px-4 py-3 text-muted">{r.updated}</td>
-                      <td className="px-4 py-3 text-right"><Button size="sm" variant={r.action.primary ? 'primary' : 'secondary'} to={r.action.to}>{r.action.label}<span className="sr-only"> {r.title}</span></Button></td>
-                    </tr>
-                  ))}
+                <tbody className="divide-y divide-line">
+                  {shown.map((r) => {
+                    const thumb = getPropertyThumbnail(r.id, r.type)
+                    return (
+                      <tr key={r.id} className="transition-colors hover:bg-canvas/50">
+                        <td className="px-5 py-3.5">
+                          <div className="flex items-center gap-3.5">
+                            <img
+                              src={thumb}
+                              alt=""
+                              loading="lazy"
+                              className="size-11 rounded-control object-cover bg-sunken shrink-0"
+                            />
+                            <div className="min-w-0">
+                              <Link
+                                to={r.action.to}
+                                className="font-semibold text-text hover:text-brand transition-colors line-clamp-1"
+                              >
+                                {r.title}
+                              </Link>
+                              <div className="text-chip text-muted">{r.sub}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          {r.recordId ? (
+                            <RecordId id={r.recordId} className="text-chip font-mono" />
+                          ) : (
+                            <span className="font-mono text-chip text-muted">Draft</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <StatusPill s={r.status} />
+                        </td>
+                        <td className="px-4 py-3.5 text-chip text-muted whitespace-nowrap">{r.updated}</td>
+                        <td className="px-5 py-3.5 text-right whitespace-nowrap">
+                          <Button
+                            size="sm"
+                            variant={r.action.primary ? 'primary' : 'secondary'}
+                            to={r.action.to}
+                          >
+                            {r.action.label}
+                            <span className="sr-only"> {r.title}</span>
+                          </Button>
+                        </td>
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
-            </Card>
+            </div>
 
-            {/* 834 and 390 cards */}
-            <ul className="flex flex-col gap-3 md:grid md:grid-cols-2 xl:hidden">
-              {shown.map((r) => (
-                <li key={r.id}>
-                  <Card className="flex flex-col gap-1.5 p-3.5">
-                    <div className="text-body font-semibold">{r.mTitle}</div>
-                    <div className="text-label text-muted">{r.mSub}</div>
-                    {r.recordId ? <RecordId id={r.recordId} className="self-start text-label" /> : <span className="font-mono text-label text-muted">RA-———</span>}
-                    <div className="mt-1 flex items-center justify-between gap-2">
-                      <StatusPill s={r.status} />
-                      <Button size="sm" variant={r.action.primary ? 'primary' : 'secondary'} className="max-xl:min-h-11" to={r.action.to}>{r.action.label}<span className="sr-only"> {r.mTitle}</span></Button>
+            {/* Mobile List (<640px) */}
+            <div className="divide-y divide-line sm:hidden">
+              {shown.map((r) => {
+                const thumb = getPropertyThumbnail(r.id, r.type)
+                return (
+                  <div key={r.id} className="flex items-center gap-3.5 p-3.5">
+                    <img
+                      src={thumb}
+                      alt=""
+                      loading="lazy"
+                      className="size-14 rounded-control object-cover bg-sunken shrink-0"
+                    />
+                    <div className="flex flex-1 flex-col justify-between min-w-0">
+                      <div>
+                        <Link
+                          to={r.action.to}
+                          className="text-body font-semibold text-text hover:text-brand transition-colors line-clamp-1"
+                        >
+                          {r.mTitle}
+                        </Link>
+                        <div className="text-chip text-muted truncate">{r.mSub}</div>
+                      </div>
+                      <div className="mt-1.5 flex items-center justify-between gap-2">
+                        <StatusPill s={r.status} />
+                        <Button
+                          size="sm"
+                          variant={r.action.primary ? 'primary' : 'secondary'}
+                          to={r.action.to}
+                          className="h-8 px-3 text-chip"
+                        >
+                          {r.action.label}
+                        </Button>
+                      </div>
                     </div>
-                  </Card>
-                </li>
-              ))}
-            </ul>
-          </>
+                  </div>
+                )
+              })}
+            </div>
+          </Card>
         )}
 
-        <nav aria-label="Pages" className="flex items-center justify-between gap-3 text-chip text-muted">
-          <span>{filtered.length === 0 ? '0 properties' : `Showing ${(page - 1) * PAGE + 1}–${(page - 1) * PAGE + shown.length} of ${filtered.length}`}</span>
-          <div className="flex items-center gap-2">
-            <Button size="sm" variant="secondary" className="max-md:min-h-11" disabled={page <= 1} onClick={() => patch({ page: page - 1 })} icon={<ChevronLeft className="size-4" aria-hidden />}>Previous</Button>
-            <span aria-current="page">Page {page} of {pages}</span>
-            <Button size="sm" variant="secondary" className="max-md:min-h-11" disabled={page >= pages} onClick={() => patch({ page: page + 1 })}>Next<ChevronRight className="size-4" aria-hidden /></Button>
-          </div>
-        </nav>
-        <div className="flex items-center gap-2 text-label text-muted"><SampleData />Pills always carry an icon and a word.</div>
+        {/* Pagination Bar (only when multiple pages exist) */}
+        {pages > 1 && (
+          <nav aria-label="Properties pagination" className="flex items-center justify-between text-chip text-muted pt-2 border-t border-line">
+            <span>
+              Showing {(page - 1) * PAGE + 1}–{Math.min(page * PAGE, filtered.length)} of {filtered.length}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={page <= 1}
+                onClick={() => patch({ page: page - 1 })}
+                icon={<ChevronLeft className="size-4" aria-hidden />}
+              >
+                Previous
+              </Button>
+              <span aria-current="page" className="font-medium text-text px-2">
+                {page} of {pages}
+              </span>
+              <Button
+                size="sm"
+                variant="secondary"
+                disabled={page >= pages}
+                onClick={() => patch({ page: page + 1 })}
+              >
+                Next
+                <ChevronRight className="size-4" aria-hidden />
+              </Button>
+            </div>
+          </nav>
+        )}
       </div>
     </Screen>
   )

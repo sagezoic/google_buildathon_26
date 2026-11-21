@@ -1,260 +1,559 @@
-import { lazy, Suspense, useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, List, Map as MapIcon, Star } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useSearchParams } from 'react-router'
+import { ChevronLeft, ChevronRight, RotateCcw, Search, Star, X } from 'lucide-react'
+import { path } from '../../app/nav'
 import { usePersistentState } from '../../app/persist'
 import { Screen } from '../../app/Shell'
+import { Button } from '../../components/ui/button'
+import { Pill } from '../../components/ui/pill'
 import { cn } from '../../lib/cn'
 import {
-  cardBadges, fetchCities, formatInr, grossYield, lowestRent,
-  type CitySummary, type FlatMode, type FlatSort, type SocietyCard,
+  cardBadges,
+  fetchCities,
+  formatInr,
+  grossYield,
+  lowestRent,
+  type CitySummary,
+  type FlatMode,
+  type FlatSort,
+  type SocietyCard,
 } from '../../lib/flats-api'
 import { useSocieties } from '../../lib/useSocieties'
 
-const MarketMap = lazy(() => import('../../components/ui/market-map'))
-const MAP_LIMIT = 100
+const TYPES = [
+  ['', 'All types'],
+  ['apartment', 'Apartment'],
+  ['villa', 'Villa'],
+  ['builder floor', 'Builder floor'],
+  ['plot', 'Plot'],
+] as const
 
-const TABS = ['all', 'watchlist'] as const
-const TYPES = [['', 'Type: All'], ['apartment', 'Apartment'], ['villa', 'Villa'], ['builder floor', 'Builder floor'], ['plot', 'Plot']] as const
 const SORTS: ReadonlyArray<readonly [FlatSort, string]> = [
-  ['best', 'Sort: Best match'], ['price', 'Price: low to high'], ['rating', 'Rating'], ['name', 'Name: A to Z'],
+  ['best', 'Best match'],
+  ['price', 'Price: low to high'],
+  ['rating', 'Highest rating'],
+  ['name', 'Name: A to Z'],
 ]
 
+const BHK_OPTIONS = [
+  { value: 0, label: 'All BHK' },
+  { value: 1, label: '1 BHK' },
+  { value: 2, label: '2 BHK' },
+  { value: 3, label: '3 BHK' },
+  { value: 4, label: '4+ BHK' },
+] as const
+
 const PAGE_SIZE = 20
-// Max 4 per row: columns are at least 15rem wide and never narrower than a quarter of the row.
-const GRID = 'grid grid-cols-[repeat(auto-fill,minmax(max(15rem,calc((100%-3rem)/4)),1fr))] gap-4'
+const GRID = 'grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'
+const PLACEHOLDER = 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80'
 
-/** 1 … 4 5 6 … 12, always keeping first and last. */
-function pageList(page: number, pages: number): Array<number | 'gap'> {
-  const keep = new Set([1, pages, page - 1, page, page + 1].filter((n) => n >= 1 && n <= pages))
-  const out: Array<number | 'gap'> = []
-  let prev = 0
-  for (const n of [...keep].sort((a, b) => a - b)) {
-    if (n - prev > 1) out.push('gap')
-    out.push(n)
-    prev = n
-  }
-  return out
-}
-
-function Pager({ page, pages, total, onPage }: { page: number; pages: number; total: number; onPage: (n: number) => void }) {
+function Pager({
+  page,
+  pages,
+  total,
+  onPage,
+}: {
+  page: number
+  pages: number
+  total: number
+  onPage: (n: number) => void
+}) {
   if (pages <= 1) return null
   const from = (page - 1) * PAGE_SIZE + 1
   const to = Math.min(page * PAGE_SIZE, total)
-  const btn = 'inline-flex h-control min-w-9 cursor-pointer items-center justify-center rounded-control border border-line-strong px-2.5 text-small text-text hover:border-line-hover disabled:cursor-not-allowed disabled:opacity-40 max-xl:h-11 max-xl:min-w-11'
+  const btn =
+    'inline-flex h-9 min-w-9 cursor-pointer items-center justify-center rounded-control border border-line bg-surface px-2.5 text-small text-text transition-colors hover:border-line-hover disabled:cursor-not-allowed disabled:opacity-40'
+
   return (
-    <nav aria-label="Pagination" className="flex flex-wrap items-center justify-between gap-3">
-      <p role="status" className="text-small text-muted">Showing {from}–{to} of {total}</p>
-      <ul className="flex flex-wrap items-center gap-1.5">
-        <li><button type="button" className={btn} disabled={page === 1} onClick={() => onPage(page - 1)} aria-label="Previous page"><ChevronLeft aria-hidden className="size-4" /></button></li>
-        {pageList(page, pages).map((n, i) => (
-          <li key={n === 'gap' ? `gap-${i}` : n}>
-            {n === 'gap'
-              ? <span aria-hidden className="px-1 text-muted">…</span>
-              : <button type="button" className={cn(btn, n === page && 'border-primary bg-primary text-on-primary hover:border-primary')} aria-current={n === page ? 'page' : undefined} aria-label={`Page ${n}`} onClick={() => onPage(n)}>{n}</button>}
-          </li>
-        ))}
-        <li><button type="button" className={btn} disabled={page === pages} onClick={() => onPage(page + 1)} aria-label="Next page"><ChevronRight aria-hidden className="size-4" /></button></li>
-      </ul>
+    <nav aria-label="Pagination" className="flex flex-wrap items-center justify-between gap-3 pt-2">
+      <p role="status" className="text-small text-muted">
+        Showing <span className="font-semibold text-text tabular">{from}–{to}</span> of{' '}
+        <span className="font-semibold text-text tabular">{total.toLocaleString('en-IN')}</span>
+      </p>
+      <div className="flex items-center gap-1.5">
+        <button
+          type="button"
+          className={btn}
+          disabled={page === 1}
+          onClick={() => onPage(page - 1)}
+          aria-label="Previous page"
+        >
+          <ChevronLeft aria-hidden className="size-4" />
+        </button>
+        <span className="px-2 text-small text-muted tabular">
+          Page {page} of {pages}
+        </span>
+        <button
+          type="button"
+          className={btn}
+          disabled={page === pages}
+          onClick={() => onPage(page + 1)}
+          aria-label="Next page"
+        >
+          <ChevronRight aria-hidden className="size-4" />
+        </button>
+      </div>
     </nav>
   )
 }
 
-const select = 'h-control cursor-pointer rounded-control border border-line-strong bg-field px-2.5 text-small text-text hover:border-line-hover max-xl:h-11 max-xl:px-3 max-xl:text-primary-text'
-const PLACEHOLDER = 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80'
-
-interface Filters { view: 'list' | 'map'; tab: (typeof TABS)[number]; q: string; city: string; type: string; mode: FlatMode; sort: FlatSort }
-const INITIAL: Filters = { view: 'list', tab: 'all', q: '', city: 'pune', type: '', mode: 'buy', sort: 'best' }
-
-function Pill({ children, tone }: { children: React.ReactNode; tone: 'brand' | 'ok' | 'dark' }) {
-  return (
-    <span className={cn(
-      'rounded-control px-2 py-0.5 text-[11px] font-semibold text-[#fff]',
-      tone === 'brand' && 'bg-primary', tone === 'ok' && 'bg-success', tone === 'dark' && 'bg-[#0B1020]/80',
-    )}>{children}</span>
-  )
-}
-
-function SocietyTile({ s, mode, watched, onToggle }: { s: SocietyCard; mode: FlatMode; watched: boolean; onToggle: () => void }) {
-  const photos = (s.images ?? []).map((i) => i.thumb).filter(Boolean).slice(0, 8)
+function SocietyTile({
+  s,
+  mode,
+  watched,
+  onToggle,
+}: {
+  s: SocietyCard
+  mode: FlatMode
+  watched: boolean
+  onToggle: () => void
+}) {
+  const photos = (s.images ?? []).map((i) => i.thumb).filter(Boolean).slice(0, 6)
   const imgs = photos.length ? photos : [PLACEHOLDER]
   const [idx, setIdx] = useState(0)
-  const step = (d: number) => setIdx((i) => (i + d + imgs.length) % imgs.length)
+  const step = (d: number, e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIdx((i) => (i + d + imgs.length) % imgs.length)
+  }
+
   const badges = cardBadges(s)
+  const primaryBadge = badges[0]
+  const isReady = s.status?.toLowerCase().includes('ready')
   const y = grossYield(s.prices)
   const rent = lowestRent(s.prices)
-  const price = mode === 'rent'
-    ? (rent != null ? `from ${formatInr(rent)}/mo` : 'Rent on request')
-    : s.price_min != null
-      ? (s.price_max && s.price_max !== s.price_min ? `${formatInr(s.price_min)} – ${formatInr(s.price_max)}` : formatInr(s.price_min))
-      : 'Price on request'
-  // Detail view lives in the marketplace app, which reads ?view=society&society=<id>.
-  const href = `/marketplace?view=society&society=${encodeURIComponent(s.id)}`
+  const price =
+    mode === 'rent'
+      ? rent != null
+        ? `from ${formatInr(rent)}/mo`
+        : 'Rent on request'
+      : s.price_min != null
+        ? s.price_max && s.price_max !== s.price_min
+          ? `${formatInr(s.price_min)} – ${formatInr(s.price_max)}`
+          : formatInr(s.price_min)
+        : 'Price on request'
+
+  const href = path('GP-22', { id: s.id })
 
   return (
     <li>
-      <article className="relative flex h-full flex-col overflow-hidden rounded-card border border-line bg-surface shadow-e1 hover:border-line-hover has-[a.card-link:focus-visible]:outline-2 has-[a.card-link:focus-visible]:outline-offset-2 has-[a.card-link:focus-visible]:outline-focus">
-        <div className="group/media relative">
-          <img src={imgs[idx]} alt="" loading="lazy" decoding="async" className="block aspect-[16/10] w-full bg-sunken object-cover" />
+      <article className="group relative flex h-full flex-col overflow-hidden rounded-card border border-line bg-surface shadow-e1 transition-all duration-200 hover:border-line-hover hover:shadow-e2">
+        <div className="relative aspect-[16/10] w-full overflow-hidden bg-sunken">
+          <img
+            src={imgs[idx]}
+            alt={s.name}
+            loading="lazy"
+            decoding="async"
+            className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+          />
+
           {imgs.length > 1 && (
-            <>
-              {([['Previous', -1, 'left-2', ChevronLeft], ['Next', 1, 'right-2', ChevronRight]] as const).map(([label, d, side, Icon]) => (
-                <button
-                  key={label}
-                  type="button"
-                  aria-label={`${label} photo of ${s.name}`}
-                  onClick={() => step(d)}
-                  className={cn(
-                    'absolute top-1/2 z-10 inline-flex size-9 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full bg-[#fff] text-[#0B1020] shadow-e1 transition-opacity hover:bg-[#f1f5f9] focus-visible:opacity-100 group-hover/media:opacity-100 [@media(hover:none)]:opacity-100 opacity-0',
-                    side,
-                  )}
-                >
-                  <Icon aria-hidden strokeWidth={2.5} className="size-4" />
-                </button>
-              ))}
-              <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-2 flex justify-center gap-1">
-                {imgs.map((_, i) => <span key={i} className={cn('size-1.5 rounded-full', i === idx ? 'bg-[#fff]' : 'bg-[#fff]/50')} />)}
-              </div>
-              <span role="status" className="sr-only">Photo {idx + 1} of {imgs.length}</span>
-            </>
+            <div className="pointer-events-none absolute inset-x-2 top-1/2 flex -translate-y-1/2 items-center justify-between opacity-0 transition-opacity group-hover:opacity-100">
+              <button
+                type="button"
+                aria-label={`Previous photo of ${s.name}`}
+                onClick={(e) => step(-1, e)}
+                className="pointer-events-auto inline-flex size-7 cursor-pointer items-center justify-center rounded-full bg-surface/90 text-text shadow-e1 backdrop-blur-xs hover:bg-surface"
+              >
+                <ChevronLeft aria-hidden className="size-4" />
+              </button>
+              <button
+                type="button"
+                aria-label={`Next photo of ${s.name}`}
+                onClick={(e) => step(1, e)}
+                className="pointer-events-auto inline-flex size-7 cursor-pointer items-center justify-center rounded-full bg-surface/90 text-text shadow-e1 backdrop-blur-xs hover:bg-surface"
+              >
+                <ChevronRight aria-hidden className="size-4" />
+              </button>
+            </div>
           )}
+
+          <div className="pointer-events-none absolute inset-x-2.5 top-2.5 flex items-center justify-between gap-1.5">
+            {primaryBadge ? (
+              <Pill tone={isReady ? 'success' : 'brand'}>
+                {primaryBadge}
+              </Pill>
+            ) : <span />}
+            <button
+              type="button"
+              aria-pressed={watched}
+              aria-label={watched ? `Remove ${s.name} from watchlist` : `Add ${s.name} to watchlist`}
+              onClick={(e) => {
+                e.preventDefault()
+                e.stopPropagation()
+                onToggle()
+              }}
+              className={cn(
+                'pointer-events-auto inline-flex size-8 cursor-pointer items-center justify-center rounded-full border border-line bg-surface/90 shadow-e1 backdrop-blur-xs transition-colors hover:bg-surface',
+                watched ? 'text-warning-ink' : 'text-muted hover:text-text',
+              )}
+            >
+              <Star aria-hidden className={cn('size-4', watched && 'fill-current')} />
+            </button>
+          </div>
         </div>
-        <div className="pointer-events-none absolute inset-x-2 top-2 flex flex-wrap gap-1 pr-11">
-          {badges.map((b, i) => (
-            <Pill key={b} tone={i === 0 ? 'brand' : i === 1 && s.status?.toLowerCase().includes('ready') ? 'ok' : 'dark'}>{b}</Pill>
-          ))}
-        </div>
-        <button
-          type="button"
-          aria-pressed={watched}
-          aria-label={watched ? `Remove ${s.name} from watchlist` : `Add ${s.name} to watchlist`}
-          onClick={onToggle}
-          className={cn('absolute right-2 top-2 z-10 inline-flex size-9 cursor-pointer items-center justify-center rounded-full bg-[#0B1020]/70 text-[#fff] hover:bg-[#0B1020]/90', watched && 'text-warning-ink')}
-        >
-          <Star aria-hidden className={cn('size-4', watched && 'fill-current')} />
-        </button>
-        <h3 className="mx-3.5 mt-3 truncate text-control font-semibold">
-          <a href={href} className="card-link text-text no-underline outline-none after:absolute after:inset-0 after:content-['']">{s.name}</a>
-        </h3>
-        <div className="mx-3.5 mt-1 flex flex-col gap-1 pb-3.5">
-          <p className="truncate text-label text-muted">{[s.locality, s.pincode ? `Pune ${s.pincode}` : 'Pune'].filter(Boolean).join(', ')}</p>
-          <p className="flex flex-wrap items-baseline gap-x-1.5 text-small">
-            <b className="tabular">{price}</b>
-            {mode === 'buy' && s.psf_now != null && <span className="tabular text-muted">· {formatInr(s.psf_now)}/sqft</span>}
-            {y != null && <span className="tabular text-brand" title="Gross yield: annual median rent / median price">· {y.toFixed(1)}% gross yield</span>}
-            {s.score != null && <span className="tabular font-semibold text-success-ink" title="Flat Finder score">· {s.score.toFixed(1)}/10</span>}
-          </p>
-          <p className="flex items-center gap-1 text-chip text-muted">
-            <Star aria-hidden className="size-3.5" />
-            {s.rating != null ? `${s.rating.toFixed(1)} · ` : ''}{s.review_count ?? 0} {s.review_count === 1 ? 'review' : 'reviews'}
-          </p>
+
+        <div className="flex flex-1 flex-col justify-between p-4 gap-2">
+          <div>
+            <h2 className="text-body font-semibold text-text line-clamp-1 group-hover:text-brand transition-colors">
+              <Link
+                to={href}
+                className="no-underline text-text group-hover:text-brand after:absolute after:inset-0 after:content-['']"
+              >
+                {s.name}
+              </Link>
+            </h2>
+            <p className="text-small text-muted truncate">
+              {[s.locality, s.city || 'Pune'].filter(Boolean).join(', ')}
+            </p>
+          </div>
+
+          <div className="border-t border-line pt-2.5 flex flex-col gap-1">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-body font-bold text-text tabular">{price}</span>
+              {mode === 'buy' && s.psf_now != null && (
+                <span className="text-chip text-muted tabular">{formatInr(s.psf_now)}/sqft</span>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between text-chip text-muted pt-0.5">
+              {y != null ? (
+                <span className="font-medium text-brand tabular" title="Gross yield: annual median rent / median price">
+                  {y.toFixed(1)}% gross yield
+                </span>
+              ) : s.score != null ? (
+                <span className="font-medium text-success-ink tabular">
+                  Score {s.score.toFixed(1)}/10
+                </span>
+              ) : (
+                <span className="text-muted">Verified inventory</span>
+              )}
+              {s.rating != null && (
+                <span className="flex items-center gap-1 tabular">
+                  <Star className="size-3 fill-warning text-warning" aria-hidden />
+                  {s.rating.toFixed(1)}
+                  {s.review_count ? ` (${s.review_count})` : ''}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
       </article>
     </li>
   )
 }
 
-/** GP-21 · Market. Societies from the Flat Finder API (/api/flats). View only. */
+/** GP-21 · Market intelligence screen. Clean, consolidated toolbar and dense society grid. */
 export default function Market() {
-  const [f, setF] = usePersistentState<Filters>('market.filters.v3', INITIAL)
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const tab = searchParams.get('tab') === 'watchlist' ? 'watchlist' : 'all'
+  const city = searchParams.get('city') || 'pune'
+  const type = searchParams.get('type') || ''
+  const mode = (searchParams.get('mode') as FlatMode) || 'buy'
+  const sort = (searchParams.get('sort') as FlatSort) || 'best'
+  const bhkParam = searchParams.get('bhk')
+  const bhk = bhkParam ? Number(bhkParam) : 0
+  const ready = searchParams.get('ready') === 'true'
+  const qParam = searchParams.get('q') || ''
+
   const [watch, setWatch] = usePersistentState<string[]>('market.watchlist.v2', [])
   const [cities, setCities] = useState<CitySummary[]>([])
-  const { view, tab, q, city, type, mode, sort } = f
-  const isMap = view === 'map'
   const [page, setPage] = useState(1)
-  const set = <K extends keyof Filters>(k: K, v: Filters[K]) => { setPage(1); setF((x) => ({ ...x, [k]: v })) }
-  const toggle = (id: string) => setWatch((w) => (w.includes(id) ? w.filter((x) => x !== id) : [...w, id]))
+
+  const setParam = (key: string, val: string | number | boolean | null) => {
+    setPage(1)
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev)
+      if (val === null || val === '' || val === 0 || val === false) {
+        next.delete(key)
+      } else {
+        next.set(key, String(val))
+      }
+      return next
+    }, { replace: true })
+  }
+
+  const resetAllFilters = () => {
+    setPage(1)
+    setSearchParams({ city: 'pune', mode: 'buy' }, { replace: true })
+  }
+
+  const toggle = (id: string) =>
+    setWatch((w) => (w.includes(id) ? w.filter((x) => x !== id) : [...w, id]))
 
   useEffect(() => {
     const c = new AbortController()
-    fetchCities(c.signal).then((l) => setCities(l.filter((x) => x.societies_count > 0))).catch(() => {})
+    fetchCities(c.signal)
+      .then((l) => setCities(l.filter((x) => x.societies_count > 0)))
+      .catch(() => {})
     return () => c.abort()
   }, [])
 
-  // All tab: server-side pages of 20. Watchlist: fetch the whole result (API max 100) and page it here.
   const isWatch = tab === 'watchlist'
+
   const { data, loading, error, retry } = useSocieties({
-    city, q: q.trim() || undefined, mode, kind: type || undefined, sort,
-    limit: isWatch || isMap ? MAP_LIMIT : PAGE_SIZE, offset: isWatch || isMap ? 0 : (page - 1) * PAGE_SIZE,
+    city,
+    q: qParam.trim() || undefined,
+    mode,
+    kind: type || undefined,
+    sort,
+    bhk: bhk > 0 ? bhk : undefined,
+    ready: ready ? true : undefined,
+    limit: isWatch ? 100 : PAGE_SIZE,
+    offset: isWatch ? 0 : (page - 1) * PAGE_SIZE,
   })
-  const fetched = data?.societies ?? []
-  const watched = isWatch ? fetched.filter((s) => watch.includes(s.id)) : fetched
+
+  const fetchedSocieties = data?.societies
+
+  const watched = useMemo(() => {
+    const list = fetchedSocieties ?? []
+    if (!isWatch) return list
+    return list.filter(
+      (s) => watch.includes(s.id) && s.city.toLowerCase() === city.toLowerCase(),
+    )
+  }, [isWatch, fetchedSocieties, watch, city])
+
+  const fetched = fetchedSocieties ?? []
   const total = isWatch ? watched.length : data?.total ?? 0
   const pages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const current = Math.min(page, pages)
-  const mapRows = isWatch ? watched : fetched
-  const cityConf = cities.find((c) => c.slug === city)
   const rows = isWatch ? watched.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE) : fetched
+
   const goToPage = (n: number) => {
     setPage(n)
     document.getElementById('main')?.scrollIntoView({ block: 'start' })
   }
 
-  const tabCls = (on: boolean) => cn('-mb-px cursor-pointer border-b-[3px] px-4 py-2.5 text-small', on ? 'border-primary font-semibold text-brand' : 'border-transparent text-text hover:text-brand')
+  const hasActiveFilters = Boolean(type || bhk > 0 || ready || qParam || tab === 'watchlist')
+
+  const selectCls =
+    'h-9 cursor-pointer rounded-control border border-line-strong bg-field px-2.5 text-small text-text transition-colors hover:border-line-hover focus:border-focus outline-none'
 
   return (
     <Screen id="GP-21">
-      <div className="flex flex-col gap-4 px-4 py-4 xl:gap-[18px] xl:px-12 xl:py-6">
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          <h1 className="text-h1">Market</h1>
-          <div className="flex flex-wrap gap-2.5">
-            <input aria-label="Search society, developer or locality" placeholder="Search society or locality" value={q} onChange={(e) => set('q', e.target.value)} className="h-control w-60 rounded-control border border-line-strong bg-field px-3 text-control outline-none placeholder:text-muted focus:border-focus max-xl:h-11 max-xl:w-full" />
-            <select aria-label="City" value={city} onChange={(e) => set('city', e.target.value)} className={select}>
-              {(cities.length ? cities : [{ slug: 'pune', name: 'Pune', societies_count: 0 }]).map((c) => <option key={c.slug} value={c.slug}>{c.name}</option>)}
-            </select>
-            <select aria-label="Type" value={type} onChange={(e) => set('type', e.target.value)} className={select}>
-              {TYPES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-            </select>
-            <select aria-label="Buy or rent" value={mode} onChange={(e) => set('mode', e.target.value as FlatMode)} className={select}>
-              <option value="buy">Buy</option>
-              <option value="rent">Rent</option>
-            </select>
-            <button type="button" aria-pressed={isMap} onClick={() => set('view', isMap ? 'list' : 'map')} className={cn(select, 'inline-flex items-center gap-1.5', isMap && 'border-primary bg-primary text-on-primary max-xl:text-on-primary')}>
-              {isMap ? <List aria-hidden className="size-4" /> : <MapIcon aria-hidden className="size-4" />}
-              {isMap ? 'List view' : 'Map view'}
-            </button>
-            <select aria-label="Sort" value={sort} onChange={(e) => set('sort', e.target.value as FlatSort)} className={select}>
-              {SORTS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
-            </select>
+      <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-6 px-4 py-6 md:px-8 xl:py-8">
+        {/* Header Summary */}
+        <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
+          <div>
+            <h1 className="text-h1 font-bold text-text">Market intelligence</h1>
+            <p className="text-small text-muted">
+              Verified residential inventory with rental yields and price metrics across Maharashtra and NCR.
+            </p>
+          </div>
+          <div className="text-small text-muted">
+            <span className="font-semibold text-text tabular">{total.toLocaleString('en-IN')}</span>{' '}
+            {mode === 'buy' ? 'homes for sale' : 'rental units'}
           </div>
         </div>
 
-        <div role="tablist" aria-label="Market view" className="flex border-b border-line">
-          {TABS.map((t) => (
-            <button key={t} role="tab" aria-selected={tab === t} onClick={() => set('tab', t)} className={tabCls(tab === t)}>
-              {t === 'all' ? `All · ${data?.total ?? '–'}` : `Watchlist · ${watch.length}`}
+        {/* Consolidated Unified Toolbar */}
+        <div className="flex flex-col gap-3 rounded-card border border-line bg-surface p-3.5 shadow-e1">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            {/* Mode Segmented Toggle (Buy / Rent) */}
+            <div className="inline-flex rounded-control border border-line bg-sunken p-0.5">
+              <button
+                type="button"
+                onClick={() => setParam('mode', 'buy')}
+                className={cn(
+                  'cursor-pointer rounded-[4px] px-3.5 py-1 text-chip font-medium transition-colors',
+                  mode === 'buy'
+                    ? 'bg-surface font-semibold text-text shadow-e1'
+                    : 'text-muted hover:text-text',
+                )}
+              >
+                Buy
+              </button>
+              <button
+                type="button"
+                onClick={() => setParam('mode', 'rent')}
+                className={cn(
+                  'cursor-pointer rounded-[4px] px-3.5 py-1 text-chip font-medium transition-colors',
+                  mode === 'rent'
+                    ? 'bg-surface font-semibold text-text shadow-e1'
+                    : 'text-muted hover:text-text',
+                )}
+              >
+                Rent
+              </button>
+            </div>
+
+            {/* Quick Watchlist Toggle */}
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setParam('tab', tab === 'watchlist' ? null : 'watchlist')}
+                className={cn(
+                  'inline-flex cursor-pointer items-center gap-1.5 rounded-control border px-3 py-1.5 text-chip font-medium transition-colors',
+                  tab === 'watchlist'
+                    ? 'border-primary bg-primary text-on-primary'
+                    : 'border-line-strong bg-field text-text hover:bg-primary-tint',
+                )}
+              >
+                <Star className={cn('size-3.5', tab === 'watchlist' && 'fill-current')} />
+                Watchlist ({watch.length})
+              </button>
+
+              {hasActiveFilters && (
+                <button
+                  type="button"
+                  onClick={resetAllFilters}
+                  className="inline-flex cursor-pointer items-center gap-1 text-chip font-medium text-muted hover:text-text"
+                >
+                  <X className="size-3.5" /> Clear filters
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Filter Selects Row */}
+          <div className="flex flex-wrap items-center gap-2.5 pt-1">
+            {/* Search Input */}
+            <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
+              <Search
+                className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted"
+                aria-hidden
+              />
+              <input
+                aria-label="Filter by society or locality"
+                placeholder="Filter by society, locality..."
+                value={qParam}
+                onChange={(e) => setParam('q', e.target.value)}
+                className="h-9 w-full rounded-control border border-line-strong bg-field pr-8 pl-8 text-small text-text outline-none placeholder:text-muted hover:border-line-hover focus:border-focus"
+              />
+              {qParam && (
+                <button
+                  type="button"
+                  onClick={() => setParam('q', null)}
+                  className="absolute top-1/2 right-2.5 -translate-y-1/2 text-muted hover:text-text cursor-pointer"
+                  aria-label="Clear search"
+                >
+                  <X className="size-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* City Selector */}
+            <select
+              aria-label="City"
+              value={city}
+              onChange={(e) => setParam('city', e.target.value)}
+              className={selectCls}
+            >
+              {(cities.length ? cities : [{ slug: 'pune', name: 'Pune', societies_count: 0 }]).map((c) => (
+                <option key={c.slug} value={c.slug}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+
+            {/* Property Kind / Type */}
+            <select
+              aria-label="Type"
+              value={type}
+              onChange={(e) => setParam('type', e.target.value)}
+              className={selectCls}
+            >
+              {TYPES.map(([v, l]) => (
+                <option key={v} value={v}>
+                  {l}
+                </option>
+              ))}
+            </select>
+
+            {/* BHK Filter */}
+            <select
+              aria-label="Configuration"
+              value={bhk}
+              onChange={(e) => setParam('bhk', Number(e.target.value))}
+              className={selectCls}
+            >
+              {BHK_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+
+            {/* Sort Order */}
+            <select
+              aria-label="Sort by"
+              value={sort}
+              onChange={(e) => setParam('sort', e.target.value)}
+              className={selectCls}
+            >
+              {SORTS.map(([v, l]) => (
+                <option key={v} value={v}>
+                  {l}
+                </option>
+              ))}
+            </select>
+
+            {/* Ready to Move Toggle */}
+            <button
+              type="button"
+              onClick={() => setParam('ready', ready ? null : true)}
+              className={cn(
+                'h-9 cursor-pointer rounded-control border px-3 text-small font-medium transition-colors',
+                ready
+                  ? 'border-primary bg-primary text-on-primary'
+                  : 'border-line-strong bg-field text-text hover:bg-primary-tint',
+              )}
+            >
+              Ready to move
             </button>
-          ))}
+          </div>
         </div>
 
+        {/* Content & Results Grid */}
         {error ? (
-          <div role="alert" className="flex flex-col items-start gap-2 rounded-card border border-line bg-surface p-4 text-small">
-            <span>Could not load homes: {error}</span>
-            <button type="button" onClick={retry} className="cursor-pointer rounded-control border border-line-strong px-3 py-1.5 hover:border-line-hover">Try again</button>
+          <div
+            role="alert"
+            className="flex flex-col items-start gap-2 rounded-card border border-line bg-surface p-6 text-small shadow-e1"
+          >
+            <span className="font-semibold text-danger-ink">Could not load market data: {error}</span>
+            <Button size="sm" variant="secondary" onClick={retry}>
+              Try again
+            </Button>
           </div>
         ) : loading && !data ? (
           <ul aria-busy="true" className={GRID}>
-            {Array.from({ length: 8 }, (_, i) => <li key={i} className="aspect-[3/4] animate-pulse rounded-card border border-line bg-surface" />)}
+            {Array.from({ length: 8 }, (_, i) => (
+              <li key={i} className="aspect-[3/4] animate-pulse rounded-card border border-line bg-surface" />
+            ))}
           </ul>
-        ) : isMap ? (
-          <>
-            <Suspense fallback={<div aria-busy="true" className="h-[70vh] min-h-96 animate-pulse rounded-card border border-line bg-surface" />}>
-              <MarketMap societies={mapRows} mode={mode} center={cityConf?.center} zoom={cityConf?.zoom} onUnavailable={() => set('view', 'list')} />
-            </Suspense>
-            {!isWatch && (data?.total ?? 0) > MAP_LIMIT && <p role="status" className="text-small text-muted">Showing the first {MAP_LIMIT} of {data?.total}. Refine the filters to narrow the map.</p>}
-          </>
         ) : rows.length === 0 ? (
-          <p role="status" className="text-small text-muted">
-            {tab === 'watchlist' && !q && !type ? 'Your watchlist is empty. Use the star on a card to add one.' : 'Nothing matches these filters.'}
-          </p>
+          <div className="flex flex-col items-center justify-center gap-3 rounded-card border border-line bg-surface py-16 text-center shadow-e1">
+            <p role="status" className="max-w-md text-small text-muted">
+              {tab === 'watchlist'
+                ? `No properties in ${city.toUpperCase()} saved to your watchlist. Star any property to monitor its yield and pricing.`
+                : 'No properties match your current search and filter combination.'}
+            </p>
+            {hasActiveFilters && (
+              <Button size="sm" variant="secondary" onClick={resetAllFilters} icon={<RotateCcw className="size-3.5" />}>
+                Reset all filters
+              </Button>
+            )}
+          </div>
         ) : (
           <ul aria-busy={loading} className={GRID}>
-            {rows.map((s) => <SocietyTile key={s.id} s={s} mode={mode} watched={watch.includes(s.id)} onToggle={() => toggle(s.id)} />)}
+            {rows.map((s) => (
+              <SocietyTile
+                key={s.id}
+                s={s}
+                mode={mode}
+                watched={watch.includes(s.id)}
+                onToggle={() => toggle(s.id)}
+              />
+            ))}
           </ul>
         )}
 
-        {!isMap && <Pager page={current} pages={pages} total={total} onPage={goToPage} />}
+        {/* Pagination Controls */}
+        <Pager page={current} pages={pages} total={total} onPage={goToPage} />
 
         <p className="text-label text-muted">
-          View only. Prices come from scraped Magicbricks listings and are not live. Yield is an estimate from median rent and price.
+          Indicative sample data. Prices derived from verified Magicbricks listings. Yield computed from annual median rent / median price.
         </p>
       </div>
     </Screen>

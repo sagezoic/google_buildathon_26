@@ -4,7 +4,8 @@ import { Link, useNavigate } from 'react-router'
 import { path } from '../../app/nav'
 import { Button } from '../../components/ui/button'
 import { Pill } from '../../components/ui/pill'
-import { INITIAL_RECENT, INITIAL_SEARCH, parseQuery, runSearch, type Property, type SearchState } from '../../data/fixtures/f08-search'
+import { INITIAL_RECENT, INITIAL_SEARCH, parseQuery, runSearch, priceShort, type Property, type SearchState } from '../../data/fixtures/f08-search'
+import { getPropertyThumbnail } from '../../data/property-images'
 import { useSharedState } from '../../lib/shared-state'
 import { cn } from '../../lib/cn'
 
@@ -82,16 +83,39 @@ export const idChip = 'rounded-control border border-line bg-sunken px-1.5 py-0.
 
 /** Result card (F08-02, F09-01 mobile). Opens the full record. */
 export function PropertyCard({ p, sub, note, shortPills }: { p: Property; sub: string; note?: boolean; shortPills?: boolean }) {
+  const thumb = getPropertyThumbnail(p.id, p.type)
   return (
-    <Link to={`${path('F09-03')}?id=${p.id}`} className="flex flex-col gap-2 rounded-card border border-line bg-surface p-3.5 text-text no-underline shadow-e1 hover:border-line-hover md:p-4">
-      <div className="flex items-center justify-between gap-2">
-        <span className={idChip}>{p.id}</span>
-        <span className="rounded-pill bg-info-tint px-2 py-0.5 text-label font-medium text-info-ink max-md:hidden">Sample</span>
+    <Link
+      to={`${path('F09-03')}?id=${p.id}`}
+      className="group flex flex-col overflow-hidden rounded-card border border-line bg-surface text-text no-underline shadow-e1 transition-all duration-200 hover:border-line-hover hover:shadow-e2"
+    >
+      <div className="relative aspect-[16/10] w-full overflow-hidden bg-sunken">
+        <img
+          src={thumb}
+          alt={p.label}
+          loading="lazy"
+          decoding="async"
+          className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+        />
+        <div className="pointer-events-none absolute inset-x-2 top-2 flex items-center justify-between gap-1.5">
+          <span className="rounded-control bg-surface/90 px-2 py-0.5 font-mono text-[11px] font-semibold text-text shadow-e1 backdrop-blur-xs">
+            {p.id}
+          </span>
+          <span className="rounded-control bg-primary px-2 py-0.5 text-[11px] font-semibold text-on-primary shadow-e1">
+            {priceShort(p.price)}
+          </span>
+        </div>
       </div>
-      <div className="text-control font-semibold md:text-body">{p.label}</div>
-      <div className="text-chip text-muted">{sub}</div>
-      <div className="flex flex-wrap gap-1.5"><StatusPills p={p} short={shortPills} /></div>
-      {note && <div className="text-chip text-muted max-md:hidden">{p.note}</div>}
+      <div className="flex flex-col gap-1.5 p-3.5 md:p-4">
+        <div className="text-control font-semibold text-text group-hover:text-brand md:text-body">
+          {p.label}
+        </div>
+        <div className="text-chip text-muted">{sub}</div>
+        <div className="mt-1 flex flex-wrap gap-1.5">
+          <StatusPills p={p} short={shortPills} />
+        </div>
+        {note && <div className="mt-1 text-chip text-muted max-md:hidden">{p.note}</div>}
+      </div>
     </Link>
   )
 }

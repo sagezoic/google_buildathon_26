@@ -13,13 +13,13 @@ export function useSocieties(query: SocietyQuery) {
   const [attempt, setAttempt] = useState(0)
   const retry = useCallback(() => setAttempt((n) => n + 1), [])
 
-  const { city, q, mode, kind, ready, sort, limit, offset } = query
+  const { city, q, mode, kind, ready, sort, bhk, limit, offset } = query
 
   useEffect(() => {
     const controller = new AbortController()
     setState((s) => ({ ...s, loading: true, error: null }))
     const timer = setTimeout(() => {
-      fetchSocieties({ city, q, mode, kind, ready, sort, limit, offset }, controller.signal)
+      fetchSocieties({ city, q, mode, kind, ready, sort, bhk, limit, offset }, controller.signal)
         .then((data) => setState({ data, loading: false, error: null }))
         .catch((err: unknown) => {
           if (controller.signal.aborted) return
@@ -30,7 +30,7 @@ export function useSocieties(query: SocietyQuery) {
       clearTimeout(timer)
       controller.abort()
     }
-  }, [city, q, mode, kind, ready, sort, limit, offset, attempt])
+  }, [city, q, mode, kind, ready, sort, bhk, limit, offset, attempt])
 
   return { ...state, retry }
 }

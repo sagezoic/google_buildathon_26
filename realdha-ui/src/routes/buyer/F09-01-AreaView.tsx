@@ -41,15 +41,20 @@ export default function AreaViewScreen() {
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
           {/* Map canvas */}
           <div className="relative min-h-[420px] overflow-hidden rounded-card border border-line bg-sunken xl:col-span-8 xl:min-h-[580px]">
-            <div className="absolute top-3 left-3 z-10 rounded-[6px] border border-line bg-surface/90 px-3 py-1 text-overline text-muted backdrop-blur-sm">
-              Map placeholder · clusters show number of records
+            <img
+              src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80"
+              alt="Baner Pune Aerial Satellite"
+              className="absolute inset-0 size-full object-cover opacity-20 filter saturate-50"
+            />
+            <div className="absolute top-3 left-3 z-10 rounded-control border border-line bg-surface/90 px-3 py-1.5 text-label font-medium text-text shadow-e1 backdrop-blur-xs">
+              Baner Locality Map · Verified Project Clusters & Land Parcels
             </div>
 
-            {/* Simulated map background lines */}
-            <svg className="absolute inset-0 size-full opacity-30" viewBox="0 0 800 600" preserveAspectRatio="none">
-              <path d="M50 50 Q200 300 400 200 T800 500" stroke="currentColor" strokeWidth="4" fill="none" className="text-line" />
-              <path d="M100 550 Q300 400 500 450 T750 100" stroke="currentColor" strokeWidth="3" fill="none" className="text-line" />
-              <path d="M400 50 L400 550" stroke="currentColor" strokeWidth="2" fill="none" className="text-line" />
+            {/* Cartographic grid overlay */}
+            <svg className="absolute inset-0 size-full opacity-40" viewBox="0 0 800 600" preserveAspectRatio="none">
+              <path d="M50 50 Q200 300 400 200 T800 500" stroke="currentColor" strokeWidth="6" fill="none" className="text-primary/40" />
+              <path d="M100 550 Q300 400 500 450 T750 100" stroke="currentColor" strokeWidth="4" fill="none" className="text-line-strong" />
+              <path d="M400 50 L400 550" stroke="currentColor" strokeWidth="3" fill="none" className="text-line-strong" />
             </svg>
 
             {/* Cluster Pins */}
