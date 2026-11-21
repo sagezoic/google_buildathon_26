@@ -4,7 +4,6 @@ import { cn } from '../lib/cn'
 import { FLOWS, type Role } from './screens'
 import { INITIALS, NAV, activePath, screenById } from './nav'
 import { useActiveRole, resolveRole } from './active-role'
-import { JourneyRail } from '../components/JourneyRail'
 import { SiteHeader, LangSwitch, ThemeToggle } from '../components/SiteHeader'
 import { useT } from './i18n'
 
@@ -102,7 +101,6 @@ export function Screen({ id, layout = 'app', role, children, className, noTabs, 
         back={back}
         title={title}
       />
-      {layout === 'app' && <JourneyRail role={r} screenId={id} />}
       <main id="main" className={cn('flex flex-1 flex-col', className)} data-screen={id} data-flow={def ? FLOWS[def.flow] : undefined}>
         {children}
       </main>

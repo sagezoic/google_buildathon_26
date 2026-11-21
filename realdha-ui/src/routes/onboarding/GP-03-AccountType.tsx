@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router'
 import { usePersistentState } from '../../app/persist'
 import { K } from '../../lib/identity-flow'
+import { nextOnboardPath, readIntent } from '../../lib/onboard-intent'
 import { Screen } from '../../app/Shell'
 import { path } from '../../app/nav'
 import { Button } from '../../components/ui/button'
@@ -35,7 +36,8 @@ function Radio({ name, opt, on, set, small }: { name: string; opt: Opt; on: bool
 /** GP-03 · Account type. Business reveals the role picker (in-frame, not a separate state). */
 export default function AccountType() {
   const nav = useNavigate()
-  const [acctRaw, setAcct] = usePersistentState(K.accountType, 'business')
+  const intent = readIntent()
+  const [acctRaw, setAcct] = usePersistentState(K.accountType, intent === 'owner' || intent === 'buyer' ? 'retail' : 'business')
   const [roleRaw, setRole] = usePersistentState(K.businessRole, 'developer')
   const acct = ACCOUNTS.some((o) => o.id === acctRaw) ? acctRaw : 'business'
   const role = ROLES.some((o) => o.id === roleRaw) ? roleRaw : 'developer'
@@ -62,7 +64,7 @@ export default function AccountType() {
           )}
           <div className="flex items-center justify-between max-xl:flex-col-reverse max-xl:gap-3">
             <Link to={path('GP-02')} className="text-small max-xl:hidden">Back</Link>
-            <Button size="lg" onClick={() => { setAcct(acct); setRole(role); nav(path('GP-04')) }} className="max-xl:w-full xl:px-8">Continue</Button>
+            <Button size="lg" onClick={() => { setAcct(acct); setRole(role); nav(intent ? nextOnboardPath(intent) : path('GP-04')) }} className="max-xl:w-full xl:px-8">Continue</Button>
           </div>
         </div>
       </div>

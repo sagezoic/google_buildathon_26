@@ -9,6 +9,8 @@ import { Button } from '../../components/ui/button'
 import { Pill } from '../../components/ui/pill'
 import { prakash } from '../../data/fixtures/identity'
 import { cn } from '../../lib/cn'
+import { OnboardSteps } from '../../components/onboard-steps'
+import { useIntent } from '../../lib/onboard-intent'
 
 const STATES = ['verified', 'pending', 'failed'] as const
 type State = (typeof STATES)[number]
@@ -16,6 +18,7 @@ type State = (typeof STATES)[number]
 /** GP-05 · KYC result. Desktop: icon card. Phone and tablet: tinted status banner. */
 export default function KYCResult() {
   const [params] = useSearchParams()
+  const intent = useIntent()
   const forcedParam = params.get('state') as State | null
   const forced = forcedParam && STATES.includes(forcedParam) ? forcedParam : null
   const [saved, setSaved] = usePersistentState<KycStatus>(K.kycStatus, 'none')
@@ -62,6 +65,7 @@ export default function KYCResult() {
     <Screen id="GP-05" layout="auth" noTabs>
       <div className="flex flex-1 items-start justify-center px-4 pt-4 pb-8 xl:items-center xl:pt-0">
         <div className="flex w-full max-w-[440px] flex-col gap-3.5" aria-live="polite">
+          <OnboardSteps step="kyc" />
           {/* phone / tablet */}
           <div className={cn('flex flex-col gap-1 rounded-[8px] border p-3.5 xl:hidden', s.banner)}>
             <div className="flex items-center gap-2.5 text-h3"><span aria-hidden>{s.icon}</span>{s.word}</div>
@@ -74,10 +78,10 @@ export default function KYCResult() {
             {s.pill}
             <p className="text-small text-muted">{s.d}</p>
           </div>
-          <Button size="lg" block variant={state === 'pending' ? 'secondary' : 'primary'} to={failed ? path('GP-04') : path('GP-06')} disabled={failed && left === 0}>
-            {failed ? 'Try again' : state === 'pending' ? 'Continue to home' : 'Go to home'}
+          <Button size="lg" block variant={state === 'pending' ? 'secondary' : 'primary'} to={failed ? path('GP-04') : intent ? path('F02-04') : path('GP-06')} disabled={failed && left === 0}>
+            {failed ? 'Try again' : intent ? 'Continue to DigiLocker documents' : state === 'pending' ? 'Continue to home' : 'Go to home'}
           </Button>
-          {failed && <a href={path('GP-06')} className="inline-flex min-h-11 items-center justify-center text-small font-medium max-xl:hidden">Do this later</a>}
+          {failed && <a href={intent ? path('F02-04') : path('GP-06')} className="inline-flex min-h-11 items-center justify-center text-small font-medium max-xl:hidden">Do this later</a>}
         </div>
       </div>
     </Screen>

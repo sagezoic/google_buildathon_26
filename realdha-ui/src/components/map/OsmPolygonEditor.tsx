@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Feature, Polygon } from 'geojson'
-import { Check, Plus, RotateCcw, Trash2 } from 'lucide-react'
+import { Check, Plus, RotateCcw, Trash2, Undo2 } from 'lucide-react'
 import * as maplibregl from 'maplibre-gl'
 import { cn } from '../../lib/cn'
 import {
@@ -73,42 +73,35 @@ export default function OsmPolygonEditor({
   useEffect(() => {
     if (!map || !ready) return
 
-    const initialFeature: Feature<Polygon> = {
-      type: 'Feature',
-      properties: {},
-      geometry: {
-        type: 'Polygon',
-        coordinates: [],
-      },
-    }
-
-    if (!map.getSource(SOURCE_ID)) {
-      map.addSource(SOURCE_ID, {
-        type: 'geojson',
-        data: initialFeature,
-      })
-
+    const ensureLayers = () => {
+      if (map.getSource(SOURCE_ID)) return
+      const ring = liveRef.current.points
+      const feature: Feature<Polygon> = {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'Polygon',
+          coordinates: ring.length >= 3 ? [[...ring, ring[0]]] : [],
+        },
+      }
+      map.addSource(SOURCE_ID, { type: 'geojson', data: feature })
       map.addLayer({
         id: FILL_LAYER,
         type: 'fill',
         source: SOURCE_ID,
-        paint: {
-          'fill-color': color,
-          'fill-opacity': 0.22,
-        },
+        paint: { 'fill-color': color, 'fill-opacity': 0.22 },
       })
-
       map.addLayer({
         id: LINE_LAYER,
         type: 'line',
         source: SOURCE_ID,
-        paint: {
-          'line-color': color,
-          'line-width': 2.5,
-          'line-dasharray': [3, 2],
-        },
+        paint: { 'line-color': color, 'line-width': 2.5, 'line-dasharray': [3, 2] },
       })
     }
+
+    ensureLayers()
+    // Theme toggle calls map.setStyle(), which wipes custom sources/layers.
+    map.on('style.load', ensureLayers)
 
     // Map click handler for drawing new vertices
     const handleMapClick = (e: maplibregl.MapMouseEvent) => {
@@ -126,65 +119,76 @@ export default function OsmPolygonEditor({
 
     return () => {
       map.off('click', handleMapClick)
+      map.off('style.load', ensureLayers)
       if (map.getLayer(FILL_LAYER)) map.removeLayer(FILL_LAYER)
       if (map.getLayer(LINE_LAYER)) map.removeLayer(LINE_LAYER)
       if (map.getSource(SOURCE_ID)) map.removeSource(SOURCE_ID)
     }
   }, [map, ready, color])
 
-  // Update GeoJSON source when points change
-  useEffect(() => {
-    if (!map || !ready) return
+  // Push a ring to the GeoJSON source (also used live while dragging a vertex)
+  const renderSource = (pts: LngLat[]) => {
+    if (!map) return
     const src = map.getSource(SOURCE_ID) as maplibregl.GeoJSONSource | undefined
     if (!src) return
-
-    const ring = points.length >= 3 ? [[...points, points[0]]] : []
     src.setData({
       type: 'Feature',
       properties: {},
       geometry: {
         type: 'Polygon',
-        coordinates: ring,
+        coordinates: pts.length >= 3 ? [[...pts, pts[0]]] : [],
       },
     })
+  }
+
+  // Update GeoJSON source when points change
+  useEffect(() => {
+    if (!map || !ready) return
+    renderSource(points)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [points, map, ready])
 
-  // Center Pin Marker
+  // Center Pin Marker (created once per map; position/draggable synced separately)
+  const pinLng = pin ? toLngLat(pin)[0] : undefined
+  const pinLat = pin ? toLngLat(pin)[1] : undefined
+  const hasPin = pinLng !== undefined && pinLat !== undefined
+
   useEffect(() => {
-    if (!map || !ready || !pin) return
+    if (!map || !ready || !hasPin) return
 
-    const p = toLngLat(pin)
-    if (!pinMarkerRef.current) {
-      const el = document.createElement('div')
-      el.className =
-        'flex size-10 cursor-grab items-center justify-center rounded-full drop-shadow-md focus-visible:outline-none'
-      el.innerHTML =
-        '<svg width="32" height="40" viewBox="0 0 30 38" fill="none"><path d="M15 36 C15 36 3 22 3 14 a12 12 0 0 1 24 0 c0 8-12 22-12 22z" fill="#2F64B8" stroke="#ffffff" stroke-width="2.5"/><circle cx="15" cy="14" r="4.5" fill="#ffffff"/></svg>'
+    const el = document.createElement('div')
+    el.className = 'flex size-10 items-center justify-center'
+    el.innerHTML =
+      '<div class="drop-shadow-md" style="line-height:0"><svg width="32" height="40" viewBox="0 0 30 38" fill="none"><path d="M15 36 C15 36 3 22 3 14 a12 12 0 0 1 24 0 c0 8-12 22-12 22z" fill="#2F64B8" stroke="#ffffff" stroke-width="2.5"/><circle cx="15" cy="14" r="4.5" fill="#ffffff"/></svg></div>'
 
-      const marker = new maplibregl.Marker({
-        element: el,
-        draggable: editable,
-        anchor: 'bottom',
-      })
-        .setLngLat(p)
-        .addTo(map)
+    const marker = new maplibregl.Marker({
+      element: el,
+      draggable: liveRef.current.editable,
+      anchor: 'bottom',
+    })
+      .setLngLat([pinLng!, pinLat!])
+      .addTo(map)
 
-      marker.on('dragend', () => {
-        const pt = marker.getLngLat()
-        liveRef.current.onPinChange?.([pt.lng, pt.lat])
-      })
+    marker.on('dragend', () => {
+      const pt = marker.getLngLat()
+      liveRef.current.onPinChange?.([pt.lng, pt.lat])
+    })
 
-      pinMarkerRef.current = marker
-    } else {
-      pinMarkerRef.current.setLngLat(p)
-      pinMarkerRef.current.setDraggable(editable)
-    }
-
+    pinMarkerRef.current = marker
     return () => {
-      pinMarkerRef.current?.remove()
+      marker.remove()
       pinMarkerRef.current = null
     }
-  }, [pin, map, ready, editable])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map, ready, hasPin])
+
+  useEffect(() => {
+    const m = pinMarkerRef.current
+    if (!m || pinLng === undefined || pinLat === undefined) return
+    const cur = m.getLngLat()
+    if (cur.lng !== pinLng || cur.lat !== pinLat) m.setLngLat([pinLng, pinLat])
+    m.setDraggable(editable)
+  }, [pinLng, pinLat, editable, map, ready])
 
   // Vertices and Midpoints Interactive Markers
   useEffect(() => {
@@ -198,43 +202,53 @@ export default function OsmPolygonEditor({
 
     if (!editable || isDrawing) return
 
+    // MapLibre owns the outer element's `transform` (positioning), so all
+    // hover/scale/transition styling lives on an inner element only.
+    const buildMarkerShell = (size: string) => {
+      const outer = document.createElement('div')
+      outer.className = cn('flex items-center justify-center', size)
+      return outer
+    }
+
     // Create vertex markers
     points.forEach((pt, index) => {
+      const outer = buildMarkerShell('size-8')
       const el = document.createElement('button')
       el.type = 'button'
       el.className = cn(
-        'group flex size-6 cursor-grab items-center justify-center rounded-full border-2 border-white bg-primary text-[10px] font-bold text-on-primary shadow-e2 transition-transform hover:scale-125 focus:scale-125 focus-visible:outline-2 focus-visible:outline-focus',
+        'flex size-6 cursor-grab items-center justify-center rounded-full border-2 border-white bg-primary text-[10px] font-bold text-on-primary shadow-e2 transition-transform duration-100 motion-reduce:transition-none hover:scale-125 focus:scale-125 focus-visible:outline-2 focus-visible:outline-focus active:cursor-grabbing',
         activeVertex === index && 'ring-2 ring-primary ring-offset-2'
       )
-      el.setAttribute('aria-label', `Vertex ${index + 1}. Drag to move.`)
+      el.setAttribute('aria-label', `Boundary point ${index + 1}. Drag to move.`)
       el.innerText = `${index + 1}`
+      outer.appendChild(el)
 
       const marker = new maplibregl.Marker({
-        element: el,
+        element: outer,
         draggable: true,
         anchor: 'center',
       })
         .setLngLat(pt)
         .addTo(map)
 
+      // Live drag: update the polygon + handles imperatively. Do NOT setState
+      // here, or the effect would rebuild (destroy) every marker mid-drag.
       marker.on('drag', () => {
         const p = marker.getLngLat()
-        setPoints((prev) => {
-          const next = [...prev]
-          next[index] = [p.lng, p.lat]
-          return next
+        const next = [...liveRef.current.points]
+        next[index] = [p.lng, p.lat]
+        renderSource(next)
+        midpointMarkersRef.current.forEach((mm, i) => {
+          mm.setLngLat(midpoint(next[i], next[(i + 1) % next.length]))
         })
       })
 
       marker.on('dragend', () => {
         const p = marker.getLngLat()
-        setPoints((prev) => {
-          const next = [...prev]
-          next[index] = [p.lng, p.lat]
-          const area = sphericalPolygonArea(next)
-          liveRef.current.onChange?.(next, area)
-          return next
-        })
+        const next = [...liveRef.current.points]
+        next[index] = [p.lng, p.lat]
+        setPoints(next)
+        liveRef.current.onChange?.(next, sphericalPolygonArea(next))
       })
 
       el.addEventListener('click', (e) => {
@@ -252,19 +266,21 @@ export default function OsmPolygonEditor({
         const p2 = points[(i + 1) % points.length]
         const mid = midpoint(p1, p2)
 
+        const outer = buildMarkerShell('size-7')
         const el = document.createElement('button')
         el.type = 'button'
         el.className =
-          'flex size-4 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-line-strong text-white opacity-70 shadow-sm transition-all hover:scale-125 hover:bg-primary hover:opacity-100'
+          'flex size-4 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-line-strong text-white opacity-80 shadow-sm transition-[scale,opacity,background-color] duration-100 motion-reduce:transition-none hover:scale-125 hover:bg-primary hover:opacity-100 focus-visible:outline-2 focus-visible:outline-focus'
         el.setAttribute(
           'aria-label',
-          `Add vertex between point ${i + 1} and ${(i + 1) % points.length + 1}`
+          `Add a point between points ${i + 1} and ${(i + 1) % points.length + 1}`
         )
         el.innerHTML =
           '<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>'
+        outer.appendChild(el)
 
         const marker = new maplibregl.Marker({
-          element: el,
+          element: outer,
           draggable: false,
           anchor: 'center',
         })
@@ -273,13 +289,10 @@ export default function OsmPolygonEditor({
 
         el.addEventListener('click', (e) => {
           e.stopPropagation()
-          setPoints((prev) => {
-            const next = [...prev]
-            next.splice(i + 1, 0, mid)
-            const area = sphericalPolygonArea(next)
-            liveRef.current.onChange?.(next, area)
-            return next
-          })
+          const next = [...liveRef.current.points]
+          next.splice(i + 1, 0, mid)
+          setPoints(next)
+          liveRef.current.onChange?.(next, sphericalPolygonArea(next))
         })
 
         midpointMarkersRef.current.push(marker)
@@ -311,6 +324,13 @@ export default function OsmPolygonEditor({
     liveRef.current.onChange?.([], 0)
   }
 
+  const handleUndoPoint = () => {
+    if (points.length === 0) return
+    const next = points.slice(0, -1)
+    setPoints(next)
+    liveRef.current.onChange?.(next, sphericalPolygonArea(next))
+  }
+
   const handleDeleteVertex = (idx: number) => {
     if (points.length <= 3) return
     const next = points.filter((_, i) => i !== idx)
@@ -323,13 +343,13 @@ export default function OsmPolygonEditor({
   return (
     <div
       className={cn(
-        'pointer-events-none absolute inset-x-3 bottom-3 z-10 flex flex-wrap items-center justify-between gap-2.5 sm:inset-x-4 sm:bottom-4',
+        'pointer-events-none absolute inset-x-3 bottom-9 z-10 flex flex-wrap items-center justify-between gap-2 sm:inset-x-4',
         className
       )}
     >
       {/* Area & Perimeter Readout Badge */}
       <div className="pointer-events-auto flex items-center gap-2 rounded-control border border-line bg-surface/95 px-3 py-1.5 text-small font-medium text-text shadow-e2 backdrop-blur-xs">
-        <span className="text-muted">Calculated Area:</span>
+        <span className="text-muted">Site area:</span>
         <span className="font-semibold text-text tabular">
           {calculatedSqm > 0 ? formatArea(calculatedSqm, unit) : '—'}
         </span>
@@ -346,15 +366,24 @@ export default function OsmPolygonEditor({
           {isDrawing ? (
             <>
               <span className="px-2 text-chip text-muted">
-                Click map to add boundary points ({points.length}/3+):
+                Click the map to place boundary points. {points.length} placed, at least 3 needed.
               </span>
+              <button
+                type="button"
+                disabled={points.length === 0}
+                onClick={handleUndoPoint}
+                className="flex cursor-pointer items-center gap-1 rounded-[4px] px-2 py-1 text-chip font-medium text-muted hover:bg-field hover:text-text focus-visible:outline-2 focus-visible:outline-focus disabled:cursor-not-allowed disabled:opacity-40"
+                title="Remove the last point"
+              >
+                <Undo2 className="size-3.5" /> Undo
+              </button>
               <button
                 type="button"
                 disabled={points.length < 3}
                 onClick={handleFinishDrawing}
                 className="flex cursor-pointer items-center gap-1 rounded-[4px] bg-primary px-2.5 py-1 text-chip font-semibold text-on-primary transition-opacity disabled:cursor-not-allowed disabled:opacity-40"
               >
-                <Check className="size-3.5" /> Done
+                <Check className="size-3.5" /> Finish boundary
               </button>
             </>
           ) : (
@@ -363,9 +392,9 @@ export default function OsmPolygonEditor({
                 type="button"
                 onClick={() => setIsDrawing(true)}
                 className="flex cursor-pointer items-center gap-1 rounded-[4px] px-2 py-1 text-chip font-medium text-muted hover:bg-field hover:text-text"
-                title="Add more points"
+                title="Click the map to add more boundary points"
               >
-                <Plus className="size-3.5" /> Add Points
+                <Plus className="size-3.5" /> Add points
               </button>
 
               {activeVertex !== null && points.length > 3 && (
@@ -373,9 +402,9 @@ export default function OsmPolygonEditor({
                   type="button"
                   onClick={() => handleDeleteVertex(activeVertex)}
                   className="flex cursor-pointer items-center gap-1 rounded-[4px] px-2 py-1 text-chip font-medium text-danger-ink hover:bg-danger-tint"
-                  title={`Delete vertex ${activeVertex + 1}`}
+                  title={`Delete boundary point ${activeVertex + 1}`}
                 >
-                  <Trash2 className="size-3.5" /> Del #{activeVertex + 1}
+                  <Trash2 className="size-3.5" /> Delete point {activeVertex + 1}
                 </button>
               )}
 
@@ -383,9 +412,9 @@ export default function OsmPolygonEditor({
                 type="button"
                 onClick={handleReset}
                 className="flex cursor-pointer items-center gap-1 rounded-[4px] px-2 py-1 text-chip font-medium text-muted hover:bg-field hover:text-text"
-                title="Clear boundary"
+                title="Remove the boundary and start again"
               >
-                <RotateCcw className="size-3.5" /> Redraw
+                <RotateCcw className="size-3.5" /> Redraw boundary
               </button>
             </>
           )}

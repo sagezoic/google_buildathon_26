@@ -1,91 +1,90 @@
 /*
- * Realdha design tokens: "Satbara ledger".
- * The look of the paper land records live on: warm paper ground, ink-black text,
- * franking-stamp indigo for action, vermilion seal for alarm, hairline rules, square corners.
+ * Realdha design tokens.
+ * Source of truth: "Realdha UI frames" artifact (Main style board + C1–C3).
  *
  * Layers
- *   1. Primitives  --rd-p-*   raw values. Never used by components.
+ *   1. Primitives  --rd-p-*   raw values from the artifact. Never used by components.
  *   2. Semantic    --rd-*     roles. Light by default, dark under [data-theme="dark"].
  *   3. Tailwind    @theme     utilities (bg-surface, text-muted, border-line, …) in index.css.
  *
  * Rules the tokens encode
  *   - Seal teal (--rd-chain-*) is only for on-chain facts: fingerprints, hashes, network, anchored.
- *   - Status is never colour alone: every status is a word plus a marker.
- *   - Flat by default: depth comes from hairlines and paper tone, not shadow.
+ *   - Status is never colour alone: every status token pair is used with an icon and a word.
+ *   - Text roles pass 4.5:1 on the surfaces they are paired with (see scripts/check-contrast.mjs).
  */
 
 :root {
-  /* ---------- 1. Primitives ---------- */
-  --rd-p-paper-50: #FBF9F3;
-  --rd-p-paper-100: #F4EFE4;
-  --rd-p-paper-200: #E9E2D1;
-  --rd-p-paper-300: #DDD5C3;
-  --rd-p-ink-900: #1B1A17;
-  --rd-p-ink-700: #4F4A3E;
-  --rd-p-ink-500: #8A8372;
-  --rd-p-ink-400: #8E846F;
-  --rd-p-ink-300: #5E5648;
+  /* ---------- 1. Primitives (aligned with logo: Terracotta, Midnight Slate, Marigold Gold) ---------- */
+  --rd-p-terracotta-900: #752A22;
+  --rd-p-terracotta-700: #94382E;
+  --rd-p-terracotta-50: #FBF0EE;
+  --rd-p-focus: #94382E;
 
-  --rd-p-indigo-900: #17204F;
-  --rd-p-indigo-700: #23306B;
-  --rd-p-indigo-50: #E0DBD0;
+  --rd-p-white: #FFFFFF;
+  --rd-p-grey-50: #F5F6F8;
+  --rd-p-grey-100: #E5E8ED;
+  --rd-p-grey-200: #D8DDE4;
+  --rd-p-grey-300: #B9C1CC;
+  --rd-p-slate-500: #6B7685;
+  --rd-p-slate-600: #4B5768;
+  --rd-p-midnight-ink: #14202E;
 
-  --rd-p-green-600: #2F6B3F;
-  --rd-p-green-50: #E3EBDC;
-  --rd-p-green-800: #20502D;
-  --rd-p-amber-600: #9A5B00;
-  --rd-p-amber-50: #F3E4C2;
-  --rd-p-amber-800: #6E4100;
-  --rd-p-red-600: #B3261E;
-  --rd-p-red-50: #F5DDD6;
-  --rd-p-red-800: #8A1C16;
-  --rd-p-blue-600: #2A5E8C;
-  --rd-p-blue-50: #DCE6EE;
-  --rd-p-blue-800: #1D4468;
-  --rd-p-teal-600: #0F6B6B;
-  --rd-p-teal-50: #D9EBE8;
-  --rd-p-teal-800: #0A4E4E;
+  --rd-p-green-600: #1E7A4B;
+  --rd-p-green-50: #E4F3EA;
+  --rd-p-green-800: #14573A;
+  --rd-p-amber-600: #B45309;
+  --rd-p-amber-50: #FEF3C7;
+  --rd-p-amber-800: #78350F;
+  --rd-p-red-600: #B42318;
+  --rd-p-red-50: #FDE9E7;
+  --rd-p-red-800: #8A1B12;
+  --rd-p-sky-600: #1F5F9E;
+  --rd-p-sky-50: #E3EEFA;
+  --rd-p-sky-800: #174B80;
+  --rd-p-gold-600: #B45309;
+  --rd-p-gold-50: #FDF4E2;
+  --rd-p-gold-800: #6D3104;
 
   /* ---------- 2. Semantic roles: light ---------- */
   color-scheme: light;
 
   /* Surfaces */
-  --rd-canvas: var(--rd-p-paper-100);
-  --rd-surface: var(--rd-p-paper-50);
-  --rd-surface-sunken: var(--rd-p-paper-200);
-  --rd-field: #FFFDF8;
-  --rd-skeleton: var(--rd-p-paper-200);
-  --rd-scrim: rgb(27 26 23 / 0.5);
+  --rd-canvas: var(--rd-p-grey-50);        /* page background (crisp minimalist) */
+  --rd-surface: var(--rd-p-white);         /* cards, nav, tables */
+  --rd-surface-sunken: var(--rd-p-grey-50);/* table header, ID chip, disabled field */
+  --rd-field: var(--rd-p-white);           /* input background */
+  --rd-skeleton: var(--rd-p-grey-100);
+  --rd-scrim: rgb(20 32 46 / 0.45);
 
   /* Lines */
-  --rd-line: var(--rd-p-paper-300);
-  --rd-line-strong: var(--rd-p-ink-400);
-  --rd-line-hover: var(--rd-p-ink-300);
+  --rd-line: var(--rd-p-grey-200);         /* card borders, dividers */
+  --rd-line-strong: var(--rd-p-grey-300);  /* input and secondary-button borders */
+  --rd-line-hover: var(--rd-p-slate-600);  /* field hover border */
 
   /* Text */
-  --rd-text: var(--rd-p-ink-900);
-  --rd-text-muted: var(--rd-p-ink-700);
-  --rd-text-disabled: var(--rd-p-ink-500);
-  --rd-heading-brand: var(--rd-p-indigo-700);
+  --rd-text: var(--rd-p-midnight-ink);
+  --rd-text-muted: var(--rd-p-slate-600);
+  --rd-text-disabled: var(--rd-p-slate-500);
+  --rd-heading-brand: var(--rd-p-terracotta-700); /* wordmark, active nav */
 
-  /* Primary (stamp indigo) */
-  --rd-primary: var(--rd-p-indigo-700);
-  --rd-primary-text: var(--rd-p-indigo-700);
-  --rd-primary-hover: var(--rd-p-indigo-900);
-  --rd-on-primary: #FBF9F3;
-  --rd-primary-tint: var(--rd-p-indigo-50);
-  --rd-on-primary-tint: var(--rd-p-indigo-900);
+  /* Primary (Terracotta Brick) */
+  --rd-primary: var(--rd-p-terracotta-700);       /* primary button fill */
+  --rd-primary-text: var(--rd-p-terracotta-700);  /* links, secondary/ghost button text, active nav */
+  --rd-primary-hover: var(--rd-p-terracotta-900);
+  --rd-on-primary: var(--rd-p-white);
+  --rd-primary-tint: var(--rd-p-terracotta-50);   /* selected, hover fill */
+  --rd-on-primary-tint: var(--rd-p-terracotta-900);
 
   /* Disabled controls */
-  --rd-disabled-fill: var(--rd-p-paper-200);
-  --rd-disabled-line: var(--rd-p-paper-300);
+  --rd-disabled-fill: var(--rd-p-grey-100);
+  --rd-disabled-line: var(--rd-p-grey-200);
 
   /* Focus */
-  --rd-focus: var(--rd-p-indigo-700);
-  --rd-focus-halo: rgb(35 48 107 / 0.30);
-  --rd-focus-gap: var(--rd-p-paper-50);
+  --rd-focus: var(--rd-p-focus);
+  --rd-focus-halo: rgb(148 56 46 / 0.35);  /* field focus */
+  --rd-focus-gap: var(--rd-p-white);        /* gap between control and ring */
 
-  /* Status */
+  /* Status: solid (borders, icons, filled buttons), tint (pill/banner fill), ink (text on tint) */
   --rd-success: var(--rd-p-green-600);
   --rd-success-tint: var(--rd-p-green-50);
   --rd-success-ink: var(--rd-p-green-800);
@@ -96,30 +95,30 @@
   --rd-danger-hover: var(--rd-p-red-800);
   --rd-danger-tint: var(--rd-p-red-50);
   --rd-danger-ink: var(--rd-p-red-800);
-  --rd-info: var(--rd-p-blue-600);
-  --rd-info-tint: var(--rd-p-blue-50);
-  --rd-info-ink: var(--rd-p-blue-800);
-  --rd-on-status: #FBF9F3;
+  --rd-info: var(--rd-p-sky-600);
+  --rd-info-tint: var(--rd-p-sky-50);
+  --rd-info-ink: var(--rd-p-sky-800);
+  --rd-on-status: var(--rd-p-white);        /* text on any solid status fill */
 
-  /* On-chain (seal teal) */
-  --rd-chain: var(--rd-p-teal-600);
-  --rd-chain-tint: var(--rd-p-teal-50);
-  --rd-chain-ink: var(--rd-p-teal-800);
+  /* On-chain (Gold Seal / Marigold Amber from logo checkmark). */
+  --rd-chain: var(--rd-p-gold-600);
+  --rd-chain-tint: var(--rd-p-gold-50);
+  --rd-chain-ink: var(--rd-p-gold-800);     /* fingerprints and hashes on surface and tint */
 
   /* Demo label */
   --rd-demo-fill: var(--rd-p-amber-50);
   --rd-demo-line: var(--rd-p-amber-600);
   --rd-demo-ink: var(--rd-p-amber-800);
 
-  /* Elevation: near-flat. Overlays only. */
-  --rd-shadow-e1: 0 1px 0 rgb(27 26 23 / 0.04);
-  --rd-shadow-e2: 0 4px 10px -4px rgb(27 26 23 / 0.18), 0 1px 2px rgb(27 26 23 / 0.06);
-  --rd-shadow-e3: 0 18px 36px -12px rgb(27 26 23 / 0.30), 0 2px 4px rgb(27 26 23 / 0.08);
+  /* Elevation */
+  --rd-shadow-e1: 0 1px 2px rgb(20 32 46 / 0.08);
+  --rd-shadow-e2: 0 4px 12px rgb(20 32 46 / 0.12);
+  --rd-shadow-e3: 0 12px 32px rgb(20 32 46 / 0.18);
 
   /* ---------- Scale (theme independent) ---------- */
-  --rd-radius-control: 3px;
-  --rd-radius-card: 4px;
-  --rd-radius-modal: 6px;
+  --rd-radius-control: 6px;
+  --rd-radius-card: 12px;
+  --rd-radius-modal: 16px;
   --rd-radius-pill: 999px;
 
   --rd-control-h: 44px;
@@ -137,64 +136,68 @@
   :root { --rd-gutter: 16px; }
 }
 
-/* ---------- 2b. Semantic roles: dark · lamp-lit ledger ---------- */
+/* ---------- 2b. Semantic roles: dark · Midnight Deed (from logo backing folder) ----------
+ * Deep slate-navy surfaces (#101924, #16222F) derived from the logo's backing document.
+ * Terracotta (#C0483A) button fill with warm terracotta-tint (#E88B7D) for accessible text.
+ * Warm Marigold Gold (#E08B16) for on-chain proof and verification checkmarks.
+ */
 [data-theme="dark"] {
   color-scheme: dark;
 
-  --rd-canvas: #14130F;
-  --rd-surface: #1B1A15;
-  --rd-surface-sunken: #16150F;
-  --rd-field: #16150F;
-  --rd-skeleton: #26231C;
+  --rd-canvas: #101924;
+  --rd-surface: #16222F;
+  --rd-surface-sunken: #121D28;
+  --rd-field: #121D28;
+  --rd-skeleton: #202F40;
   --rd-scrim: rgb(0 0 0 / 0.65);
 
-  --rd-line: #2D2A21;
-  --rd-line-strong: #7A725E;
-  --rd-line-hover: #A39A84;
+  --rd-line: #253446;
+  --rd-line-strong: #62758E;
+  --rd-line-hover: #8295AD;
 
-  --rd-text: #EFEADD;
-  --rd-text-muted: #ABA38F;
-  --rd-text-disabled: #766F5E;
-  --rd-heading-brand: #B3BEF5;
+  --rd-text: #EDEFE9;
+  --rd-text-muted: #9AA7B7;
+  --rd-text-disabled: #6E7C8E;
+  --rd-heading-brand: #E88B7D;
 
-  --rd-primary: #5566C2;
-  --rd-primary-text: #B3BEF5;
-  --rd-primary-hover: #4556AF;
+  --rd-primary: #C0483A;
+  --rd-primary-text: #E88B7D;
+  --rd-primary-hover: #AD3F32;
   --rd-on-primary: #FFFFFF;
-  --rd-primary-tint: #1F2340;
-  --rd-on-primary-tint: #D6DCFA;
+  --rd-primary-tint: #2B1D20;
+  --rd-on-primary-tint: #FCDCD7;
 
-  --rd-disabled-fill: #1F1D17;
-  --rd-disabled-line: #2D2A21;
+  --rd-disabled-fill: #1B2633;
+  --rd-disabled-line: #253446;
 
-  --rd-focus: #B3BEF5;
-  --rd-focus-halo: rgb(179 190 245 / 0.40);
-  --rd-focus-gap: #1B1A15;
+  --rd-focus: #E88B7D;
+  --rd-focus-halo: rgb(232 139 125 / 0.40);
+  --rd-focus-gap: #16222F;
 
-  --rd-success: #6FBF86;
-  --rd-success-tint: #15261B;
-  --rd-success-ink: #A4DDB5;
-  --rd-warning: #E2A94A;
-  --rd-warning-tint: #2B230F;
-  --rd-warning-ink: #F1CD85;
-  --rd-danger: #F0776C;
+  --rd-success: #4CC08A;
+  --rd-success-tint: #142A1F;
+  --rd-success-ink: #92DDB5;
+  --rd-warning: #E0A93B;
+  --rd-warning-tint: #2D240F;
+  --rd-warning-ink: #F3CD7C;
+  --rd-danger: #F07167;
   --rd-danger-hover: #F59A92;
-  --rd-danger-tint: #341815;
+  --rd-danger-tint: #361816;
   --rd-danger-ink: #FFB4AB;
-  --rd-info: #7DAEE0;
-  --rd-info-tint: #172536;
-  --rd-info-ink: #B0CFF0;
-  --rd-on-status: #14130F;
+  --rd-info: #6EA6E6;
+  --rd-info-tint: #172638;
+  --rd-info-ink: #A9CBF2;
+  --rd-on-status: #101924;
 
-  --rd-chain: #4FC0BA;
-  --rd-chain-tint: #102624;
-  --rd-chain-ink: #8FDDD7;
+  --rd-chain: #E08B16;
+  --rd-chain-tint: #2B1E0C;
+  --rd-chain-ink: #F7C06D;
 
-  --rd-demo-fill: #2B230F;
-  --rd-demo-line: #E2A94A;
-  --rd-demo-ink: #F1CD85;
+  --rd-demo-fill: #2D240F;
+  --rd-demo-line: #E0A93B;
+  --rd-demo-ink: #F3CD7C;
 
-  --rd-shadow-e1: 0 1px 0 rgb(0 0 0 / 0.30);
+  --rd-shadow-e1: 0 1px 2px rgb(0 0 0 / 0.40);
   --rd-shadow-e2: 0 4px 12px rgb(0 0 0 / 0.45);
   --rd-shadow-e3: 0 12px 32px rgb(0 0 0 / 0.55);
 }

@@ -33,7 +33,7 @@ export const JOURNEYS: Record<JourneyRole, Journey> = {
     name: 'I own a property',
     outcome: 'Turn a pile of title documents into a lawyer-signed record, anchored on-chain, that you can share.',
     cta: 'Start as owner',
-    home: path('GP-06'),
+    home: path('X-01'),
     homeIds: ['GP-06'],
     stages: [
       { label: 'Add property', feature: 'Plot or apartment, with its documents', to: path('GP-07'), ids: ['GP-07', 'GP-08', 'F03-01', 'F03-02', 'F03-03', 'F03-04'] },

@@ -5,6 +5,7 @@ import { JOURNEYS, type JourneyRole } from '../app/journeys'
 import { path } from '../app/nav'
 import { Screen } from '../app/Shell'
 import { Button } from '../components/ui/button'
+import { nextOnboardPath, setIntent } from '../lib/onboard-intent'
 
 const ORDER: JourneyRole[] = ['owner', 'developer', 'buyer']
 
@@ -15,14 +16,15 @@ const ALSO: { label: string; to: string }[] = [
   { label: 'Government record check', to: path('F20-01') },
 ]
 
-/** Front door: pick a role, land on that role's first screen. */
+/** Front door: pick a role, then sign in, verify identity and fetch DigiLocker documents before that role's first screen. */
 export default function Start() {
   const navigate = useNavigate()
   const [, setActiveRole] = useActiveRole()
 
   const begin = (role: JourneyRole) => {
     if (role === 'owner' || role === 'buyer') setActiveRole(role)
-    navigate(JOURNEYS[role].home)
+    setIntent(role)
+    navigate(nextOnboardPath(role))
   }
 
   return (

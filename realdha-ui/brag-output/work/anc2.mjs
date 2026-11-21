@@ -1,0 +1,11 @@
+import { chromium } from 'playwright-core';
+const b = await chromium.launch({ executablePath: '/Users/light/Library/Caches/ms-playwright/chromium_headless_shell-1254/chrome-headless-shell-mac-arm64/chrome-headless-shell' });
+const p = await b.newPage({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 3 });
+await p.goto('http://localhost:5173/properties/new/anchoring', { waitUntil: 'networkidle' });
+await p.waitForTimeout(1200);
+await p.getByRole('checkbox').first().check();
+await p.getByRole('button', { name: 'Approve and anchor' }).click();
+await p.waitForTimeout(6000);
+const card = p.locator('text=Anchored on-chain').first().locator('xpath=ancestor::*[.//button][1]');
+await card.screenshot({ path: 'el/anc-done.png' });
+await b.close();
