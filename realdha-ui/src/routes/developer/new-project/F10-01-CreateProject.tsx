@@ -6,6 +6,8 @@ import { Button } from '../../../components/ui/button'
 import { Card } from '../../../components/ui/card'
 import { StepPills, TextField } from '../../../components/ui/f10-parts'
 import { useProject } from '../../../lib/f10-store'
+import OsmMap from '../../../components/map/OsmMap'
+import OsmPolygonEditor from '../../../components/map/OsmPolygonEditor'
 
 /** F10-01 · Create project details. */
 export default function CreateProjectScreen() {
@@ -91,13 +93,33 @@ export default function CreateProjectScreen() {
             />
           </div>
 
-          {/* Interactive pin preview */}
+          {/* Interactive location and site boundary creator */}
           <div className="flex flex-col gap-2 border-t border-line pt-4">
-            <span className="text-chip font-semibold text-text">Map location pin</span>
-            <div className="relative h-44 w-full overflow-hidden rounded-control border border-line bg-sunken flex items-center justify-center">
-              <span className="text-small text-muted">
-                Pune · Baner ({project.pin.x * 5}%, {project.pin.y * 5}%)
+            <div className="flex flex-wrap items-center justify-between gap-1">
+              <span className="text-chip font-semibold text-text">Site location & parcel demarcation</span>
+              <span className="text-label text-muted">
+                {project.locality || 'Baner'}, {project.city || 'Pune'} · Drag pin or adjust boundary
               </span>
+            </div>
+            <div className="relative h-64 w-full overflow-hidden rounded-control border border-line bg-sunken">
+              <OsmMap
+                center={[project.pin.lng ?? 73.7868, project.pin.lat ?? 18.559]}
+                zoom={16}
+                showThemeToggle
+              >
+                <OsmPolygonEditor
+                  polygon={project.boundary ?? []}
+                  pin={{ lng: project.pin.lng ?? 73.7868, lat: project.pin.lat ?? 18.559 }}
+                  unit="acre"
+                  onChange={(pts) => setProject({ ...project, boundary: pts })}
+                  onPinChange={([lng, lat]) =>
+                    setProject({
+                      ...project,
+                      pin: { ...project.pin, lng, lat },
+                    })
+                  }
+                />
+              </OsmMap>
             </div>
           </div>
 

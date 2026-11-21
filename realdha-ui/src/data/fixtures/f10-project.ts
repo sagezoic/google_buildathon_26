@@ -3,7 +3,7 @@
 export const PROJECT_RECORD = 'RA-PUN-001'
 export const DEVELOPER = 'Sahyadri Developers'
 
-export interface Pin { x: number; y: number }
+export interface Pin { x: number; y: number; lat?: number; lng?: number }
 export interface Project {
   name: string
   rera: string
@@ -11,8 +11,9 @@ export interface Project {
   locality: string
   possession: string
   description: string
-  /** Pin position on the placeholder map, in steps of 5% (0 to 20). */
+  /** Pin position on the map. */
   pin: Pin
+  boundary?: [number, number][]
   savedAt: number | null
 }
 export const SAMPLE_PROJECT: Project = {
@@ -22,7 +23,13 @@ export const SAMPLE_PROJECT: Project = {
   locality: 'Baner',
   possession: 'Dec 2027',
   description: 'Two towers, 3 and 4 BHK.',
-  pin: { x: 10, y: 9 },
+  pin: { x: 10, y: 9, lat: 18.559, lng: 73.7868 },
+  boundary: [
+    [73.7858, 18.5582],
+    [73.7878, 18.5585],
+    [73.7874, 18.5598],
+    [73.7854, 18.5594],
+  ],
   savedAt: null,
 }
 

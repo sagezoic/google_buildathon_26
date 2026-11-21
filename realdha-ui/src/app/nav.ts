@@ -54,7 +54,6 @@ export const NAV: Record<Role, NavItem[]> = {
   ],
   buyer: [
     { label: 'Home', to: path('X-01') },
-    { label: 'My properties', tab: 'Properties', to: path('F03-03') },
     { label: 'Search', to: path('F08-01') },
     { label: 'Market', to: path('GP-21') },
     { label: 'Watchlist', to: path('F18-01') },

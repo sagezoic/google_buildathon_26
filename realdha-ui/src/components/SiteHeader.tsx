@@ -22,6 +22,7 @@ import { Link, NavLink, useNavigate } from 'react-router'
 import { cn } from '../lib/cn'
 import { type Role } from '../app/screens'
 import { NAV, INITIALS, path } from '../app/nav'
+import { useActiveRole } from '../app/active-role'
 import { usePrefs, type Lang } from '../app/prefs'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
@@ -248,9 +249,11 @@ export function SiteHeader({
     navigate(route)
   }
 
+  const [, setActiveRole] = useActiveRole()
   const handleRoleSwitch = (newRole: Role) => {
     const profile = ROLE_PROFILES[newRole]
     if (profile) {
+      if (newRole === 'owner' || newRole === 'buyer') setActiveRole(newRole)
       setMobileOpen(false)
       navigate(profile.route)
     }

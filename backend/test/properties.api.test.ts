@@ -2,14 +2,15 @@ import { afterAll, beforeAll, describe, expect, it, spyOn } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { app } from '../src/app';
-import { getDb, closeDb } from '../src/db/client';
+import { getDb, closeDb, testDbConnection } from '../src/db/client';
 import { properties } from '../src/db/schema';
 import { DocumentAiService } from '../src/services/documentai';
 import { StorageService } from '../src/services/storage';
 import { TranslateService } from '../src/services/translate';
 import { eq } from 'drizzle-orm';
 
-const hasDatabase = !!process.env.DATABASE_URL;
+const dbCheck = await testDbConnection();
+const hasDatabase = dbCheck.connected;
 const mrText = readFileSync(join(import.meta.dir, 'fixtures/712_extract_mr.txt'), 'utf8');
 const PDF = new TextEncoder().encode('%PDF-1.7\n%fake');
 

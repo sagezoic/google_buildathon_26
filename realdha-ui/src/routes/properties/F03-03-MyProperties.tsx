@@ -13,7 +13,8 @@ import {
   type LucideIcon,
 } from 'lucide-react'
 import { useMemo } from 'react'
-import { Link } from 'react-router'
+import { Link, Navigate } from 'react-router'
+import { useActiveRole } from '../../app/active-role'
 import { Screen } from '../../app/Shell'
 import { path } from '../../app/nav'
 import { useDemoState } from '../../app/useDemoState'
@@ -64,6 +65,7 @@ function StatusPill({ s }: { s: PropStatus }) {
 
 /** F03-03 · My properties. Distilled registry view: high-density table on desktop, scannable list on mobile. */
 export default function MyProperties() {
+  const [activeRole] = useActiveRole()
   useDemoState(['all'] as const)
   const [ui, setUi] = useListUi()
   const [draft] = usePropertyDraft()
@@ -154,6 +156,8 @@ export default function MyProperties() {
     { id: 'signed', label: `Signed off · ${signedCount}`, m: `Signed (${signedCount})` },
     { id: 'progress', label: `In progress · ${rows.length - signedCount}`, m: `In progress (${rows.length - signedCount})` },
   ] as const
+
+  if (activeRole === 'buyer') return <Navigate to={path('GP-21')} replace />
 
   return (
     <Screen id="F03-03" role="owner">

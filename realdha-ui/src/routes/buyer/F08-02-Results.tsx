@@ -6,13 +6,31 @@ import { path } from '../../app/nav'
 import { useDemoState } from '../../app/useDemoState'
 import { Button } from '../../components/ui/button'
 import { SampleData } from '../../components/ui/record-id'
-import { FRAME_FILTERS, activeFilters, dropFilter, runSearch } from '../../data/fixtures/f08-search'
+import { FRAME_FILTERS, activeFilters, dropFilter, runSearch, priceShort, type Property } from '../../data/fixtures/f08-search'
 import { cn } from '../../lib/cn'
 import { FilterDrawer } from '../parts/FilterPanel'
 import { EMPTY_ERROR, Pager, PropertyCard, SearchBar, Seg, useRecent, useSearch } from '../parts/search'
+import OsmMap from '../../components/map/OsmMap'
+import OsmMarker from '../../components/map/OsmMarker'
 
 const PAGE = 5
-const PINS = ['left-[22%] top-[26%]', 'left-[48%] top-[44%]', 'left-[66%] top-[22%]', 'left-[30%] top-[66%]', 'left-[72%] top-[70%]', 'left-[12%] top-[48%]']
+
+const LOCALITY_COORDS: Record<string, [number, number]> = {
+  Baner: [73.7868, 18.5590],
+  Balewadi: [73.7707, 18.5789],
+  Wakad: [73.7631, 18.5987],
+  Hinjewadi: [73.7299, 18.5913],
+  Aundh: [73.8055, 18.5580],
+  Kothrud: [73.8118, 18.5074],
+  Kusgaon: [73.4062, 18.7546],
+}
+
+function propertyCoord(p: Property, index: number): [number, number] {
+  const base = LOCALITY_COORDS[p.locality] ?? [73.8567, 18.5204]
+  const angle = (index * 137.5 * Math.PI) / 180
+  const r = 0.0035 * Math.sqrt((index % 6) + 1)
+  return [base[0] + r * Math.cos(angle), base[1] + r * Math.sin(angle) * 0.8]
+}
 
 /** F08-02 · Results. 1440: list + map, filters drawer. 834/390: list or map toggle, filters sheet. Filters really narrow the sample dataset. */
 export default function Results() {
@@ -49,7 +67,6 @@ export default function Results() {
   const pages = Math.max(1, Math.ceil(results.length / PAGE))
   const cur = Math.min(page, pages)
   const shown = results.slice((cur - 1) * PAGE, cur * PAGE)
-  const localities = Array.from(new Set(results.map((p) => p.locality)))
   const sub = (p: (typeof results)[number]) => `${p.locality}, ${p.city}`
 
   // A query that is an ID, or that finds nothing at all, belongs on the F08-03 / F08-04 screens.
@@ -67,14 +84,67 @@ export default function Results() {
   const apply = (f: typeof search.filters) => { setSearch((s) => ({ ...s, filters: f })); setPage(1) }
   const setFilters = (f: typeof search.filters) => { apply(f); if (mode !== 'list') setMode('list') }
 
+  const [selectedPropId, setSelectedPropId] = useState<string | null>(null)
+  const selectedProp = useMemo(() => results.find((p) => p.id === selectedPropId), [results, selectedPropId])
+
   const map = (
-    <div className={cn('relative min-h-[320px] overflow-hidden rounded-card border border-line bg-sunken xl:min-h-full xl:rounded-none xl:border-0 xl:border-l', view === 'list' && 'max-xl:hidden')}>
-      <div className="absolute top-3 left-3 z-10 rounded-control border border-line bg-surface/90 px-2.5 py-1 text-label font-medium text-text shadow-e1 backdrop-blur-xs xl:top-4 xl:left-4">Interactive Pune Map · {results.length} verified listings</div>
-      {localities.slice(0, PINS.length).map((l, i) => (
-        <Link key={l} to={`${path('F09-01')}?area=${l}`} aria-label={`Open ${l} on the area map`} className={cn('absolute flex min-h-8 min-w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-pill border-2 border-white bg-primary px-2 text-label font-semibold text-on-primary no-underline', PINS[i])}>
-          {results.filter((p) => p.locality === l).length}
-        </Link>
-      ))}
+    <div className={cn('relative min-h-[380px] overflow-hidden rounded-card border border-line bg-sunken xl:min-h-full xl:rounded-none xl:border-0 xl:border-l', view === 'list' && 'max-xl:hidden')}>
+      <OsmMap center={[73.7868, 18.5590]} zoom={13} showThemeToggle className="size-full">
+        <div className="absolute top-3 left-3 z-10 rounded-control border border-line bg-surface/90 px-2.5 py-1 text-label font-medium text-text shadow-e1 backdrop-blur-xs xl:top-4 xl:left-4">
+          Interactive Pune Map · {results.length} verified listings
+        </div>
+
+        {/* Property markers */}
+        {results.slice(0, 30).map((p, i) => {
+          const coord = propertyCoord(p, i)
+          const isSelected = selectedPropId === p.id
+          return (
+            <OsmMarker key={p.id} position={coord} onClick={() => setSelectedPropId(p.id)}>
+              <div
+                className={cn(
+                  'group flex cursor-pointer items-center gap-1 rounded-pill border-2 px-2 py-0.5 text-[11px] font-bold shadow-e2 transition-transform hover:scale-110',
+                  isSelected
+                    ? 'scale-110 border-primary bg-primary text-on-primary ring-2 ring-primary ring-offset-2'
+                    : 'border-white bg-surface text-text hover:border-primary'
+                )}
+              >
+                <span className="size-1.5 rounded-full bg-primary" />
+                <span>{priceShort(p.price)}</span>
+              </div>
+            </OsmMarker>
+          )
+        })}
+
+        {/* Selected Property Popup Card */}
+        {selectedProp && (
+          <div className="absolute bottom-4 left-4 right-4 z-20 mx-auto max-w-sm rounded-card border border-line bg-surface p-3.5 shadow-e3 backdrop-blur-xs">
+            <div className="flex items-start justify-between gap-2">
+              <div>
+                <div className="text-chip text-muted">{selectedProp.locality}, {selectedProp.city}</div>
+                <div className="text-small font-bold text-text">{selectedProp.unit} · {selectedProp.project}</div>
+                <div className="mt-1 text-label font-semibold text-primary">{inr(selectedProp.price)} · {selectedProp.label}</div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedPropId(null)}
+                className="cursor-pointer text-muted hover:text-text"
+                aria-label="Close preview"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+            <div className="mt-2.5 flex items-center justify-between border-t border-line pt-2">
+              <span className="text-chip text-muted">{selectedProp.status === 'signed-off' ? 'Signed off' : 'In review'}</span>
+              <Link
+                to={`${path('F09-03')}?record=${selectedProp.id}`}
+                className="rounded-[4px] bg-primary px-3 py-1 text-chip font-semibold text-on-primary no-underline hover:opacity-90"
+              >
+                View Property
+              </Link>
+            </div>
+          </div>
+        )}
+      </OsmMap>
     </div>
   )
 

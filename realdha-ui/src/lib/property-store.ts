@@ -23,6 +23,8 @@ export interface PropertyDraft {
   /** Plot area as typed, with its unit. Drives the shape drawn on the map. */
   area: string
   areaUnit: AreaUnit
+  /** Custom parcel boundary polygon coordinates [[lng, lat], ...] */
+  boundary?: [number, number][]
   moved: boolean
   /** True once the owner pressed Save draft or Continue: GP-06 then lists the property. */
   saved: boolean

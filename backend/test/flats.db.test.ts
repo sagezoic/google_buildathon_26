@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'bun:test';
-import { getDb, closeDb } from '../src/db/client';
+import { getDb, closeDb, testDbConnection } from '../src/db/client';
 import { societies, unitTypes, listings, bhkPrices, pois } from '../src/db/schema';
 import { FlatsService } from '../src/modules/flats/service';
 import { eq } from 'drizzle-orm';
 
-const hasDatabase = !!process.env.DATABASE_URL;
+const dbCheck = await testDbConnection();
+const hasDatabase = dbCheck.connected;
 
 describe('Flats Database Integration', () => {
   it.skipIf(!hasDatabase)(

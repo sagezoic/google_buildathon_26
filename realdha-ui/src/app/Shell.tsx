@@ -3,6 +3,7 @@ import { NavLink } from 'react-router'
 import { cn } from '../lib/cn'
 import { FLOWS, type Role } from './screens'
 import { INITIALS, NAV, activePath, screenById } from './nav'
+import { useActiveRole, resolveRole } from './active-role'
 import { SiteHeader, LangSwitch, ThemeToggle } from '../components/SiteHeader'
 
 export { LangSwitch, ThemeToggle }
@@ -85,7 +86,8 @@ interface ScreenProps {
 /** One responsive screen per frame ID: wraps content in the DEMO bar, nav and page chrome. */
 export function Screen({ id, layout = 'app', role, children, className, noTabs, back, title }: ScreenProps) {
   const def = screenById(id)
-  const r = role ?? def?.role ?? 'owner'
+  const [active] = useActiveRole()
+  const r = resolveRole(role ?? def?.role ?? 'owner', active)
   return (
     // h-dvh + overflow-y-auto: legacy-aliases.css locks html/body/#root to overflow:hidden, so each screen scrolls itself.
     <div className="flex h-dvh flex-col overflow-y-auto bg-canvas text-text">

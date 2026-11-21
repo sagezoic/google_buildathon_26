@@ -4,7 +4,16 @@ import { path } from '../../app/nav'
 import { Button } from '../../components/ui/button'
 import { Card } from '../../components/ui/card'
 import { NEARBY_AREAS, areaByName } from '../../data/fixtures/f09-area'
-import { cn } from '../../lib/cn'
+import OsmMap from '../../components/map/OsmMap'
+import OsmMarker from '../../components/map/OsmMarker'
+
+const BANER_CLUSTERS = [
+  { n: 24, name: 'Baner Hill Reserve', coord: [73.7820, 18.5535] as [number, number] },
+  { n: 18, name: 'Baner Road Corridor', coord: [73.7915, 18.5610] as [number, number] },
+  { n: 9, name: 'Pashan-Baner Link', coord: [73.7990, 18.5480] as [number, number] },
+  { n: 31, name: 'Balewadi High St Junction', coord: [73.7780, 18.5720] as [number, number] },
+  { n: 6, name: 'Mahalunge Border Plots', coord: [73.7650, 18.5630] as [number, number] },
+]
 
 /** F09-01 · Area view, map clusters and stats. */
 export default function AreaViewScreen() {
@@ -39,39 +48,30 @@ export default function AreaViewScreen() {
 
         {/* Map & Stats Grid */}
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
-          {/* Map canvas */}
+          {/* Live OpenStreetMap canvas */}
           <div className="relative min-h-[420px] overflow-hidden rounded-card border border-line bg-sunken xl:col-span-8 xl:min-h-[580px]">
-            <img
-              src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80"
-              alt="Baner Pune Aerial Satellite"
-              className="absolute inset-0 size-full object-cover opacity-20 filter saturate-50"
-            />
-            <div className="absolute top-3 left-3 z-10 rounded-control border border-line bg-surface/90 px-3 py-1.5 text-label font-medium text-text shadow-e1 backdrop-blur-xs">
-              Baner Locality Map · Verified Project Clusters & Land Parcels
-            </div>
+            <OsmMap center={[73.7868, 18.5590]} zoom={14} showThemeToggle className="size-full">
+              <div className="absolute top-3.5 left-3.5 z-10 rounded-control border border-line bg-surface/90 px-3 py-1.5 text-label font-medium text-text shadow-e1 backdrop-blur-xs">
+                Baner Locality Map · Verified Project Clusters & Land Parcels
+              </div>
 
-            {/* Cartographic grid overlay */}
-            <svg className="absolute inset-0 size-full opacity-40" viewBox="0 0 800 600" preserveAspectRatio="none">
-              <path d="M50 50 Q200 300 400 200 T800 500" stroke="currentColor" strokeWidth="6" fill="none" className="text-primary/40" />
-              <path d="M100 550 Q300 400 500 450 T750 100" stroke="currentColor" strokeWidth="4" fill="none" className="text-line-strong" />
-              <path d="M400 50 L400 550" stroke="currentColor" strokeWidth="3" fill="none" className="text-line-strong" />
-            </svg>
-
-            {/* Cluster Pins */}
-            {area.clusters.map((c, i) => (
-              <button
-                key={i}
-                type="button"
-                onClick={() => navigate(path('F09-02'))}
-                className={cn(
-                  'absolute z-20 flex size-9 items-center justify-center rounded-full border-2 border-surface bg-primary text-small font-bold text-on-primary shadow-e2 transition-transform hover:scale-110',
-                  c.pos
-                )}
-                title={`Cluster with ${c.n} properties`}
-              >
-                {c.n}
-              </button>
-            ))}
+              {/* Cluster Pins on real coordinates */}
+              {BANER_CLUSTERS.map((c, i) => (
+                <OsmMarker
+                  key={i}
+                  position={c.coord}
+                  onClick={() => navigate(path('F09-02'))}
+                >
+                  <button
+                    type="button"
+                    className="flex size-9 cursor-pointer items-center justify-center rounded-full border-2 border-surface bg-primary text-small font-bold text-on-primary shadow-e2 transition-transform hover:scale-125 focus-visible:outline-2 focus-visible:outline-focus"
+                    title={`${c.name} · ${c.n} verified properties`}
+                  >
+                    {c.n}
+                  </button>
+                </OsmMarker>
+              ))}
+            </OsmMap>
           </div>
 
           {/* Right Rail: Stats & Nearby */}

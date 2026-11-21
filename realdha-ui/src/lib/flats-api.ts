@@ -1,5 +1,7 @@
 // Client for the Flat Finder API (/api/flats). Goes through the Vite / nginx proxy, never a hardcoded backend URL.
 
+import { SAMPLE_SOCIETIES, getSampleSociety } from '../data/fixtures/sample-societies'
+
 export type FlatMode = 'buy' | 'rent'
 export type FlatSort = 'best' | 'price' | 'rent' | 'rating' | 'name'
 
@@ -116,34 +118,86 @@ async function getJson<T>(url: string, signal?: AbortSignal): Promise<T> {
   return (await res.json()) as T
 }
 
-export function fetchSocieties(query: SocietyQuery, signal?: AbortSignal) {
-  const p = new URLSearchParams()
-  if (query.city) p.set('city', query.city)
-  if (query.q) p.set('q', query.q)
-  if (query.mode) p.set('mode', query.mode)
-  if (query.kind) p.set('kind', query.kind)
-  if (query.ready !== undefined) p.set('ready', query.ready ? 'true' : 'false')
-  if (query.bhk != null) {
-    p.set('bhk', Array.isArray(query.bhk) ? query.bhk.join(',') : String(query.bhk))
+export async function fetchSocieties(query: SocietyQuery, signal?: AbortSignal): Promise<SocietiesResponse> {
+  try {
+    const p = new URLSearchParams()
+    if (query.city) p.set('city', query.city)
+    if (query.q) p.set('q', query.q)
+    if (query.mode) p.set('mode', query.mode)
+    if (query.kind) p.set('kind', query.kind)
+    if (query.ready !== undefined) p.set('ready', query.ready ? 'true' : 'false')
+    if (query.bhk != null) {
+      p.set('bhk', Array.isArray(query.bhk) ? query.bhk.join(',') : String(query.bhk))
+    }
+    if (query.sort) {
+      // If in rent mode and sorting by price, send sort=rent to sort by monthly rent
+      const effectiveSort = query.mode === 'rent' && query.sort === 'price' ? 'rent' : query.sort
+      p.set('sort', effectiveSort)
+    }
+    p.set('limit', String(query.limit ?? 100))
+    if (query.offset) p.set('offset', String(query.offset))
+    return await getJson<SocietiesResponse>(`/api/flats/societies?${p}`, signal)
+  } catch (err: unknown) {
+    if (signal?.aborted) throw err
+    // Graceful offline/local fallback
+    const city = (query.city || 'pune').toLowerCase()
+    let filtered = SAMPLE_SOCIETIES.filter((s) => s.city.toLowerCase() === city)
+    if (query.q) {
+      const q = query.q.toLowerCase()
+      filtered = filtered.filter(
+        (s) =>
+          s.name.toLowerCase().includes(q) ||
+          (s.developer && s.developer.toLowerCase().includes(q)) ||
+          (s.locality && s.locality.toLowerCase().includes(q)),
+      )
+    }
+    if (query.kind) {
+      filtered = filtered.filter((s) => s.kind === query.kind)
+    }
+    if (query.ready) {
+      filtered = filtered.filter((s) => s.status && s.status.toLowerCase().includes('ready'))
+    }
+    if (query.bhk) {
+      const bhks = Array.isArray(query.bhk) ? query.bhk : [query.bhk]
+      filtered = filtered.filter((s) => bhks.some((b) => s.prices && s.prices[String(b)] !== undefined))
+    }
+    const limit = query.limit ?? 20
+    const offset = query.offset ?? 0
+    return {
+      societies: filtered.slice(offset, offset + limit),
+      total: filtered.length,
+      limit,
+      offset,
+    }
   }
-  if (query.sort) {
-    // If in rent mode and sorting by price, send sort=rent to sort by monthly rent
-    const effectiveSort = query.mode === 'rent' && query.sort === 'price' ? 'rent' : query.sort
-    p.set('sort', effectiveSort)
-  }
-  p.set('limit', String(query.limit ?? 100))
-  if (query.offset) p.set('offset', String(query.offset))
-  return getJson<SocietiesResponse>(`/api/flats/societies?${p}`, signal)
 }
 
-export async function fetchSociety(id: string, signal?: AbortSignal) {
-  const r = await getJson<{ society: SocietyDetailData }>(`/api/flats/societies/${encodeURIComponent(id)}`, signal)
-  return r.society
+export async function fetchSociety(id: string, signal?: AbortSignal): Promise<SocietyDetailData> {
+  try {
+    const r = await getJson<{ society: SocietyDetailData }>(`/api/flats/societies/${encodeURIComponent(id)}`, signal)
+    if (r.society) return r.society
+  } catch (err: unknown) {
+    if (signal?.aborted) throw err
+    const sample = getSampleSociety(id)
+    if (sample) return sample
+    throw err
+  }
+  const sample = getSampleSociety(id)
+  if (sample) return sample
+  throw new Error(`Society with ID ${id} was not found.`)
 }
 
-export async function fetchCities(signal?: AbortSignal) {
-  const r = await getJson<{ cities: CitySummary[] }>('/api/flats/cities', signal)
-  return r.cities
+export async function fetchCities(signal?: AbortSignal): Promise<CitySummary[]> {
+  try {
+    const r = await getJson<{ cities: CitySummary[] }>('/api/flats/cities', signal)
+    if (r.cities && r.cities.length) return r.cities
+  } catch (err: unknown) {
+    if (signal?.aborted) throw err
+  }
+  return [
+    { slug: 'pune', name: 'Pune', societies_count: SAMPLE_SOCIETIES.length },
+    { slug: 'gurgaon', name: 'Gurugram', societies_count: 2708 },
+  ]
 }
 
 /** 14300000 -> "₹1.43 Cr", 3650000 -> "₹36.5 L", 36500 -> "₹36,500". */
@@ -156,19 +210,29 @@ export function formatInr(n: number | null | undefined): string {
 const trim = (v: number) => v.toFixed(2).replace(/\.?0+$/, '')
 
 /** Average gross rental yield (%) over BHKs that have both a buy and a rent median. */
-export function grossYield(prices: Record<string, BhkPriceSummary>): number | null {
-  const ys = Object.values(prices)
-    .filter((p) => p.buy_median && p.rent_median)
-    .map((p) => (p.rent_median! * 12 * 100) / p.buy_median!)
-  return ys.length ? ys.reduce((a, b) => a + b, 0) / ys.length : null
+export function grossYield(prices?: Record<string, BhkPriceSummary> | null): number | null {
+  if (!prices || typeof prices !== 'object') return null
+  try {
+    const ys = Object.values(prices)
+      .filter((p) => p && typeof p.buy_median === 'number' && typeof p.rent_median === 'number')
+      .map((p) => (p.rent_median! * 12 * 100) / p.buy_median!)
+    return ys.length ? ys.reduce((a, b) => a + b, 0) / ys.length : null
+  } catch {
+    return null
+  }
 }
 
 /** Lowest monthly rent across BHKs, or null. */
-export function lowestRent(prices: Record<string, BhkPriceSummary>): number | null {
-  const rs = Object.values(prices)
-    .map((p) => p.rent_median)
-    .filter((v): v is number => typeof v === 'number')
-  return rs.length ? Math.min(...rs) : null
+export function lowestRent(prices?: Record<string, BhkPriceSummary> | null): number | null {
+  if (!prices || typeof prices !== 'object') return null
+  try {
+    const rs = Object.values(prices)
+      .map((p) => p?.rent_median)
+      .filter((v): v is number => typeof v === 'number')
+    return rs.length ? Math.min(...rs) : null
+  } catch {
+    return null
+  }
 }
 
 const titleCase = (s: string) => s.replace(/\b\w/g, (c) => c.toUpperCase())
