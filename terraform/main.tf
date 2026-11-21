@@ -326,6 +326,14 @@ resource "google_cloud_run_v2_service" "backend" {
       }
 
       dynamic "env" {
+        for_each = local.backend_data_env
+        content {
+          name  = env.key
+          value = env.value
+        }
+      }
+
+      dynamic "env" {
         for_each = var.enable_chain ? {
           for k, v in {
             CHAIN_NETWORK          = var.chain_network
@@ -363,7 +371,11 @@ resource "google_cloud_run_v2_service" "backend" {
     google_sql_database.postgres_db,
     google_sql_user.postgres_user,
     google_secret_manager_secret_version.chain,
-    google_secret_manager_secret_iam_member.backend_chain
+    google_secret_manager_secret_iam_member.backend_chain,
+    google_pubsub_topic_iam_member.backend_publisher,
+    google_pubsub_subscription_iam_member.backend_subscriber,
+    google_bigquery_dataset_iam_member.backend_editor,
+    google_storage_bucket_iam_member.backend_cdn
   ]
 }
 

@@ -48,6 +48,14 @@ export const processingRows = [
   { name: 'Draft agreement', state: 'waiting' },
 ] as const
 
+/** GP-09 details shown for the simulated check (seed documents have no server extraction). Matches the GP-10 sample findings. */
+export const simFound: Record<string, { k: string; v: string }[]> = {
+  extract: [{ k: 'Owner', v: 'Prakash Kulkarni' }, { k: 'Gat', v: '112/2 · Kusgaon' }, { k: 'Area', v: '418 sq m' }, { k: 'Mutation no.', v: '2291' }],
+  card: [{ k: 'Owner', v: 'Prakash Kulkarni' }, { k: 'Gat', v: '112/2 · Kusgaon' }],
+  na: [{ k: 'Owner', v: 'Prakash Kulkarny' }, { k: 'Land use', v: 'Non-agricultural (NA)' }],
+  deed: [{ k: 'Owner', v: 'Prakash Kulkarni' }, { k: 'Area', v: '418 sq m' }],
+}
+
 /** GP-09 mobile cards. */
 export const processingCards = [
   { name: '7/12 extract', status: 'Reading · Marathi · page 1 of 2', value: 50 },
