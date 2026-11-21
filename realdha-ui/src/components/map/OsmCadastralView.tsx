@@ -114,10 +114,13 @@ function CadastralLayer({
     const uniqueCorners = ring.slice(0, -1)
     uniqueCorners.forEach((pt, i) => {
       const el = document.createElement('div')
-      el.className =
-        'flex size-5 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-success text-[9px] font-bold text-white shadow-e2 transition-transform hover:scale-125'
-      el.setAttribute('title', `Survey Station S${i + 1}: ${pt[1].toFixed(5)}, ${pt[0].toFixed(5)}`)
-      el.innerText = `S${i + 1}`
+      el.className = 'flex size-7 items-center justify-center'
+      const badge = document.createElement('div')
+      badge.className =
+        'flex size-5 cursor-pointer items-center justify-center rounded-full border-2 border-white bg-success text-[9px] font-bold text-white shadow-e2 transition-transform duration-100 hover:scale-125'
+      badge.setAttribute('title', `Survey Station S${i + 1}: ${pt[1].toFixed(5)}, ${pt[0].toFixed(5)}`)
+      badge.innerText = `S${i + 1}`
+      el.appendChild(badge)
 
       const marker = new maplibregl.Marker({
         element: el,

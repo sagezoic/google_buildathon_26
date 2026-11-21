@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "cream-palette",
+        "value": "*",
+        "files": [
+          "brag-output/work/video.html"
+        ],
+        "createdAt": "2026-11-21T02:02:42.288Z",
+        "reason": "agent triage: canvas is the project's own token --rd-p-paper-100 #F4EFE4 from realdha-ui/src/styles/tokens.css ('Satbara ledger' paper), reused deliberately to match the app"
+      }
+    ]
+  }
+}

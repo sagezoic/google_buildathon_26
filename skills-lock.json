@@ -57,6 +57,13 @@
       "skillPath": "skills/cloud/bigquery-basics/SKILL.md",
       "computedHash": "985c8b675a5f8187a585da4af49bdfaaa3a29cb32ad35de3c53b013daaff3e25"
     },
+    "brag-slim": {
+      "source": "latent-spaces/brag",
+      "commit": "06379432a9243c951dfcc051153be18d2d261044",
+      "sourceType": "github",
+      "skillPath": "skills/brag-slim/SKILL.md",
+      "computedHash": "dfdaf2ec5dd2f10efbb169350b228b58fb5cab03d2f2079e26cbbba5e0fea0e7"
+    },
     "clerk": {
       "source": "clerk/skills",
       "commit": "78092a74297dac3fb2c64efab3dbe86b581eaea8",

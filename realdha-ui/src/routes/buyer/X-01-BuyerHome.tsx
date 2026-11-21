@@ -5,8 +5,7 @@ import {
   Layers,
   ShieldCheck,
 } from 'lucide-react'
-import { Link, Navigate } from 'react-router'
-import { useActiveRole } from '../../app/active-role'
+import { Link } from 'react-router'
 import { Screen } from '../../app/Shell'
 import { path } from '../../app/nav'
 import { usePersistentState } from '../../app/persist'
@@ -115,11 +114,8 @@ function ProjectCard({ project }: { project: Launch }) {
 /** X-01 · Buyer home / explore screen. */
 export default function BuyerHome() {
   const [profile] = usePersistentState<Profile>('x.profile', PROFILE_DEFAULT)
-  const [activeRole] = useActiveRole()
   const first = profile.name.trim().split(/\s+/)[0]
 
-
-  if (activeRole === 'owner') return <Navigate to={path('GP-06')} replace />
 
   return (
     <Screen id="X-01">

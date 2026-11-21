@@ -56,7 +56,7 @@ const ROLE_PROFILES: Record<
   owner: {
     name: 'Pradeep Kulkarni',
     title: 'Property Owner',
-    route: path('GP-06'),
+    route: path('X-01'),
     icon: <Building2 className="size-4" />,
   },
   buyer: {
