@@ -10,12 +10,10 @@ locals {
   # Resolved Valkey host / port
   valkey_host = try(
     google_memorystore_instance.valkey[0].endpoints[0].connections[0].psc_auto_connection[0].ip_address,
-    google_memorystore_instance.valkey[0].endpoints[0].connections[0].psc_connection[0].ip_address,
     ""
   )
   valkey_port = tostring(try(
     google_memorystore_instance.valkey[0].endpoints[0].connections[0].psc_auto_connection[0].port,
-    google_memorystore_instance.valkey[0].endpoints[0].connections[0].psc_connection[0].port,
     6379
   ))
 
