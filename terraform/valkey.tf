@@ -10,10 +10,12 @@ locals {
   # Resolved Valkey host / port
   valkey_host = try(
     google_memorystore_instance.valkey[0].endpoints[0].connections[0].psc_auto_connection[0].ip_address,
+    google_memorystore_instance.valkey[0].endpoints[0].connections[0].psc_connection[0].ip_address,
     ""
   )
   valkey_port = tostring(try(
     google_memorystore_instance.valkey[0].endpoints[0].connections[0].psc_auto_connection[0].port,
+    google_memorystore_instance.valkey[0].endpoints[0].connections[0].psc_connection[0].port,
     6379
   ))
 
@@ -49,7 +51,7 @@ resource "google_memorystore_instance" "valkey" {
   authorization_mode          = var.valkey_authorization_mode
   deletion_protection_enabled = var.valkey_deletion_protection
 
-  desired_psc_auto_connections {
+  desired_auto_created_endpoints {
     network    = local.effective_valkey_network
     project_id = var.project_id
   }
