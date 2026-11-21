@@ -41,11 +41,18 @@ bun run chain:deploy                        # prints CHAIN_CONTRACT_ADDRESS, pas
 bun run chain:seed-demo
 ```
 
-Cloud (Sepolia):
-1. Set the CI secrets `CHAIN_RPC_URL`, `CHAIN_ADMIN_TOKEN`, `CHAIN_OWNER_SALT` (`openssl rand -hex 32` each for the last two) and push. Terraform creates the KMS key, secrets, IAM and Cloud Run env. The CI service account needs `roles/cloudkms.admin` and `roles/secretmanager.admin`.
-2. `terraform output chain_registrar_kms_key`, then `CHAIN_KMS_KEY=<that> bun run chain:address` prints the registrar's Ethereum address. Fund it with Sepolia ETH from a faucet.
-3. `CHAIN_KMS_KEY=... CHAIN_RPC_URL=... PUBLIC_API_URL=<backend url> bun run chain:deploy`, then set the repo variable `CHAIN_CONTRACT_ADDRESS` (and `CHAIN_PUBLIC_API_URL`) and redeploy.
-4. `bun run chain:seed-demo` against the Cloud SQL database.
+Cloud (Sepolia). Run these in order. Steps 1 and 2 must be done before the first push, or the Terraform apply fails.
+
+1. **CI secrets.** Set `CHAIN_RPC_URL` (a Sepolia JSON-RPC URL), `CHAIN_ADMIN_TOKEN` and `CHAIN_OWNER_SALT` (`openssl rand -hex 32` for each of the last two).
+2. **CI service account roles.** Grant the deploy service account `roles/cloudkms.admin` and `roles/secretmanager.admin`.
+3. **First deploy.** Push to `main`. Terraform creates the KMS key, the secrets, the IAM and the Cloud Run env. The ledger stays unconfigured (503 from chain routes) until step 7, which is expected.
+4. **Backend URL.** The URL is only known after step 3: `cd terraform && terraform output backend_service_url` (also in the deploy summary). Call it `<backend url>` below.
+5. **Registrar address.** `cd terraform && terraform output chain_registrar_kms_key`, then in `backend/`: `CHAIN_KMS_KEY=<that value> bun run chain:address`. It prints the registrar's Ethereum address. Fund it with Sepolia ETH from a faucet.
+6. **Deploy the contract.** In `backend/`: `CHAIN_KMS_KEY=<that value> CHAIN_RPC_URL=<rpc url> PUBLIC_API_URL=<backend url> bun run chain:deploy`. It prints the contract address. `PUBLIC_API_URL` becomes the base of every token's metadata URI, so it must equal the value Cloud Run gets in step 7 (`CHAIN_PUBLIC_API_URL`), with no trailing path.
+7. **Redeploy with the contract.** Set two GitHub repo variables, then push again:
+   - `CHAIN_CONTRACT_ADDRESS` = the address from step 6.
+   - `CHAIN_PUBLIC_API_URL` = `<backend url>`. Without it Cloud Run's `PUBLIC_API_URL` is unset and token metadata URIs point at `http://localhost:8080`.
+8. **Seed the demo properties.** The Cloud SQL instance must be reachable from your machine, for example through the Cloud SQL Auth Proxy. Take the connection string from `terraform output -raw database_url_proxy`, start the proxy, then in `backend/`: `DATABASE_URL=<that value> CHAIN_KMS_KEY=<that value> CHAIN_RPC_URL=<rpc url> CHAIN_CONTRACT_ADDRESS=<contract> PUBLIC_API_URL=<backend url> bun run chain:seed-demo`. Seeding mints through the real contract, so it needs the same chain env as the API. The UI then shows live data.
 
 ## Review of the proposed plan
 
