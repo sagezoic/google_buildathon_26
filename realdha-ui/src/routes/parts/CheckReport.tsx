@@ -1,4 +1,4 @@
-import { CheckCircle2, TriangleAlert, XCircle } from 'lucide-react'
+import { CheckCircle2, Loader2, TriangleAlert, XCircle } from 'lucide-react'
 import { Screen } from '../../app/Shell'
 import { path } from '../../app/nav'
 import { Button } from '../../components/ui/button'
@@ -6,7 +6,8 @@ import { Card } from '../../components/ui/card'
 import { Pill } from '../../components/ui/pill'
 import { SampleData } from '../../components/ui/record-id'
 import { VerdictBanner } from '../../components/ui/verdict-banner'
-import { REPORTS, type CheckFinding, type Sev } from '../../data/fixtures/f05-check'
+import { type CheckFinding, type Sev } from '../../data/fixtures/f05-check'
+import { useCheckReport } from '../../lib/check-store'
 
 const SEV = {
   high: { tone: 'danger', label: 'High', Icon: XCircle },
@@ -34,6 +35,12 @@ function Finding({ f }: { f: CheckFinding }) {
         <span className="max-md:hidden">{f.body}</span>
       </p>
       <div className="flex flex-col gap-2 rounded-control border border-line bg-canvas px-3.5 py-3">
+        {f.quoteOrig && (
+          <div className="flex items-baseline gap-2">
+            <span className="inline-flex flex-none rounded-control border border-line-strong bg-sunken px-2 text-label font-medium">Original</span>
+            <span className="text-label md:text-small">{f.quoteOrig}</span>
+          </div>
+        )}
         <div className="flex items-baseline gap-2">
           <span className="inline-flex flex-none rounded-control border border-line-strong bg-primary-tint px-2 text-label font-medium text-on-primary-tint">EN</span>
           <span className="text-label md:text-small">
@@ -47,11 +54,28 @@ function Finding({ f }: { f: CheckFinding }) {
   )
 }
 
-/** F05-03 (STOP, Sameer) and F05-04 (PROCEED) share this layout. */
-export function CheckReport({ id, verdict }: { id: 'F05-03' | 'F05-04'; verdict: 'stop' | 'proceed' }) {
-  const r = REPORTS[verdict]
+/** F05-03 (STOP) and F05-04 (PROCEED) share this layout. Shows the Gemini report of the last check, or the sample when none has run. */
+export function CheckReport({ id, verdict: fallback }: { id: 'F05-03' | 'F05-04'; verdict: 'stop' | 'proceed' }) {
+  const { report: r, loading, error } = useCheckReport(fallback)
   const toShare = `${path('F05-05')}?state=share`
   const toReview = `${path('F05-05')}?state=review`
+  if (!r) {
+    return (
+      <Screen id={id} back={path('F05-01')} title="Report">
+        <div className="flex flex-1 justify-center px-4 py-4 md:px-12 md:py-7">
+          <Card className="flex w-full max-w-[960px] flex-col gap-3 p-6">
+            {loading || !error
+              ? <p role="status" className="flex items-center gap-2 text-small text-muted"><Loader2 className="size-4 animate-spin motion-reduce:animate-none" aria-hidden />Loading your report…</p>
+              : <>
+                  <p role="alert" className="flex items-start gap-2 text-small text-danger-ink"><TriangleAlert className="mt-0.5 size-4 flex-none" aria-hidden />{error}</p>
+                  <Button variant="secondary" to={path('F05-01')} className="self-start">Back to the documents</Button>
+                </>}
+          </Card>
+        </div>
+      </Screen>
+    )
+  }
+  const verdict = r.verdict
   return (
     <Screen id={id} back={path('F05-02')} title="Report">
       <div className="flex flex-1 justify-center px-4 py-4 md:px-12 md:py-7">
@@ -68,7 +92,7 @@ export function CheckReport({ id, verdict }: { id: 'F05-03' | 'F05-04'; verdict:
                   <span className="md:hidden">{r.idM}</span>
                   <span className="max-md:hidden">{r.checkId}</span>
                 </span>
-                <SampleData />
+                {r.sample && <SampleData />}
               </div>
             </div>
             <div className="flex gap-2.5 max-md:hidden">

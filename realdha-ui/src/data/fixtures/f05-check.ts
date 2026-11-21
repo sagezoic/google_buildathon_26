@@ -12,15 +12,27 @@ export const KINDS: KindOption[] = [
 
 export type FileStatus = 'uploading' | 'uploaded'
 /** Name, size and progress only. File objects are never stored. */
-export interface CheckFile { name: string; pages: number; size: string; status: FileStatus; pct: number }
+export interface CheckFile {
+  name: string
+  pages: number
+  size: string
+  status: FileStatus
+  pct: number
+  /** Server document id once the upload has finished. Live files without one are dropped on reload. */
+  id?: string
+}
 
 export interface CheckState {
   kind: CheckKind
   files: CheckFile[]
-  /** 0 to 100, advanced by a timer on F05-02. */
+  /** 0 to 100, advanced by F05-02 as documents are read and Gemini checks them. */
   pct: number
-  /** Set when the check starts; decides which report opens. */
+  /** Set when the check finishes; decides which report opens. */
   verdict: 'stop' | 'proceed' | null
+  /** Server property that holds the uploaded documents. */
+  propertyId?: string
+  /** Gemini check whose report F05-03/04/05 show. */
+  checkId?: string | null
 }
 
 const up = (name: string, pages: number, size: string): CheckFile => ({ name, pages, size, status: 'uploaded', pct: 100 })
@@ -33,7 +45,7 @@ export const FRAME_FILES: CheckFile[] = [
 export const SAMEER_FILES: CheckFile[] = [up('Agreement for sale.pdf', 18, '2.4 MB'), up('Share certificate.pdf', 2, '310 KB'), up('Society NOC.jpg', 1, '1.1 MB')]
 export const LAKEVIEW_FILES: CheckFile[] = [up('Agreement for sale - Lake View.pdf', 20, '2.8 MB'), up('Share certificate - Lake View.pdf', 2, '290 KB'), up('Society NOC - Lake View.pdf', 1, '420 KB')]
 
-export const INITIAL_CHECK: CheckState = { kind: 'resale', files: FRAME_FILES, pct: 0, verdict: null }
+export const INITIAL_CHECK: CheckState = { kind: 'resale', files: [], pct: 0, verdict: null }
 
 /** Sample rule: documents from the Lake View sample set (all three heirs sign) get PROCEED; every other set is Sameer's, with one heir missing, and gets STOP. */
 export const decideVerdict = (files: CheckFile[]): 'stop' | 'proceed' => (files.some((f) => /lake view/i.test(f.name)) ? 'proceed' : 'stop')
@@ -51,7 +63,11 @@ export const STAGES = [
 export const STAGE_START = [0, 0, 50, 70, 90] as const
 
 export type Sev = 'high' | 'medium' | 'clear'
-export interface CheckFinding { title: string; titleM: string; sev: Sev; body: string; bodyM: string; quote: string; quoteM: string; source: string }
+export interface CheckFinding {
+  title: string; titleM: string; sev: Sev; body: string; bodyM: string; quote: string; quoteM: string; source: string
+  /** The quote in the document's own language and script, when it is not English. */
+  quoteOrig?: string
+}
 export interface CheckReport {
   verdict: 'stop' | 'proceed'
   title: string
@@ -65,6 +81,8 @@ export interface CheckReport {
   findings: CheckFinding[]
   footer: string
   footerM: string
+  /** True for the built-in sample reports. */
+  sample?: boolean
 }
 
 export const STOP_REPORT: CheckReport = {
@@ -104,7 +122,7 @@ export const PROCEED_REPORT: CheckReport = {
   footerM: 'Sample data. AI-assisted check, not legal advice.',
 }
 
-export const REPORTS = { stop: STOP_REPORT, proceed: PROCEED_REPORT } as const
+export const REPORTS = { stop: { ...STOP_REPORT, sample: true }, proceed: { ...PROCEED_REPORT, sample: true } } as const
 
 export interface ReviewPlan { id: 'standard' | 'priority'; label: string; reply: string; replyM: string; price: string }
 export const REVIEW_PLANS: ReviewPlan[] = [

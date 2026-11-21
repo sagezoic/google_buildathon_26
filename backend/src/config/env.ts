@@ -14,6 +14,12 @@ export interface EnvConfig {
   DOCAI_LOCATION: string;
   DOCAI_PROCESSOR_ID?: string;
   TRANSLATE_LOCATION: string;
+  /** Vertex AI location for Gemini calls (a US region, or `global`). */
+  VERTEX_LOCATION: string;
+  /** Gemini model that reads documents and writes the check report. */
+  GEMINI_VERIFY_MODEL: string;
+  /** Gemini model that answers chat questions about a property's documents. */
+  GEMINI_CHAT_MODEL: string;
   MAX_UPLOAD_MB: number;
   CHAIN_RPC_URL?: string;
   CHAIN_NETWORK: string;
@@ -58,6 +64,9 @@ function parseEnv(): EnvConfig {
     DOCAI_LOCATION: process.env.DOCAI_LOCATION || 'us',
     DOCAI_PROCESSOR_ID: process.env.DOCAI_PROCESSOR_ID,
     TRANSLATE_LOCATION: process.env.TRANSLATE_LOCATION || 'global',
+    VERTEX_LOCATION: process.env.VERTEX_LOCATION || 'us-central1',
+    GEMINI_VERIFY_MODEL: process.env.GEMINI_VERIFY_MODEL || 'gemini-3.8-flash',
+    GEMINI_CHAT_MODEL: process.env.GEMINI_CHAT_MODEL || 'gemini-3.8-flash',
     MAX_UPLOAD_MB: Number.isNaN(maxUploadMb) ? 20 : maxUploadMb,
     PORT: Number.isNaN(port) ? 8080 : port,
     HOST: host,

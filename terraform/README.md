@@ -39,6 +39,7 @@ Automated CI/CD is provided via **GitHub Actions** located in `.github/workflows
     ├── pubsub.tf                 # Pub/Sub topics, subscriptions, dead-letter, GCS notification
     ├── bigquery.tf               # BigQuery dataset, events table, Pub/Sub streaming
     ├── cdn.tf                    # Public assets bucket + Cloud CDN load balancer
+    ├── vertex.tf                 # Gemini on Vertex AI: backend IAM and model env vars
     ├── outputs.tf                # Service URLs and Docker push commands
     ├── providers.tf              # Google provider configuration
     ├── terraform.tf              # Required providers & version
@@ -156,6 +157,10 @@ backend_service_url = "https://realdha-backend-xxxxxxxxxx-uc.a.run.app"
 | `cdn_bucket_name` | Assets bucket name (empty = `realdha-cdn-<project_id>`) | `string` | `""` |
 | `cdn_domain` | Custom domain for HTTPS (empty = HTTP on the reserved IP) | `string` | `""` |
 | `cdn_cors_origins` | Origins allowed to fetch assets (CORS) | `list(string)` | `["*"]` |
+| `enable_gemini` | Enable Vertex AI and grant the backend `roles/aiplatform.user` | `bool` | `true` |
+| `vertex_location` | Vertex AI location for Gemini (`us-*` or `global`) | `string` | `"us-central1"` |
+| `gemini_verify_model` | Model for document checks (STOP / PROCEED report) | `string` | `"gemini-3.8-flash"` |
+| `gemini_chat_model` | Model for chat about a property's documents | `string` | `"gemini-3.8-flash"` |
 
 ---
 
@@ -183,6 +188,11 @@ backend_service_url = "https://realdha-backend-xxxxxxxxxx-uc.a.run.app"
 | `bigquery_dataset_id` / `bigquery_events_table` | BigQuery dataset and the `project.dataset.table` receiving events |
 | `cdn_bucket_name` | Bucket to upload public assets to |
 | `cdn_ip_address` / `cdn_base_url` | CDN load balancer IP (for DNS) and the URL that serves assets |
+| `gemini_config` | Gemini location and models passed to the backend |
+
+### Gemini models
+
+`gemini-3.8-flash` is Google's GA "workhorse" model (released 2026-09-02, supported until at least 2027-09-02), and it replaces the retired `gemini-2.5-*` models. Checks run it with `HIGH` thinking and attach the files. Chat runs it with `LOW` thinking over the OCR text. To change a model or location, edit the variables and re-apply; no code change is needed. If a model is not served in `vertex_location`, the backend returns a 502 naming the model and location. Either set `vertex_location = "global"` or pick another model.
 
 ---
 

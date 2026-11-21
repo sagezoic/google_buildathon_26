@@ -7,6 +7,7 @@ import { flatsRoutes } from './modules/flats/routes';
 import { storageRoutes } from './routes/storage';
 import { propertiesRoutes } from './modules/properties/routes';
 import { chainRoutes } from './modules/chain/routes';
+import { aiRoutes } from './modules/ai/routes';
 import { ApiError } from './lib/errors';
 
 export const app = new Elysia()
@@ -29,6 +30,7 @@ export const app = new Elysia()
           { name: 'Storage', description: 'Google Cloud Storage operations, signed URLs, and file management' },
           { name: 'Chain', description: 'Blockchain property tokens: lawyer approval, anchoring and document verification' },
           { name: 'Properties', description: 'Add Property drafts, document upload, OCR, translation and field extraction' },
+          { name: 'AI', description: 'Gemini on Vertex AI: document checks (STOP / PROCEED reports) and chat about a property' },
         ],
       },
     })
@@ -80,6 +82,7 @@ export const app = new Elysia()
   .use(flatsRoutes)
   .use(storageRoutes)
   .use(propertiesRoutes)
+  .use(aiRoutes)
   .use(chainRoutes);
 
 export default app;
