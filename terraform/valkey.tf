@@ -49,7 +49,7 @@ resource "google_memorystore_instance" "valkey" {
   authorization_mode          = var.valkey_authorization_mode
   deletion_protection_enabled = var.valkey_deletion_protection
 
-  desired_psc_auto_connections {
+  desired_auto_created_endpoints {
     network    = local.effective_valkey_network
     project_id = var.project_id
   }

@@ -35,7 +35,10 @@ locals {
       "storage.googleapis.com"
     ] : [],
     var.enable_apis && var.enable_valkey ? [
-      "memorystore.googleapis.com"
+      "memorystore.googleapis.com",
+      "networkconnectivity.googleapis.com",
+      "serviceconsumermanagement.googleapis.com",
+      "compute.googleapis.com"
     ] : []
   )
 
