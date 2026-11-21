@@ -1,19 +1,20 @@
 import { SlidersHorizontal, X } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { Screen } from '../../app/Shell'
 import { path } from '../../app/nav'
 import { useDemoState } from '../../app/useDemoState'
 import { Button } from '../../components/ui/button'
 import { SampleData } from '../../components/ui/record-id'
-import { FRAME_FILTERS, activeFilters, dropFilter, runSearch, priceShort, type Property } from '../../data/fixtures/f08-search'
+import { FRAME_FILTERS, activeFilters, dropFilter, inr, runSearch, priceShort, type Property } from '../../data/fixtures/f08-search'
 import { cn } from '../../lib/cn'
 import { FilterDrawer } from '../parts/FilterPanel'
-import { EMPTY_ERROR, Pager, PropertyCard, SearchBar, Seg, useRecent, useSearch } from '../parts/search'
+import { EMPTY_ERROR, Pager, PropertyCard, SearchBar, Seg, StatusPills, useRecent, useSearch } from '../parts/search'
 import OsmMap from '../../components/map/OsmMap'
 import OsmMarker from '../../components/map/OsmMarker'
 
 const PAGE = 5
+const MAP_PINS = 30
 
 const LOCALITY_COORDS: Record<string, [number, number]> = {
   Baner: [73.7868, 18.5590],
@@ -87,29 +88,38 @@ export default function Results() {
   const [selectedPropId, setSelectedPropId] = useState<string | null>(null)
   const selectedProp = useMemo(() => results.find((p) => p.id === selectedPropId), [results, selectedPropId])
 
+  // Stable positions and handlers: the marker layer only rebuilds when the result set changes, not on every keystroke.
+  const pins = useMemo(() => results.slice(0, MAP_PINS).map((p, i) => ({ p, coord: propertyCoord(p, i), select: () => setSelectedPropId(p.id) })), [results])
+  const closePreview = useCallback(() => setSelectedPropId(null), [])
+  useEffect(() => {
+    if (!selectedPropId) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closePreview() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [selectedPropId, closePreview])
+
   const map = (
     <div className={cn('relative min-h-[380px] overflow-hidden rounded-card border border-line bg-sunken xl:min-h-full xl:rounded-none xl:border-0 xl:border-l', view === 'list' && 'max-xl:hidden')}>
       <OsmMap center={[73.7868, 18.5590]} zoom={13} showThemeToggle className="size-full">
-        <div className="absolute top-3 left-3 z-10 rounded-control border border-line bg-surface/90 px-2.5 py-1 text-label font-medium text-text shadow-e1 backdrop-blur-xs xl:top-4 xl:left-4">
-          Interactive Pune Map · {results.length} verified listings
+        <div className="absolute top-3 left-3 z-10 rounded-control border border-line bg-surface px-2.5 py-1 text-label font-medium text-text shadow-e1 xl:top-4 xl:left-4">
+          {pins.length < results.length ? `Map shows ${pins.length} of ${results.length} properties` : `${results.length} propert${results.length === 1 ? 'y' : 'ies'} on map`}
         </div>
 
         {/* Property markers */}
-        {results.slice(0, 30).map((p, i) => {
-          const coord = propertyCoord(p, i)
+        {pins.map(({ p, coord, select }) => {
           const isSelected = selectedPropId === p.id
           return (
-            <OsmMarker key={p.id} position={coord} onClick={() => setSelectedPropId(p.id)}>
+            <OsmMarker key={p.id} position={coord} onClick={select} ariaLabel={`${p.label}, ${inr(p.price)}`}>
               <div
                 className={cn(
-                  'group flex cursor-pointer items-center gap-1 rounded-pill border-2 px-2 py-0.5 text-[11px] font-bold shadow-e2 transition-transform hover:scale-110',
+                  'flex cursor-pointer items-center gap-1.5 rounded-pill border-2 px-2.5 py-1 text-chip font-semibold shadow-e2 transition-transform duration-[var(--rd-dur-fast)] motion-reduce:transition-none',
                   isSelected
-                    ? 'scale-110 border-primary bg-primary text-on-primary ring-2 ring-primary ring-offset-2'
-                    : 'border-white bg-surface text-text hover:border-primary'
+                    ? 'scale-110 border-primary bg-primary text-on-primary'
+                    : 'border-surface bg-surface text-text hover:scale-105 hover:border-primary'
                 )}
               >
-                <span className="size-1.5 rounded-full bg-primary" />
-                <span>{priceShort(p.price)}</span>
+                <span className={cn('size-1.5 rounded-full', isSelected ? 'bg-on-primary' : 'bg-primary')} aria-hidden />
+                <span className="tabular">{priceShort(p.price)}</span>
               </div>
             </OsmMarker>
           )
@@ -117,30 +127,25 @@ export default function Results() {
 
         {/* Selected Property Popup Card */}
         {selectedProp && (
-          <div className="absolute bottom-4 left-4 right-4 z-20 mx-auto max-w-sm rounded-card border border-line bg-surface p-3.5 shadow-e3 backdrop-blur-xs">
+          <div role="dialog" aria-label="Property preview" className="absolute right-4 bottom-4 left-4 z-20 mx-auto max-w-sm rounded-card border border-line bg-surface p-4 shadow-e2">
             <div className="flex items-start justify-between gap-2">
-              <div>
+              <div className="min-w-0">
                 <div className="text-chip text-muted">{selectedProp.locality}, {selectedProp.city}</div>
-                <div className="text-small font-bold text-text">{selectedProp.unit} · {selectedProp.project}</div>
-                <div className="mt-1 text-label font-semibold text-primary">{inr(selectedProp.price)} · {selectedProp.label}</div>
+                <div className="text-small font-semibold text-text">{selectedProp.unit} · {selectedProp.project}</div>
+                <div className="tabular mt-1 text-chip font-semibold text-primary-text">{inr(selectedProp.price)} · {selectedProp.label}</div>
               </div>
               <button
                 type="button"
-                onClick={() => setSelectedPropId(null)}
-                className="cursor-pointer text-muted hover:text-text"
+                onClick={closePreview}
+                className="-mt-1.5 -mr-1.5 inline-flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-control text-muted hover:bg-primary-tint hover:text-text md:size-9"
                 aria-label="Close preview"
               >
-                <X className="size-4" />
+                <X className="size-4" aria-hidden />
               </button>
             </div>
-            <div className="mt-2.5 flex items-center justify-between border-t border-line pt-2">
-              <span className="text-chip text-muted">{selectedProp.status === 'signed-off' ? 'Signed off' : 'In review'}</span>
-              <Link
-                to={`${path('F09-03')}?record=${selectedProp.id}`}
-                className="rounded-[4px] bg-primary px-3 py-1 text-chip font-semibold text-on-primary no-underline hover:opacity-90"
-              >
-                View Property
-              </Link>
+            <div className="mt-3 flex items-center justify-between gap-2 border-t border-line pt-3">
+              <div className="flex flex-wrap gap-1.5"><StatusPills p={selectedProp} short /></div>
+              <Button to={`${path('F09-03')}?id=${selectedProp.id}`} size="sm" className="shrink-0 max-md:h-11">View property</Button>
             </div>
           </div>
         )}
@@ -163,7 +168,7 @@ export default function Results() {
           <Seg<'list' | 'map'> label="Results view" value={view} onChange={setView} className="xl:hidden" options={[{ id: 'list', label: 'List' }, { id: 'map', label: 'Map' }]} />
           {filterButton}
         </div>
-        <ul aria-label="Active filters" className="flex flex-wrap gap-2 max-xl:hidden">
+        <ul aria-label="Active filters" className="flex flex-wrap gap-2 max-md:hidden">
           {chips.map((c) => (
             <li key={c.key}>
               <button type="button" aria-label={`Remove filter ${c.label}`} onClick={() => apply(dropFilter(search.filters, c.key))} className="inline-flex min-h-8 cursor-pointer items-center gap-1.5 rounded-pill bg-skeleton py-0.5 pr-2 pl-3 text-label font-medium text-muted hover:bg-primary-tint">
@@ -172,7 +177,7 @@ export default function Results() {
             </li>
           ))}
         </ul>
-        <div role="status" className="flex items-center gap-2 text-chip text-muted xl:ml-auto">{results.length} result{results.length === 1 ? '' : 's'} · <SampleData /></div>
+        <div role="status" className="flex items-center gap-2 text-chip text-muted xl:ml-auto"><span className="tabular">{results.length} result{results.length === 1 ? '' : 's'}</span> · <SampleData /></div>
       </div>
 
       <div className="flex flex-1 flex-col gap-3 bg-canvas p-4 xl:grid xl:grid-cols-[460px_1fr] xl:gap-0 xl:p-0">

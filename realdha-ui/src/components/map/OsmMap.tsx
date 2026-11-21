@@ -4,14 +4,13 @@ import {
   useEffect,
   useRef,
   useState,
-  type ReactNode,
 } from 'react'
 import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { Layers, MapPin, Satellite } from 'lucide-react'
 import { cn } from '../../lib/cn'
-import { toLngLat, type LngLat } from './osm-geometry'
+import { toLngLat } from './osm-geometry'
 import { getMapStyle, type MapTheme } from './osm-styles'
 import type { OsmMapProps } from './types'
 
@@ -52,6 +51,7 @@ export default function OsmMap({
 }: OsmMapProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<maplibregl.Map | null>(null)
+  const [mapInstance, setMapInstance] = useState<maplibregl.Map | null>(null)
   const [ready, setReady] = useState(false)
   const [failed, setFailed] = useState(false)
   const [currentTheme, setCurrentTheme] = useState<MapTheme>(initialTheme)
@@ -114,6 +114,7 @@ export default function OsmMap({
     }
 
     map.on('load', () => {
+      setMapInstance(map)
       setReady(true)
       callbacksRef.current.onLoad?.(map)
     })
@@ -143,6 +144,7 @@ export default function OsmMap({
       resizeObserver.disconnect()
       map.remove()
       mapRef.current = null
+      setMapInstance(null)
       setReady(false)
     }
   }, []) // Mount once
@@ -177,7 +179,7 @@ export default function OsmMap({
   }, [center, zoom, pitch, ready])
 
   return (
-    <OsmMapContext.Provider value={{ map: mapRef.current, ready }}>
+    <OsmMapContext.Provider value={{ map: mapInstance, ready }}>
       <div
         ref={containerRef}
         style={style}

@@ -87,21 +87,21 @@ export function PropertyCard({ p, sub, note, shortPills }: { p: Property; sub: s
   return (
     <Link
       to={`${path('F09-03')}?id=${p.id}`}
-      className="group flex flex-col overflow-hidden rounded-card border border-line bg-surface text-text no-underline shadow-e1 transition-all duration-200 hover:border-line-hover hover:shadow-e2"
+      className="group flex flex-col overflow-hidden rounded-card border border-line bg-surface text-text no-underline shadow-e1 transition-[border-color,box-shadow] duration-200 hover:border-line-hover hover:shadow-e2"
     >
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-sunken">
         <img
           src={thumb}
-          alt={p.label}
+          alt=""
           loading="lazy"
           decoding="async"
-          className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+          className="size-full object-cover transition-transform duration-300 group-hover:scale-105 motion-reduce:transition-none motion-reduce:group-hover:scale-100"
         />
         <div className="pointer-events-none absolute inset-x-2 top-2 flex items-center justify-between gap-1.5">
-          <span className="rounded-control bg-surface/90 px-2 py-0.5 font-mono text-[11px] font-semibold text-text shadow-e1 backdrop-blur-xs">
+          <span className="rounded-control bg-surface px-2 py-0.5 font-mono text-label font-semibold text-text shadow-e1">
             {p.id}
           </span>
-          <span className="rounded-control bg-primary px-2 py-0.5 text-[11px] font-semibold text-on-primary shadow-e1">
+          <span className="rounded-control bg-primary px-2 py-0.5 text-label font-semibold text-on-primary shadow-e1 tabular">
             {priceShort(p.price)}
           </span>
         </div>
