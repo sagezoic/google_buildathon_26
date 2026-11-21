@@ -86,7 +86,10 @@ export const deleteDocument = (propertyId: string, docId: string) =>
 export const processDocument = (propertyId: string, docId: string, force = false) =>
   request<ServerDocDetail>(`/api/properties/${propertyId}/documents/${docId}/process${force ? '?force=true' : ''}`, { method: 'POST' })
 
-export const getDocument = (propertyId: string, docId: string) => request<ServerDocDetail>(`/api/properties/${propertyId}/documents/${docId}`)
+/** URL of the original upload, served inline by the API. Used as an iframe / img source. */
+export const documentFileUrl = (propertyId: string, docId: string) => `/api/properties/${propertyId}/documents/${docId}/file`
+
+export const getDocument =(propertyId: string, docId: string) => request<ServerDocDetail>(`/api/properties/${propertyId}/documents/${docId}`)
 
 /** 'mr' → 'Marathi'. Falls back to the code when the runtime does not know it. */
 export function languageName(code: string): string {
