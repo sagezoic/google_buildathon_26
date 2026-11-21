@@ -19,9 +19,9 @@ locals {
     VALKEY_HOST    = local.valkey_host
     VALKEY_PORT    = local.valkey_port
     VALKEY_ENABLED = "true"
-  } : (var.valkey_url != "" ? {
-    VALKEY_URL     = var.valkey_url
-    VALKEY_ENABLED = "true"
+    } : (var.valkey_url != "" ? {
+      VALKEY_URL     = var.valkey_url
+      VALKEY_ENABLED = "true"
   } : {})
 }
 
