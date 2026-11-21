@@ -1,4 +1,4 @@
-import { Check, Compass, Eye, Heart, Layers, Mail, MapPin, MessageSquare, Phone, Share2, ShieldCheck } from 'lucide-react'
+import { Check, Compass, Eye, Heart, Layers, Mail, MapPin, MessageSquare, Phone, Share2, ShieldCheck, View } from 'lucide-react'
 import { useState } from 'react'
 import { Screen } from '../../app/Shell'
 import { path } from '../../app/nav'
@@ -7,6 +7,7 @@ import { Button } from '../../components/ui/button'
 import { Card } from '../../components/ui/card'
 import { Pill } from '../../components/ui/pill'
 import { RecordId } from '../../components/ui/record-id'
+import { Tour360 } from '../../components/ui/tour-360'
 import { getPropertyPhotos } from '../../data/property-images'
 import { BK } from '../../lib/buyer-store'
 import { cn } from '../../lib/cn'
@@ -16,7 +17,7 @@ import OsmMarker from '../../components/map/OsmMarker'
 /** F09-03 · Single property buyer view (A-1804). */
 export default function PropertyBuyerScreen() {
   const [shortlist, setShortlist] = usePersistentState<string[]>(BK.shortlist, ['RA-PUN-001-A-18-04'])
-  const [activeMedia, setActiveMedia] = useState<'photos' | 'floorplan' | 'map'>('photos')
+  const [activeMedia, setActiveMedia] = useState<'photos' | 'floorplan' | 'map' | 'tour'>('photos')
   const [activePhotoIdx, setActivePhotoIdx] = useState(0)
   const isShortlisted = shortlist.includes('RA-PUN-001-A-18-04')
   const photos = getPropertyPhotos('RA-PUN-001-A-18-04')
@@ -72,6 +73,13 @@ export default function PropertyBuyerScreen() {
               >
                 <MapPin className="size-3.5" /> Neighborhood Map
               </button>
+              <button
+                type="button"
+                onClick={() => setActiveMedia('tour')}
+                className={cn('flex items-center gap-1.5 rounded-[4px] px-3 py-1.5 transition-colors', activeMedia === 'tour' ? 'bg-primary text-on-primary' : 'text-muted hover:text-text')}
+              >
+                <View className="size-3.5" /> 360° Tour
+              </button>
             </div>
             <span className="text-label text-muted max-md:hidden">Sahyadri Hills Facing · Verified Architectural Layout</span>
           </div>
@@ -125,6 +133,8 @@ export default function PropertyBuyerScreen() {
               </svg>
               <div className="mt-2 text-label text-muted">Architectural Sanctioned Plan · Unit A-1804 (1,180 sq ft carpet)</div>
             </div>
+          ) : activeMedia === 'tour' ? (
+            <Tour360 />
           ) : (
             <div className="relative min-h-[460px] overflow-hidden rounded-card border border-line bg-sunken">
               <OsmMap center={[73.7868, 18.5590]} zoom={15} showThemeToggle className="size-full min-h-[460px]">
