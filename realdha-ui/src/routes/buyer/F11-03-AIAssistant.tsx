@@ -1,5 +1,5 @@
-import { FileText, Loader2, Trash2, TriangleAlert } from 'lucide-react'
-import { Fragment, useEffect, useRef, useState } from 'react'
+import { FileText, Loader2, MapPin, Trash2, TriangleAlert } from 'lucide-react'
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { Screen } from '../../app/Shell'
 import { path } from '../../app/nav'
@@ -9,6 +9,10 @@ import { Card } from '../../components/ui/card'
 import { RecordId } from '../../components/ui/record-id'
 import { ASSISTANT_DISCLAIMER, ASSISTANT_NOTE, PROJECT, SEED_CHAT, TRY_ASKING, assistantReply, type Reply, type Turn } from '../../data/fixtures/f11-buyer'
 import { BK } from '../../lib/buyer-store'
+import { usePlace, type Place } from '../../lib/places'
+import OsmMap from '../../components/map/OsmMap'
+import OsmMarker from '../../components/map/OsmMarker'
+import { INITIAL_SEARCH, runSearch } from '../../data/fixtures/f08-search'
 
 const FORCED: Record<string, Turn[]> = { answer: SEED_CHAT.slice(0, 1), missing: SEED_CHAT.slice(1) }
 
@@ -25,12 +29,30 @@ function Bubble({ r }: { r: Reply }) {
   )
 }
 
+/** Map pinned on the place the buyer searched for. */
+function PlaceMap({ place, className }: { place: Place; className?: string }) {
+  const center = useMemo<[number, number]>(() => [place.lng, place.lat], [place])
+  return (
+    <div className={`relative overflow-hidden rounded-card border border-line bg-sunken ${className ?? ''}`}>
+      <OsmMap center={center} zoom={14} className="size-full">
+        <OsmMarker position={center} ariaLabel={`${place.name} on the map`}>
+          <div className="flex items-center gap-1.5 rounded-pill border-2 border-primary bg-primary px-2.5 py-1 text-chip font-semibold text-on-primary shadow-e2">
+            <MapPin className="size-3.5" aria-hidden />{place.name}
+          </div>
+        </OsmMarker>
+      </OsmMap>
+    </div>
+  )
+}
+
 /** F11-03 · Full-page AI assistant for a project. History persists in `f11.chat`. */
 export default function AIAssistant() {
   const [params] = useSearchParams()
   const forced = FORCED[params.get('state') ?? '']
   const [saved, setChat] = usePersistentState<Turn[]>(BK.chat, SEED_CHAT)
   const chat = forced ?? saved
+  const [place] = usePlace()
+  const area = place ? { name: place.name, records: runSearch(place.name, INITIAL_SEARCH.filters).results.length } : undefined
   const [text, setText] = useState('')
   const [err, setErr] = useState('')
   const [thinking, setThinking] = useState<string>()
@@ -45,11 +67,12 @@ export default function AIAssistant() {
     if (thinking) return
     const id = `t${Date.now()}`
     setErr(''); setText(''); setThinking(id)
-    setChat((c) => [...c, { id, q: t, a: assistantReply(t) }])
+    setChat((c) => [...c, { id, q: t, a: assistantReply(t, area) }])
     timer.current = window.setTimeout(() => setThinking(undefined), 800)
   }
+  const asks = place ? [`What is verified near ${place.name}?`, ...TRY_ASKING] : TRY_ASKING
   const chips = (
-    <>{TRY_ASKING.map((s) => <button key={s} type="button" onClick={() => ask(s)} className="min-h-11 cursor-pointer rounded-control border border-line-strong bg-surface px-3 py-2 text-left text-chip font-medium text-primary-text hover:bg-primary-tint xl:min-h-9 xl:py-1.5">{s}</button>)}</>
+    <>{asks.map((s) => <button key={s} type="button" onClick={() => ask(s)} className="min-h-11 cursor-pointer rounded-control border border-line-strong bg-surface px-3 py-2 text-left text-chip font-medium text-primary-text hover:bg-primary-tint xl:min-h-9 xl:py-1.5">{s}</button>)}</>
   )
 
   return (
@@ -61,13 +84,16 @@ export default function AIAssistant() {
             <b className="text-h3">{PROJECT.name}</b>
             <RecordId id={PROJECT.id} className="self-stretch" />
             <p className="text-label font-medium text-muted">{ASSISTANT_NOTE}</p>
+            {place && <span className="inline-flex items-center gap-1.5 self-start rounded-control border border-line bg-primary-tint px-2 py-0.5 text-chip font-medium"><MapPin className="size-3.5 text-primary-text" aria-hidden />{place.name}{place.area && <span className="font-normal text-muted">{place.area}</span>}</span>}
           </Card>
+          {place && <PlaceMap place={place} className="h-56" />}
           <Card className="flex flex-col gap-2 p-6"><b className="text-h3">Try asking</b>{chips}</Card>
         </div>
         <div className="xl:hidden">
           <h1 className="text-h2 font-semibold">Ask about this property</h1>
           <p className="mt-2 text-chip font-medium text-muted">AI can explain what the documents say. It does not state legal title or value.</p>
         </div>
+        {place && <PlaceMap place={place} className="h-40 xl:hidden" />}
         <Card className="flex flex-1 flex-col gap-0 p-0 xl:min-h-[calc(100dvh-170px)]">
           <div className="flex flex-1 flex-col gap-3.5 p-4 xl:p-6">
             {chat.length === 0 && <p className="text-small text-muted">Ask about this project. {ASSISTANT_NOTE}</p>}

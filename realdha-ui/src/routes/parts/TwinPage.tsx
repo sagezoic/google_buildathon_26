@@ -10,8 +10,11 @@ import { Modal } from '../../components/ui/modal'
 import { DOCS, type CheckRecord, type TwinDoc } from '../../data/fixtures/twin'
 import { cn } from '../../lib/cn'
 import { copyText, useTwinRecord } from '../../lib/twin-store'
+import { shortHash } from '../../lib/chain-api'
 import OsmCadastralView from '../../components/map/OsmCadastralView'
 import type { LngLat } from '../../components/map/osm-geometry'
+
+const SLOTS = ['extract', 'card', 'na', 'mutation', 'deed']
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
@@ -58,14 +61,19 @@ function MapPanel({ boundaryLabel }: { boundaryLabel: string }) {
 
 /** Owner Digital Twin body (GP-16). Also rendered behind the GP-17 modal and GP-18 drawer. */
 export function TwinPage() {
-  const { plot, anchored, signedOff, proof } = useTwinRecord()
+  const { plot, anchored, signedOff, proof, token } = useTwinRecord()
+  // Live fingerprints, in the fixture's document order (7/12, card, NA, mutation, deed).
+  const docs: TwinDoc[] = DOCS.map((d, i) => {
+    const live = token?.documents.find((x) => x.slot === SLOTS[i])
+    return live ? { ...d, hash: shortHash(live.sha256) } : d
+  })
   const [tab, setTab] = usePersistentState('twin.tab', 'overview')
   const [checks] = usePersistentState<CheckRecord[]>('twin.checks', [])
   const [viewing, setViewing] = useState<TwinDoc>()
   const [note, setNote] = useState('')
   const flash = (m: string) => { setNote(m); setTimeout(() => setNote(''), 2200) }
   const share = async () => flash((await copyText(`${location.origin}${path('F07-01')}?record=${plot.recordId}`)) ? 'Link copied' : 'Could not copy the link')
-  const copyHash = async () => flash((await copyText(proof.txHash)) ? 'Transaction hash copied' : 'Could not copy the hash')
+  const copyHash = async () => flash((await copyText(proof.fullTxHash ?? proof.txHash)) ? 'Transaction hash copied' : 'Could not copy the hash')
   return (
     <div className="flex flex-col gap-6 px-4 py-6 md:px-12 xl:py-7">
       <section aria-label="Record summary" className="grid gap-4 xl:grid-cols-[1fr_640px] xl:grid-rows-[1fr_auto] xl:gap-0 xl:overflow-hidden xl:rounded-card xl:border xl:border-line xl:bg-surface xl:shadow-e1">
@@ -116,17 +124,13 @@ export function TwinPage() {
       </Card>
 
       <Card id="documents" className="flex scroll-mt-4 flex-col gap-3">
-        <h2 className="text-h2">Documents</h2>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4"><h2 className="text-h2">Documents</h2><p className="text-small text-muted">Each file is fingerprinted on-chain</p></div>
         <ul>
-          {DOCS.map((d) => (
+          {docs.map((d) => (
             <li key={d.name} className="flex items-center gap-3 border-b border-line py-2.5 last:border-b-0 xl:gap-4">
               <span className="flex-1 text-small font-medium xl:text-body">{d.name}</span>
               <span className="text-label text-muted max-xl:hidden">{d.pages}</span>
               <span className="font-mono text-label text-chain-ink max-xl:hidden">{d.hash}</span>
-              <Pill tone="chain" icon={<Check className="size-3.5" />}>
-                <span className="xl:hidden">Fingerprint</span>
-                <span className="max-xl:hidden">Fingerprint ✓</span>
-              </Pill>
               <Button size="sm" variant="secondary" className="max-xl:hidden" aria-label={`View ${d.name}`} onClick={() => setViewing(d)}>View</Button>
             </li>
           ))}
@@ -184,7 +188,7 @@ export function TwinPage() {
           <KV k="Fingerprints">{proof.fingerprints}</KV>
           <KV k="Transaction hash"><span className="inline-flex items-center gap-1.5"><span className="font-mono text-small text-chain-ink">{proof.txHash}</span><button type="button" onClick={() => void copyHash()} aria-label="Copy transaction hash" className="inline-flex size-8 cursor-pointer items-center justify-center rounded-control text-muted hover:bg-primary-tint"><Copy className="size-3.5" aria-hidden /></button></span></KV>
           <KV k="Anchored"><span className="text-small">{proof.anchored}</span></KV>
-          <a href="https://sepolia.etherscan.io/" target="_blank" rel="noopener noreferrer" className="text-small font-medium text-chain-ink underline">View on explorer ↗</a>
+          <a href={proof.explorerUrl ?? 'https://sepolia.etherscan.io/'} target="_blank" rel="noopener noreferrer" className="text-small font-medium text-chain-ink underline">View on explorer ↗</a>
         </div>
       </section>
 

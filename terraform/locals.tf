@@ -12,7 +12,9 @@ locals {
       "artifactregistry.googleapis.com",
       "iam.googleapis.com",
       "documentai.googleapis.com",
-      "translate.googleapis.com"
+      "translate.googleapis.com",
+      "cloudkms.googleapis.com",
+      "secretmanager.googleapis.com"
     ] : [],
     var.enable_apis && var.deploy_database ? [
       "sqladmin.googleapis.com",

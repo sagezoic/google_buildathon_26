@@ -84,7 +84,6 @@ export default function CheckStart() {
                 >
                   <span className="flex items-center justify-between">
                     <span className="text-body font-semibold max-md:text-control">{k.label}</span>
-                    {on && <Pill tone="success" icon={<CheckCircle2 className="size-4" />} className="max-md:hidden">Selected</Pill>}
                   </span>
                   <span className="text-chip leading-[19px] text-muted">
                     <span className="md:hidden">{k.descM}</span>

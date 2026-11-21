@@ -6,7 +6,6 @@ import { path } from '../../../app/nav'
 import { useDemoState } from '../../../app/useDemoState'
 import { Button } from '../../../components/ui/button'
 import { Card } from '../../../components/ui/card'
-import { Pill } from '../../../components/ui/pill'
 import { Modal } from '../../../components/ui/modal'
 import { clock, useDrafts } from '../../../lib/f03-store'
 import { cn } from '../../../lib/cn'
@@ -59,7 +58,6 @@ export default function DraftResumeScreen() {
           <Card className={cn('flex flex-col gap-4 border', state === 'saved' ? 'border-primary ring-2 ring-primary-tint' : 'border-line')}>
             <div className="flex items-center justify-between">
               <span className="text-overline font-semibold uppercase tracking-wider text-muted">A · Draft saved (inside the flow)</span>
-              {state === 'saved' && <Pill tone="info">Active demo state</Pill>}
             </div>
 
             <div className="flex items-center justify-between">
@@ -108,7 +106,6 @@ export default function DraftResumeScreen() {
           <Card className={cn('flex flex-col gap-4 border', state === 'resume' ? 'border-primary ring-2 ring-primary-tint' : 'border-line')}>
             <div className="flex items-center justify-between">
               <span className="text-overline font-semibold uppercase tracking-wider text-muted">B · Resume where you left off</span>
-              {state === 'resume' && <Pill tone="info">Active demo state</Pill>}
             </div>
 
             <h2 className="text-h2 font-semibold">Welcome back, Prakash</h2>

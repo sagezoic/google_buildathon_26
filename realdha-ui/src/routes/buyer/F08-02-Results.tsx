@@ -5,9 +5,11 @@ import { Screen } from '../../app/Shell'
 import { path } from '../../app/nav'
 import { useDemoState } from '../../app/useDemoState'
 import { Button } from '../../components/ui/button'
+import { ScrollArea } from '../../components/ui/scroll-area'
 import { SampleData } from '../../components/ui/record-id'
 import { FRAME_FILTERS, activeFilters, dropFilter, runSearch, inr, priceShort, type Property } from '../../data/fixtures/f08-search'
 import { cn } from '../../lib/cn'
+import { usePlace } from '../../lib/places'
 import { FilterDrawer } from '../parts/FilterPanel'
 import { EMPTY_ERROR, Pager, PropertyCard, SearchBar, Seg, StatusPills, useRecent, useSearch } from '../parts/search'
 import OsmMap from '../../components/map/OsmMap'
@@ -89,6 +91,8 @@ export default function Results() {
   const selectedProp = useMemo(() => results.find((p) => p.id === selectedPropId), [results, selectedPropId])
 
   // Stable positions and handlers: the marker layer only rebuilds when the result set changes, not on every keystroke.
+  const [place] = usePlace()
+  const mapCenter = useMemo<[number, number]>(() => (place ? [place.lng, place.lat] : [73.7868, 18.559]), [place])
   const pins = useMemo(() => results.slice(0, MAP_PINS).map((p, i) => ({ p, coord: propertyCoord(p, i), select: () => setSelectedPropId(p.id) })), [results])
   const closePreview = useCallback(() => setSelectedPropId(null), [])
   useEffect(() => {
@@ -99,8 +103,8 @@ export default function Results() {
   }, [selectedPropId, closePreview])
 
   const map = (
-    <div className={cn('relative min-h-[380px] overflow-hidden rounded-card border border-line bg-sunken xl:min-h-full xl:rounded-none xl:border-0 xl:border-l', view === 'list' && 'max-xl:hidden')}>
-      <OsmMap center={[73.7868, 18.5590]} zoom={13} showThemeToggle className="size-full">
+    <div className={cn('relative min-h-0 flex-1 overflow-hidden rounded-card border border-line bg-sunken xl:rounded-none xl:border-0 xl:border-l', view === 'list' && 'max-xl:hidden')}>
+      <OsmMap center={mapCenter} zoom={place ? 14 : 13} showThemeToggle className="size-full">
         <div className="absolute top-3 left-3 z-10 rounded-control border border-line bg-surface px-2.5 py-1 text-label font-medium text-text shadow-e1 xl:top-4 xl:left-4">
           {pins.length < results.length ? `Map shows ${pins.length} of ${results.length} properties` : `${results.length} propert${results.length === 1 ? 'y' : 'ies'} on map`}
         </div>
@@ -161,8 +165,8 @@ export default function Results() {
   )
 
   return (
-    <Screen id="F08-02" back={path('F08-01')} title="Results">
-      <div className="flex flex-col gap-3 border-b-line bg-surface px-4 py-3.5 max-xl:bg-canvas xl:flex-row xl:flex-wrap xl:items-center xl:border-b xl:px-12">
+    <Screen id="F08-02" back={path('F08-01')} title="Results" className="min-h-0 overflow-hidden">
+      <div className="flex shrink-0 flex-col gap-3 border-b-line bg-surface px-4 py-3.5 max-xl:bg-canvas xl:flex-row xl:flex-wrap xl:items-center xl:border-b xl:px-12">
         <SearchBar value={draft} error={error} label="Search properties" size="md" onChange={(v) => { setDraft(v); setError('') }} onSubmit={submit} className="xl:w-[520px] [&_button]:max-xl:hidden xl:[&_input]:border xl:[&_input]:border-line-strong xl:[&_input]:h-control" />
         <div className="flex items-center justify-between gap-2 xl:contents">
           <Seg<'list' | 'map'> label="Results view" value={view} onChange={setView} className="xl:hidden" options={[{ id: 'list', label: 'List' }, { id: 'map', label: 'Map' }]} />
@@ -180,16 +184,18 @@ export default function Results() {
         <div role="status" className="flex items-center gap-2 text-chip text-muted xl:ml-auto"><span className="tabular">{results.length} result{results.length === 1 ? '' : 's'}</span> · <SampleData /></div>
       </div>
 
-      <div className="flex flex-1 flex-col gap-3 bg-canvas p-4 xl:grid xl:grid-cols-[460px_1fr] xl:gap-0 xl:p-0">
-        <div className={cn('flex flex-col gap-3 xl:p-4', view === 'map' && 'max-xl:hidden')}>
-          {shown.map((p) => <PropertyCard key={p.id} p={p} sub={sub(p)} note shortPills />)}
-          {!results.length && (
-            <div role="status" className="rounded-card border border-line bg-surface p-5 text-small">
-              Nothing matches {parsed.q ? `"${parsed.q}"` : 'these filters'}. <Link to={`${path('F08-03')}?state=none`} className="font-medium text-primary-text">See how to widen it</Link>
-            </div>
-          )}
-          <Pager page={cur} pages={pages} onPage={setPage} />
-        </div>
+      <div className="flex min-h-0 flex-1 flex-col gap-3 bg-canvas p-4 xl:grid xl:grid-cols-[460px_minmax(0,1fr)] xl:grid-rows-1 xl:gap-0 xl:p-0">
+        <ScrollArea className={cn('min-h-0 flex-1 xl:flex-none', view === 'map' && 'max-xl:hidden')} viewportClassName="[&>div]:!block">
+          <div className="flex flex-col gap-3 pr-1 xl:p-4 xl:pr-5">
+            {shown.map((p) => <PropertyCard key={p.id} p={p} sub={sub(p)} note shortPills />)}
+            {!results.length && (
+              <div role="status" className="rounded-card border border-line bg-surface p-5 text-small">
+                Nothing matches {parsed.q ? `"${parsed.q}"` : 'these filters'}. <Link to={`${path('F08-03')}?state=none`} className="font-medium text-primary-text">See how to widen it</Link>
+              </div>
+            )}
+            <Pager page={cur} pages={pages} onPage={setPage} />
+          </div>
+        </ScrollArea>
         {map}
       </div>
 

@@ -34,7 +34,6 @@ export default function GovLookup() {
     <Screen id="F20-01" role="government" title="Lookup a record">
       <Page className="max-w-[900px] gap-5">
         <div className="flex flex-wrap items-center gap-2">
-          <Pill tone="info">Read-only</Pill>
           <span className="text-small text-muted">Government body · Maharashtra Revenue (sample)</span>
         </div>
 

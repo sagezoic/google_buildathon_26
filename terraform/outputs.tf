@@ -168,3 +168,8 @@ output "local_connection_instructions" {
     # --------------------------------------------------------------------------
   EOT
 }
+
+output "chain_registrar_kms_key" {
+  description = "Cloud KMS key version that signs on-chain property token writes (derive its Ethereum address with `bun run chain:address`)"
+  value       = local.chain_kms_key_version
+}

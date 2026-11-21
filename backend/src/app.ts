@@ -6,6 +6,7 @@ import { infoRoutes } from './routes/info';
 import { flatsRoutes } from './modules/flats/routes';
 import { storageRoutes } from './routes/storage';
 import { propertiesRoutes } from './modules/properties/routes';
+import { chainRoutes } from './modules/chain/routes';
 import { ApiError } from './lib/errors';
 
 export const app = new Elysia()
@@ -26,6 +27,7 @@ export const app = new Elysia()
           { name: 'General', description: 'General service info and root endpoints' },
           { name: 'Flats', description: 'Flat Finder society search, localities, and details' },
           { name: 'Storage', description: 'Google Cloud Storage operations, signed URLs, and file management' },
+          { name: 'Chain', description: 'Blockchain property tokens: lawyer approval, anchoring and document verification' },
           { name: 'Properties', description: 'Add Property drafts, document upload, OCR, translation and field extraction' },
         ],
       },
@@ -77,6 +79,7 @@ export const app = new Elysia()
   .use(infoRoutes)
   .use(flatsRoutes)
   .use(storageRoutes)
-  .use(propertiesRoutes);
+  .use(propertiesRoutes)
+  .use(chainRoutes);
 
 export default app;

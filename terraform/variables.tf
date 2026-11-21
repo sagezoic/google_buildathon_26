@@ -276,3 +276,58 @@ variable "gcs_bucket_name" {
   type        = string
   default     = ""
 }
+
+# ------------------------------------------------------------------------------
+# Blockchain property tokens
+# ------------------------------------------------------------------------------
+
+variable "enable_chain" {
+  description = "Create the Cloud KMS registrar key and pass chain settings to the backend"
+  type        = bool
+  default     = true
+}
+
+variable "chain_network" {
+  description = "Name of the EVM network the property registry contract lives on"
+  type        = string
+  default     = "sepolia"
+}
+
+variable "chain_contract_address" {
+  description = "Deployed PropertyRegistry address (run `bun run chain:deploy` in backend/ once). Empty until deployed."
+  type        = string
+  default     = ""
+}
+
+variable "chain_explorer_url" {
+  description = "Block explorer base URL used for transaction links"
+  type        = string
+  default     = "https://sepolia.etherscan.io"
+}
+
+variable "chain_rpc_url" {
+  description = "JSON-RPC endpoint for the chain (Blockchain Node Engine, Infura, Alchemy...). Stored in Secret Manager."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "chain_admin_token" {
+  description = "Bearer token the lawyer console uses to approve and anchor a property. Stored in Secret Manager."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "chain_owner_salt" {
+  description = "Secret salt mixed into the on-chain owner reference so it cannot be reversed to a name. Stored in Secret Manager; never change it after tokens exist."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "chain_public_api_url" {
+  description = "Public base URL of the backend (used in token metadata URLs). Empty falls back to localhost."
+  type        = string
+  default     = ""
+}

@@ -131,7 +131,6 @@ export default function LawyerQueue() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-label text-muted">
               Showing {from}–{from ? from + rows.length - 1 : 0} of {sorted.length}{needle && sorted.length !== total ? ` (${total} in tab)` : ''}
-              <span className="max-md:hidden"> · Files older than 5 days are marked with a word and an icon, not colour alone.</span>
             </p>
             {pages > 1 && (
               <nav aria-label="Pagination" className="flex items-center gap-1.5">

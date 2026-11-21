@@ -338,22 +338,9 @@ export default function MarketDetail() {
         {/* Title & Core Price Hero */}
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="flex flex-col gap-2">
-            <div className="flex flex-wrap items-center gap-2">
-              {badges.map((b, i) => {
-                const isStatus = i === 1 && s.status?.toLowerCase().includes('ready')
-                const tone = i === 0 ? 'brand' : isStatus ? 'success' : 'neutral'
-                return (
-                  <Pill key={b} tone={tone} icon={isStatus ? <CheckCircle2 className="size-3" /> : undefined}>
-                    {b}
-                  </Pill>
-                )
-              })}
-              {s.rera_id && (
-                <span className="rounded-control border border-line bg-sunken px-2 py-0.5 font-mono text-[11px] text-muted">
-                  RERA: {s.rera_id}
-                </span>
-              )}
-            </div>
+            <p className="text-small text-muted">
+              {[badges[0], s.rera_id ? `RERA ${s.rera_id}` : ''].filter(Boolean).join(' · ')}
+            </p>
 
             <h1 className="text-h1 font-semibold text-text">{s.name}</h1>
             <p className="flex items-center gap-1.5 text-small text-muted">
@@ -613,11 +600,11 @@ export default function MarketDetail() {
                       <h2 className="text-h3 font-semibold text-text">Amenities & facilities</h2>
                       <p className="text-small text-muted">Infrastructure and common areas verified on deed.</p>
                     </div>
-                    <div className="flex flex-wrap gap-2.5">
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-3 md:grid-cols-3">
                       {s.amenities.map((a) => (
                         <span
                           key={a}
-                          className="inline-flex items-center gap-2 rounded-control border border-line bg-surface px-3 py-2 text-chip font-medium text-text shadow-e0"
+                          className="inline-flex items-center gap-2 text-small text-text"
                         >
                           <CheckCircle2 className="size-3.5 shrink-0 text-success-ink" aria-hidden />
                           <span>{a}</span>

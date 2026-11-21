@@ -209,6 +209,69 @@ export const propertyDocuments = pgTable(
   (table) => [index('property_documents_property_id_idx').on(table.property_id)]
 );
 
+export interface TokenManifestDoc {
+  slot: string;
+  filename: string;
+  size: number;
+  sha256: string; // 0x-prefixed sha256 of the stored file
+  leaf: string; // keccak256(sha256), the Merkle leaf
+}
+
+/** One blockchain property token per approved property. Hashes only on-chain; this row is the off-chain mirror. */
+export const propertyTokens = pgTable(
+  'property_tokens',
+  {
+    id: text('id').primaryKey(), // tok_<uuid>
+    property_id: text('property_id')
+      .notNull()
+      .unique()
+      .references(() => properties.id, { onDelete: 'cascade' }),
+    token_id: text('token_id').notNull().unique(), // uint256 as decimal; == propertyId on-chain
+    property_key: text('property_key').notNull(), // 0x… keccak256(abi.encode(jurisdiction, parcel))
+    jurisdiction: text('jurisdiction').notNull(),
+    parcel: text('parcel').notNull(),
+    owner_ref: text('owner_ref').notNull(),
+    doc_root: text('doc_root').notNull(),
+    doc_count: integer('doc_count').notNull(),
+    manifest: jsonb('manifest').$type<TokenManifestDoc[]>().notNull(),
+    proofs: jsonb('proofs').$type<Record<string, string[]>>().notNull(),
+    metadata_hash: text('metadata_hash').notNull(),
+    metadata_gcs_path: text('metadata_gcs_path').notNull(),
+    attestation: text('attestation').notNull(),
+    approved_by: text('approved_by').notNull(),
+    approved_at: timestamp('approved_at', { withTimezone: true }).notNull(),
+    network: text('network').notNull(),
+    chain_id: integer('chain_id').notNull(),
+    contract_address: text('contract_address').notNull(),
+    version: integer('version').notNull().default(1),
+    status: text('status').notNull().default('pending'), // pending | confirmed | failed
+    tx_hash: text('tx_hash'),
+    block_number: integer('block_number'),
+    error: text('error'),
+    created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index('property_tokens_doc_root_idx').on(table.doc_root)]
+);
+
+/** Chain of title: every register / update transaction for a token. */
+export const propertyTokenTxs = pgTable(
+  'property_token_txs',
+  {
+    id: serial('id').primaryKey(),
+    token_id: text('token_id')
+      .notNull()
+      .references(() => propertyTokens.token_id, { onDelete: 'cascade' }),
+    kind: text('kind').notNull(), // register | update
+    version: integer('version').notNull(),
+    doc_root: text('doc_root').notNull(),
+    tx_hash: text('tx_hash').notNull(),
+    block_number: integer('block_number').notNull(),
+    created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index('property_token_txs_token_idx').on(table.token_id)]
+);
+
 // Relations
 export const propertiesRelations = relations(properties, ({ many }) => ({
   documents: many(propertyDocuments),
@@ -273,5 +336,7 @@ export type ScrapeRun = typeof scrapeRuns.$inferSelect;
 export type NewScrapeRun = typeof scrapeRuns.$inferInsert;
 export type Property = typeof properties.$inferSelect;
 export type NewProperty = typeof properties.$inferInsert;
+export type PropertyToken = typeof propertyTokens.$inferSelect;
+export type PropertyTokenTx = typeof propertyTokenTxs.$inferSelect;
 export type PropertyDocument = typeof propertyDocuments.$inferSelect;
 export type NewPropertyDocument = typeof propertyDocuments.$inferInsert;
