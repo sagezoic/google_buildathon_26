@@ -9,10 +9,13 @@ import { path } from '../../app/nav'
 import { Button } from '../../components/ui/button'
 import { Field } from '../../components/ui/field'
 import { prakash } from '../../data/fixtures/identity'
+import { OnboardSteps } from '../../components/onboard-steps'
+import { useIntent } from '../../lib/onboard-intent'
 
 /** GP-04 · KYC. Desktop: single card with consent. Phone and tablet: shorter copy, consent inline. */
 export default function KYC() {
   const nav = useNavigate()
+  const intent = useIntent()
   const [pan, setPan] = usePersistentState(K.pan, prakash.pan)
   const [consent, setConsent] = usePersistentState(K.panConsent, true)
   const [attempts, setAttempts] = usePersistentState(K.kycAttempts, 0)
@@ -49,7 +52,7 @@ export default function KYC() {
     <Screen id="GP-04" layout="auth" noTabs>
       <div className="flex flex-1 items-start justify-center px-4 pt-4 pb-8 xl:pt-2">
         <div className="flex w-full max-w-[560px] flex-col gap-3.5 xl:rounded-card xl:border xl:border-line xl:bg-surface xl:p-6 xl:shadow-e1">
-          <p className="text-label font-semibold tracking-[0.06em] text-muted uppercase max-xl:hidden">Step 3 of 3 · Verify your identity</p>
+          {intent ? <OnboardSteps step="kyc" /> : <p className="text-label font-semibold tracking-[0.06em] text-muted uppercase max-xl:hidden">Step 3 of 3 · Verify your identity</p>}
           <h1 className="text-h2 xl:text-h1"><span className="xl:hidden">Verify your identity</span><span className="max-xl:hidden">Verify who you are</span></h1>
           <p className="text-control text-muted">
             <span className="xl:hidden">Needed to add a property or tokenise.</span>
@@ -80,7 +83,7 @@ export default function KYC() {
           {consentErr && <p id="consent-err" role="alert" className="flex items-center gap-1.5 text-label text-danger-ink max-xl:hidden"><AlertCircle className="size-3.5 flex-none" aria-hidden />Tick the consent box to continue.</p>}
           {locked && <p role="alert" className="flex items-center gap-1.5 text-label text-danger-ink"><AlertCircle className="size-3.5 flex-none" aria-hidden />No attempts left today.</p>}
           <Button size="lg" block onClick={verify} loading={busy} disabled={!consent || locked} className="max-xl:hidden">Verify identity</Button>
-          <div className="text-center"><a href={path('GP-06')} className="inline-flex min-h-11 items-center text-small font-medium">Do this later</a></div>
+          <div className="text-center"><a href={intent ? path('F02-04') : path('GP-06')} className="inline-flex min-h-11 items-center text-small font-medium">Do this later</a></div>
         </div>
       </div>
     </Screen>
