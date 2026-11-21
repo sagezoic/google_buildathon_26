@@ -10,9 +10,12 @@ locals {
   # Resolved Valkey host / port
   valkey_host = try(
     google_memorystore_instance.valkey[0].endpoints[0].connections[0].psc_auto_connection[0].ip_address,
-    try(google_memorystore_instance.valkey[0].endpoints[0].connections[0].psc_connection[0].ip_address, "")
+    ""
   )
-  valkey_port = tostring(try(google_memorystore_instance.valkey[0].endpoints[0].port, 6379))
+  valkey_port = tostring(try(
+    google_memorystore_instance.valkey[0].endpoints[0].connections[0].psc_auto_connection[0].port,
+    6379
+  ))
 
   # Env vars passed to backend Cloud Run service
   valkey_env = var.enable_valkey ? {
