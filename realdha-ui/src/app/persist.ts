@@ -9,11 +9,14 @@ const NS = 'rd:'
  * Writes happen synchronously in the setter, so a click that saves and then navigates
  * never loses the value (an effect would not run once the screen unmounts).
  */
-export function usePersistentState<T>(key: string, initial: T) {
+export function usePersistentState<T>(key: string, initial: T, migrate?: (stored: T) => T) {
   const read = (): T => {
     try {
       const raw = localStorage.getItem(NS + key)
-      return raw === null ? initial : (JSON.parse(raw) as T)
+      if (raw === null) return initial
+      const stored = JSON.parse(raw) as T
+      // `migrate` fills in fields that were added after the value was saved.
+      return migrate ? migrate(stored) : stored
     } catch {
       return initial
     }

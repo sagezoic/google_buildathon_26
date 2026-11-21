@@ -21,6 +21,15 @@ export interface Launch {
 
 export const RECENT: Listing[] = [
   {
+    id: 'RA-PUN-018-V-07-01',
+    title: 'Villa 7 · Sahyadri Meadows',
+    locality: 'Baner, Pune',
+    price: '₹3.85 Cr',
+    specs: '4 BHK Villa · 2,850 sq ft · 360° tour',
+    status: 'anchored',
+    to: path('F09-03', { id: 'RA-PUN-018-V-07-01' }),
+  },
+  {
     id: 'RA-PUN-001-A-18-04',
     title: 'A-1804 · Baner Heights',
     locality: 'Baner, Pune',

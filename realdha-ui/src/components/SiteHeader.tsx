@@ -24,6 +24,7 @@ import { type Role } from '../app/screens'
 import { NAV, INITIALS, path } from '../app/nav'
 import { useActiveRole } from '../app/active-role'
 import { usePrefs, type Lang } from '../app/prefs'
+import { useT } from '../app/i18n'
 import { Button } from './ui/button'
 import { Input } from './ui/input'
 import { Badge } from './ui/badge'
@@ -132,10 +133,11 @@ const LANGS: { id: Lang; label: string }[] = [
 
 export function LangSwitch({ className }: { className?: string }) {
   const { lang, setLang } = usePrefs()
+  const t = useT()
   return (
     <div
       role="group"
-      aria-label="Language"
+      aria-label={t('Language')}
       className={cn(
         'flex h-8 items-center overflow-hidden rounded-control border border-line-strong bg-surface text-label font-medium shrink-0',
         className,
@@ -164,11 +166,12 @@ export function LangSwitch({ className }: { className?: string }) {
 
 export function ThemeToggle({ className }: { className?: string }) {
   const { theme, toggleTheme } = usePrefs()
+  const t = useT()
   return (
     <button
       type="button"
       onClick={toggleTheme}
-      aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+      aria-label={t(theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme')}
       className={cn(
         'inline-flex size-8 shrink-0 cursor-pointer items-center justify-center rounded-control text-muted transition-colors hover:bg-primary-tint hover:text-text',
         className,
@@ -207,6 +210,7 @@ export function SiteHeader({
   onSearch,
 }: SiteHeaderProps) {
   const navigate = useNavigate()
+  const t = useT()
   const [mobileOpen, setMobileOpen] = React.useState(false)
   const [searchQuery, setSearchQuery] = React.useState('')
   const [searchFocused, setSearchFocused] = React.useState(false)
@@ -302,7 +306,7 @@ export function SiteHeader({
         {back ? (
           <Link
             to={back}
-            aria-label="Back"
+            aria-label={t('Back')}
             className="inline-flex size-8 shrink-0 items-center justify-center rounded-control text-text transition-colors hover:bg-primary-tint md:hidden"
           >
             <ArrowLeft className="size-5" />
@@ -314,7 +318,7 @@ export function SiteHeader({
               <SheetTrigger asChild>
                 <button
                   type="button"
-                  aria-label="Toggle navigation menu"
+                  aria-label={t('Toggle navigation menu')}
                   className="inline-flex size-8 items-center justify-center rounded-control text-muted transition-colors hover:bg-primary-tint hover:text-text"
                 >
                   <Menu className="size-5" />
@@ -332,11 +336,11 @@ export function SiteHeader({
                       Realdha
                     </span>
                     <Badge variant="secondary" className="text-[10px] py-0 px-1.5 font-mono">
-                      Testnet
+                      {t('Testnet')}
                     </Badge>
                   </div>
                   <p className="text-xs text-muted">
-                    One permanent record for every property in India
+                    {t('One permanent record for every property in India')}
                   </p>
                 </SheetHeader>
 
@@ -350,7 +354,7 @@ export function SiteHeader({
                       {currentProfile.name}
                     </div>
                     <div className="truncate text-xs text-muted">
-                      {currentProfile.title}
+                      {t(currentProfile.title)}
                     </div>
                   </div>
                 </div>
@@ -358,7 +362,7 @@ export function SiteHeader({
                 {/* Mobile Navigation Links */}
                 <nav className="flex flex-col gap-1 overflow-y-auto py-2">
                   <div className="px-2 pb-1 text-xs font-semibold tracking-wider text-muted uppercase">
-                    {role} Navigation
+                    {t(role)} {t('Navigation')}
                   </div>
                   {items.map((item) => {
                     const isItemActive = active ? active === item.to : false
@@ -376,20 +380,20 @@ export function SiteHeader({
                           )
                         }
                       >
-                        {item.label}
+                        {t(item.label)}
                       </NavLink>
                     )
                   })}
 
                   <div className="mt-3 px-2 pb-1 text-xs font-semibold tracking-wider text-muted uppercase">
-                    Quick Portals
+                    {t('Quick Portals')}
                   </div>
                   <NavLink
                     to="/dev/flows"
                     onClick={() => setMobileOpen(false)}
                     className="flex min-h-11 items-center justify-between rounded-control px-3 text-small text-text no-underline hover:bg-primary-tint"
                   >
-                    <span>Prototype Flow Index</span>
+                    <span>{t('Prototype Flow Index')}</span>
                     <span className="font-mono text-xs text-muted">123 screens</span>
                   </NavLink>
                 </nav>
@@ -397,7 +401,7 @@ export function SiteHeader({
                 {/* Mobile Role Switcher */}
                 <div className="border-t border-line pt-3">
                   <div className="mb-2 text-xs font-semibold text-muted">
-                    Switch Test Persona
+                    {t('Switch Test Persona')}
                   </div>
                   <div className="grid grid-cols-2 gap-1.5">
                     {(
@@ -421,7 +425,7 @@ export function SiteHeader({
                             : 'border-line bg-surface text-text hover:bg-sunken',
                         )}
                       >
-                        {r}
+                        {t(r)}
                       </button>
                     ))}
                   </div>
@@ -440,7 +444,7 @@ export function SiteHeader({
         {/* Screen title on mobile when back is active */}
         {back && title ? (
           <span className="truncate text-body font-semibold text-text max-w-[130px] sm:max-w-[200px] md:hidden shrink-0">
-            {title}
+            {t(title)}
           </span>
         ) : null}
 
@@ -483,7 +487,7 @@ export function SiteHeader({
                 )
               }
             >
-              {item.label}
+              {t(item.label)}
             </NavLink>
           )
         })}
@@ -507,8 +511,8 @@ export function SiteHeader({
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             onFocus={() => setSearchFocused(true)}
-            placeholder="Search ID, society, RERA..."
-            aria-label="Search property records or RERA numbers"
+            placeholder={t('Search ID, society, RERA...')}
+            aria-label={t('Search property records or RERA numbers')}
             className="h-9 pl-9 pr-3 text-small rounded-control bg-field border-line shadow-none focus-visible:border-focus"
           />
         </form>
@@ -517,7 +521,7 @@ export function SiteHeader({
         {searchFocused && (
           <div className="absolute top-full right-0 sm:left-0 mt-1.5 w-[280px] sm:w-[320px] rounded-control border border-line bg-surface p-2 shadow-e2 z-50">
             <div className="px-2 py-1 text-xs font-semibold text-muted uppercase">
-              Quick Case Studies &amp; Records
+              {t('Quick Case Studies & Records')}
             </div>
             <div className="flex flex-col gap-1 mt-1">
               {SAMPLE_SEARCH_RESULTS.map((item) => (
@@ -543,13 +547,13 @@ export function SiteHeader({
                     </div>
                   </div>
                   <Badge variant={item.tone} className="text-[10px] shrink-0">
-                    {item.badge}
+                    {t(item.badge)}
                   </Badge>
                 </button>
               ))}
             </div>
             <div className="border-t border-line mt-2 pt-2 px-2 flex items-center justify-between text-[11px] text-muted">
-              <span>Press Enter to search</span>
+              <span>{t('Press Enter to search')}</span>
               <span className="font-mono">⌘K</span>
             </div>
           </div>
@@ -567,7 +571,7 @@ export function SiteHeader({
             icon={<Plus className="size-3.5" />}
             className="h-9 whitespace-nowrap text-chip"
           >
-            Add property
+            {t('Add property')}
           </Button>
         </div>
 
@@ -580,7 +584,7 @@ export function SiteHeader({
         {/* Notifications Bell */}
         <Link
           to={path('X-02')}
-          aria-label={`Notifications, ${unread} unread`}
+          aria-label={`${t('Notifications')}, ${unread} ${t('unread')}`}
           className="relative flex size-8 shrink-0 items-center justify-center rounded-control text-muted transition-colors hover:bg-primary-tint hover:text-text no-underline"
         >
           <Bell className="size-4" aria-hidden />
@@ -607,11 +611,11 @@ export function SiteHeader({
                 <div className="flex items-center justify-between">
                   <span className="font-semibold text-text">{currentProfile.name}</span>
                   <Badge variant="brand" className="text-[10px]">
-                    {role}
+                    {t(role)}
                   </Badge>
                 </div>
                 <span className="text-xs font-normal text-muted">
-                  {currentProfile.title}
+                  {t(currentProfile.title)}
                 </span>
               </DropdownMenuLabel>
 
@@ -619,7 +623,7 @@ export function SiteHeader({
 
               {/* Persona Switcher Section */}
               <div className="px-2.5 py-1 text-[11px] font-semibold text-muted uppercase">
-                Switch Persona
+                {t('Switch Persona')}
               </div>
               <div className="grid grid-cols-2 gap-1 p-1">
                 {(
@@ -644,7 +648,7 @@ export function SiteHeader({
                     )}
                   >
                     {ROLE_PROFILES[r]?.icon}
-                    <span className="truncate">{r}</span>
+                    <span className="truncate">{t(r)}</span>
                   </button>
                 ))}
               </div>
@@ -654,12 +658,12 @@ export function SiteHeader({
               {/* Navigation Shortcuts */}
               <DropdownMenuItem onSelect={() => navigate(path('X-03'))}>
                 <Settings className="size-4 text-muted" />
-                <span>Profile &amp; Settings</span>
+                <span>{t('Profile & Settings')}</span>
               </DropdownMenuItem>
 
               <DropdownMenuItem onSelect={() => navigate(path('F18-01'))}>
                 <Sparkles className="size-4 text-muted" />
-                <span>My Watchlist</span>
+                <span>{t('My Watchlist')}</span>
               </DropdownMenuItem>
 
           
@@ -672,7 +676,7 @@ export function SiteHeader({
                 className="text-danger hover:bg-danger-tint hover:text-danger-ink"
               >
                 <LogOut className="size-4" />
-                <span>Sign Out / Reset</span>
+                <span>{t('Sign Out / Reset')}</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -5,6 +5,7 @@ import { FLOWS, type Role } from './screens'
 import { INITIALS, NAV, activePath, screenById } from './nav'
 import { useActiveRole, resolveRole } from './active-role'
 import { SiteHeader, LangSwitch, ThemeToggle } from '../components/SiteHeader'
+import { useT } from './i18n'
 
 export { LangSwitch, ThemeToggle }
 
@@ -56,13 +57,14 @@ export function MobileBar({
 }
 
 export function TabBar({ role, active }: { role: Role; active?: string }) {
+  const t = useT()
   const items = NAV[role]
   if (!items.length) return null
   return (
     <nav aria-label="Primary" className="sticky bottom-0 flex h-16 flex-none border-t border-line bg-surface md:hidden">
       {items.map((i) => (
         <NavLink key={i.to} to={i.to} aria-current={active === i.to ? 'page' : undefined} className={({ isActive }) => cn('flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] leading-[14px] no-underline', (active ? active === i.to : isActive) ? 'font-semibold text-brand' : 'text-muted')}>
-          {i.tab ?? i.label}
+          {t(i.tab ?? i.label)}
         </NavLink>
       ))}
     </nav>

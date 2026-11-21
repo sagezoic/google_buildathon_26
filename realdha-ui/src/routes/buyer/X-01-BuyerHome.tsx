@@ -13,6 +13,7 @@ import { Link } from 'react-router'
 import { Screen } from '../../app/Shell'
 import { path } from '../../app/nav'
 import { usePersistentState } from '../../app/persist'
+import { useT } from '../../app/i18n'
 import { Button } from '../../components/ui/button'
 import { Pill } from '../../components/ui/pill'
 import { RecordId } from '../../components/ui/record-id'
@@ -28,6 +29,7 @@ import {
 import { getPropertyThumbnail } from '../../data/property-images'
 
 function PropertyCard({ item }: { item: Listing }) {
+  const t = useT()
   const thumb = getPropertyThumbnail(item.id)
   const isAnchored = item.status === 'anchored'
 
@@ -50,22 +52,22 @@ function PropertyCard({ item }: { item: Listing }) {
             tone={isAnchored ? 'chain' : 'success'}
             icon={isAnchored ? <ShieldCheck className="size-3" /> : <CheckCircle2 className="size-3" />}
           >
-            {isAnchored ? 'On-chain' : 'Signed off'}
+            {t(isAnchored ? 'On-chain' : 'Signed off')}
           </Pill>
         </div>
       </div>
       <div className="flex flex-1 flex-col justify-between p-4 gap-2">
         <div>
           <div className="font-semibold text-text group-hover:text-brand transition-colors line-clamp-1">
-            {item.title}
+            {t(item.title)}
           </div>
-          <div className="text-chip text-muted">{item.locality}</div>
-          <div className="mt-1 text-label text-muted">{item.specs}</div>
+          <div className="text-chip text-muted">{t(item.locality)}</div>
+          <div className="mt-1 text-label text-muted">{t(item.specs)}</div>
         </div>
         <div className="flex items-baseline justify-between border-t border-line pt-2.5">
-          <span className="text-body font-bold text-text">{item.price}</span>
+          <span className="text-body font-bold text-text">{t(item.price)}</span>
           <span className="text-chip font-medium text-primary-text group-hover:underline">
-            View passport →
+            {t('View passport →')}
           </span>
         </div>
       </div>
@@ -74,6 +76,7 @@ function PropertyCard({ item }: { item: Listing }) {
 }
 
 function ProjectCard({ project }: { project: Launch }) {
+  const t = useT()
   const thumb = getPropertyThumbnail(project.id)
 
   return (
@@ -94,22 +97,22 @@ function ProjectCard({ project }: { project: Launch }) {
             {project.id}
           </span>
           <Pill tone="brand" icon={<Sparkles className="size-3" />}>
-            New launch
+            {t('New launch')}
           </Pill>
         </div>
       </div>
       <div className="flex flex-1 flex-col justify-between p-4 gap-2">
         <div>
           <div className="font-semibold text-text group-hover:text-brand transition-colors line-clamp-1">
-            {project.title}
+            {t(project.title)}
           </div>
-          <div className="text-chip text-muted">{project.sub}</div>
-          <div className="mt-1 font-mono text-[11px] text-muted">RERA: {project.rera}</div>
+          <div className="text-chip text-muted">{t(project.sub)}</div>
+          <div className="mt-1 font-mono text-[11px] text-muted">{t('RERA:')} {project.rera}</div>
         </div>
         <div className="flex items-baseline justify-between border-t border-line pt-2.5">
-          <span className="text-body font-bold text-text">{project.price}</span>
+          <span className="text-body font-bold text-text">{t(project.price)}</span>
           <span className="text-chip font-medium text-primary-text group-hover:underline">
-            Explore units →
+            {t('Explore units →')}
           </span>
         </div>
       </div>
@@ -119,15 +122,16 @@ function ProjectCard({ project }: { project: Launch }) {
 
 /** X-01 · Buyer home / explore screen. */
 export default function BuyerHome() {
+  const t = useT()
   const [profile] = usePersistentState<Profile>('x.profile', PROFILE_DEFAULT)
   const first = profile.name.trim().split(/\s+/)[0]
 
   const QUICK_LINKS = [
-    { label: 'Apartments', to: `${path('F08-02')}?q=apartment`, icon: Building2 },
-    { label: 'Plots in Lonavala', to: `${path('F08-02')}?q=plot`, icon: MapPin },
-    { label: 'New launches', to: path('F10-06'), icon: Sparkles },
-    { label: 'Market analysis', to: path('GP-21'), icon: Compass },
-    { label: 'Check documents', to: path('F05-01'), icon: FileCheck },
+    { label: t('Apartments'), to: `${path('F08-02')}?q=apartment`, icon: Building2 },
+    { label: t('Plots in Lonavala'), to: `${path('F08-02')}?q=plot`, icon: MapPin },
+    { label: t('New launches'), to: path('F10-06'), icon: Sparkles },
+    { label: t('Market analysis'), to: path('GP-21'), icon: Compass },
+    { label: t('Check documents'), to: path('F05-01'), icon: FileCheck },
   ]
 
   return (
@@ -137,18 +141,17 @@ export default function BuyerHome() {
         <div className="flex flex-col gap-5 pt-1">
           <div className="flex flex-col gap-2 max-w-3xl">
             <h1 className="text-h1 font-bold text-text sm:text-display tracking-tight">
-              {profile.saved ? `Welcome back, ${first}` : 'One permanent record for every property in Maharashtra'}
+              {profile.saved ? `${t('Welcome back')}, ${first}` : t('One permanent record for every property in Maharashtra')}
             </h1>
             <p className="text-body text-muted leading-relaxed">
-              Permanent 30-year revenue title verification, independent advocate sign-offs, and
-              on-chain cryptographic proofs for residential and commercial real estate.
+              {t('Permanent 30-year revenue title verification, independent advocate sign-offs, and on-chain cryptographic proofs for residential and commercial real estate.')}
             </p>
           </div>
 
           {/* Primary Action Buttons */}
           <div className="flex flex-wrap items-center gap-3 pt-1">
             <Button to={path('F08-01')} size="lg" className="h-11 px-6 font-semibold shadow-e1">
-              Explore verified registry
+              {t('Explore verified registry')}
             </Button>
             <Button
               to={path('F05-01')}
@@ -157,7 +160,7 @@ export default function BuyerHome() {
               className="h-11 px-5"
               icon={<ShieldCheck className="size-4" />}
             >
-              Verify title deed
+              {t('Verify title deed')}
             </Button>
             <Button
               to={path('GP-07')}
@@ -165,13 +168,13 @@ export default function BuyerHome() {
               size="lg"
               className="h-11 px-4 text-muted hover:text-text"
             >
-              Add a property
+              {t('Add a property')}
             </Button>
           </div>
 
           {/* Quick Categories */}
           <div className="flex flex-wrap items-center gap-2 pt-1">
-            <span className="text-chip font-medium text-muted max-sm:hidden">Quick filters:</span>
+            <span className="text-chip font-medium text-muted max-sm:hidden">{t('Quick filters:')}</span>
             {QUICK_LINKS.map((q) => {
               const Icon = q.icon
               return (
@@ -196,16 +199,16 @@ export default function BuyerHome() {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="text-body font-semibold text-text">Active title verification</span>
+                <span className="text-body font-semibold text-text">{t('Active title verification')}</span>
                 <span className="font-mono text-label text-muted">#CK-2026-0412</span>
               </div>
               <p className="text-small text-muted">
-                7/12 extracts and mutation entries under legal sign-off review by Adv. Meera Joshi.
+                {t('7/12 extracts and mutation entries under legal sign-off review by Adv. Meera Joshi.')}
               </p>
             </div>
           </div>
           <Button to={path('F05-03')} variant="secondary" size="sm" icon={<ArrowRight className="size-3.5" />}>
-            View report status
+            {t('View report status')}
           </Button>
         </div>
 
@@ -214,22 +217,22 @@ export default function BuyerHome() {
           <div className="flex items-center justify-between">
             <div>
               <h2 id="h-verified" className="text-h2 font-semibold text-text">
-                Verified properties
+                {t('Verified properties')}
               </h2>
               <p className="text-small text-muted">
-                Anchored title deeds with 30-year revenue continuity and spatial digital twins.
+                {t('Anchored title deeds with 30-year revenue continuity and spatial digital twins.')}
               </p>
             </div>
             <Link
               to={path('F08-01')}
               className="text-small font-semibold text-primary-text no-underline hover:underline"
             >
-              See all properties →
+              {t('See all properties →')}
             </Link>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {RECENT.map((item) => (
+            {RECENT.slice(0, 4).map((item) => (
               <PropertyCard key={item.id} item={item} />
             ))}
           </div>
@@ -240,17 +243,17 @@ export default function BuyerHome() {
           <div className="flex items-center justify-between">
             <div>
               <h2 id="h-launches" className="text-h2 font-semibold text-text">
-                New project launches
+                {t('New project launches')}
               </h2>
               <p className="text-small text-muted">
-                Verified residential and commercial developments with RERA approvals.
+                {t('Verified residential and commercial developments with RERA approvals.')}
               </p>
             </div>
             <Link
               to={path('F10-06')}
               className="text-small font-semibold text-primary-text no-underline hover:underline"
             >
-              Browse all launches →
+              {t('Browse all launches →')}
             </Link>
           </div>
 
@@ -271,19 +274,19 @@ export default function BuyerHome() {
                 </div>
                 <div>
                   <h3 id="h-shortlist" className="text-body font-semibold text-text">
-                    Shortlisted properties ({SHORTLIST.length})
+                    {t('Shortlisted properties ({0})', SHORTLIST.length)}
                   </h3>
                   <p className="text-small text-muted">
-                    Compare unit dimensions, floor plans, legal sign-offs, and indicative prices side-by-side.
+                    {t('Compare unit dimensions, floor plans, legal sign-offs, and indicative prices side-by-side.')}
                   </p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
                 <Button to={path('F11-01')} variant="secondary" size="sm">
-                  View shortlist
+                  {t('View shortlist')}
                 </Button>
                 <Button to={path('F11-02')} size="sm" icon={<ArrowRight className="size-3.5" />}>
-                  Compare selected
+                  {t('Compare selected')}
                 </Button>
               </div>
             </div>
@@ -292,15 +295,15 @@ export default function BuyerHome() {
 
         {/* Section 4: Institutional Verification Standard */}
         <section
-          aria-label="Institutional verification standard"
+          aria-label={t('Institutional verification standard')}
           className="rounded-card border border-line bg-surface p-6 shadow-e1 sm:p-8"
         >
           <div className="flex flex-col gap-1 pb-6 border-b border-line">
             <h2 className="text-h2 font-semibold text-text">
-              Zero ambiguity. Built for Indian land records.
+              {t('Zero ambiguity. Built for Indian land records.')}
             </h2>
             <p className="text-small text-muted max-w-xl">
-              Every property transaction protected by sovereign title verification and verifiable provenance.
+              {t('Every property transaction protected by sovereign title verification and verifiable provenance.')}
             </p>
           </div>
 
@@ -309,10 +312,9 @@ export default function BuyerHome() {
               <div className="flex size-9 items-center justify-center rounded-control bg-sunken text-primary-text">
                 <FileCheck className="size-5" />
               </div>
-              <h3 className="text-body font-semibold text-text">30-Year Revenue Checks</h3>
+              <h3 className="text-body font-semibold text-text">{t('30-Year Revenue Checks')}</h3>
               <p className="text-small text-muted">
-                Automated AI cross-referencing across 7/12 extracts, Ferfar mutation registers, non-agriculture (NA)
-                orders, and village maps in Marathi and English.
+                {t('Automated AI cross-referencing across 7/12 extracts, Ferfar mutation registers, non-agriculture (NA) orders, and village maps in Marathi and English.')}
               </p>
             </div>
 
@@ -320,10 +322,9 @@ export default function BuyerHome() {
               <div className="flex size-9 items-center justify-center rounded-control bg-sunken text-success-ink">
                 <CheckCircle2 className="size-5" />
               </div>
-              <h3 className="text-body font-semibold text-text">Independent Lawyer Sign-Off</h3>
+              <h3 className="text-body font-semibold text-text">{t('Independent Lawyer Sign-Off')}</h3>
               <p className="text-small text-muted">
-                Practicing land title advocates examine heir releases, pending litigation, encumbrance certificates,
-                and formal revenue sanctions before sign-off.
+                {t('Practicing land title advocates examine heir releases, pending litigation, encumbrance certificates, and formal revenue sanctions before sign-off.')}
               </p>
             </div>
 
@@ -331,10 +332,9 @@ export default function BuyerHome() {
               <div className="flex size-9 items-center justify-center rounded-control bg-sunken text-chain-ink">
                 <ShieldCheck className="size-5" />
               </div>
-              <h3 className="text-body font-semibold text-text">Sepolia On-Chain Proof</h3>
+              <h3 className="text-body font-semibold text-text">{t('Sepolia On-Chain Proof')}</h3>
               <p className="text-small text-muted">
-                Document hashes and verification certificates are permanently anchored on the blockchain. Any later
-                tampering or alteration is immediately flagged.
+                {t('Document hashes and verification certificates are permanently anchored on the blockchain. Any later tampering or alteration is immediately flagged.')}
               </p>
             </div>
           </div>

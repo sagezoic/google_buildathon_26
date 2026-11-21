@@ -163,6 +163,13 @@ export const PropertiesService = {
     return detail(await this.findDocument(propertyId, docId));
   },
 
+  /** The stored original, for viewing in the browser. The MIME type is the sniffed one saved at upload. */
+  async getDocumentFile(propertyId: string, docId: string): Promise<{ content: Buffer; mime: string; filename: string }> {
+    const doc = await this.findDocument(propertyId, docId);
+    const { content } = await StorageService.downloadFile(doc.gcs_path);
+    return { content, mime: doc.mime, filename: doc.filename };
+  },
+
   /** Download → OCR → detect language → translate to English → extract fields → persist. Idempotent unless `force`. */
   async processDocument(propertyId: string, docId: string, force = false): Promise<DocumentDetail> {
     const doc = await this.findDocument(propertyId, docId);
