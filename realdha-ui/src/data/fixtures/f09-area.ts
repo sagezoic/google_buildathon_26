@@ -28,6 +28,7 @@ export const areaByName = (n: string | null) => AREAS.find((a) => a.name.toLower
 
 export interface Project { id: string; name: string; sub: string; area: string; status: 'checked' | 'new-launch'; priceRange: string; low: number; high: number }
 export const PROJECTS: Project[] = [
+  { id: 'RA-PUN-018-V', name: 'Sahyadri Meadows · Villa community', sub: 'Baner, Pune', area: 'Baner', status: 'checked', priceRange: '₹3.85 Cr', low: 38500000, high: 38500000 },
   { id: 'RA-PUN-001-A', name: 'Baner Heights · 3 tower project', sub: 'Baner, Pune', area: 'Baner', status: 'checked', priceRange: '₹1.15 Cr to ₹1.9 Cr', low: 11500000, high: 19000000 },
   { id: 'RA-PUN-007-A', name: 'Skyline Residency · New launch', sub: 'Baner, Pune', area: 'Baner', status: 'new-launch', priceRange: '₹92 L to ₹1.4 Cr', low: 9200000, high: 14000000 },
   { id: 'RA-PUN-003-A', name: 'Balewadi Pool Court · 2 tower project', sub: 'Balewadi, Pune', area: 'Balewadi', status: 'checked', priceRange: '₹1.15 Cr to ₹1.58 Cr', low: 11500000, high: 15800000 },

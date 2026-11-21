@@ -21,6 +21,7 @@ export const UNITS: Unit[] = [
   { id: 'RA-PUN-001-A-17-04', unit: 'A-1704', bhk: '3 BHK', carpet: '1,180 sq ft', project: 'Baner Heights', price: 13800000, developer: 'Sahyadri Developers (sample)', status: { label: 'Documents checked', tone: 'success' }, extra: { label: 'Awaiting lawyer sign-off', tone: 'neutral' }, floor: '17', view: 'Hill, partly blocked by Tower B', sunlight: 'Morning sun until 10:00' },
   { id: 'RA-PUN-007-B-09-02', unit: 'B-0902', bhk: '2 BHK', carpet: NS, project: 'Skyline Residency', price: 10200000, developer: 'Sahyadri Developers (sample)', status: { label: 'New launch', tone: 'neutral' }, floor: '9', view: NS, sunlight: NS },
   { id: 'RA-PUN-003-A-07-01', unit: 'A-0701', bhk: '3 BHK', carpet: NS, project: 'Balewadi', price: 13100000, developer: 'Sahyadri Developers (sample)', status: { label: 'Lawyer review', tone: 'warning' }, floor: '7', view: NS, sunlight: NS },
+  { id: 'RA-PUN-018-V-07-01', unit: 'Villa 7', bhk: '4 BHK', carpet: '2,850 sq ft', project: 'Sahyadri Meadows Villas', price: 38500000, developer: 'Sahyadri Developers (sample)', status: { label: 'Signed off', tone: 'success' }, extra: { label: 'On-chain', tone: 'chain' }, floor: 'Ground + 1', view: 'Private garden', sunlight: 'Morning sun until 11:00' },
 ]
 export const unitById = (id: string) => UNITS.find((u) => u.id === id)
 export const inr = (n: number) => `₹${n.toLocaleString('en-IN')}`

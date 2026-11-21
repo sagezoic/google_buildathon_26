@@ -6,7 +6,6 @@ import { Button } from '../../../components/ui/button'
 import { Card } from '../../../components/ui/card'
 import { Pill } from '../../../components/ui/pill'
 import { RecordId, SampleData } from '../../../components/ui/record-id'
-import { Tour360 } from '../../../components/ui/tour-360'
 import { cn } from '../../../lib/cn'
 import OsmMap from '../../../components/map/OsmMap'
 import OsmMarker from '../../../components/map/OsmMarker'
@@ -96,7 +95,7 @@ export default function ApartmentTwinScreen() {
                   onClick={() => setViewMode('3d')}
                   className={cn('rounded-[4px] px-3 py-1.5 transition-colors', viewMode === '3d' ? 'bg-primary text-on-primary' : 'text-muted hover:text-text')}
                 >
-                  360° tour
+                  3D walkthrough
                 </button>
                 <button
                   type="button"
@@ -152,7 +151,25 @@ export default function ApartmentTwinScreen() {
                     </OsmMap>
                   </div>
                 ) : (
-                  <Tour360 height="460px" className="size-full min-h-[360px] rounded-none border-0 xl:min-h-[460px]" />
+                  <div className="relative size-full min-h-[360px] overflow-hidden">
+                    <img
+                      src={lightTime === 'morning'
+                        ? 'https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?auto=format&fit=crop&w=1200&q=80'
+                        : 'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80'}
+                      alt="3D Spatial Walkthrough"
+                      className="size-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-text/70 via-transparent to-transparent" />
+                    <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white">
+                      <div>
+                        <div className="text-body font-semibold">Living Room & Hill-View Balcony</div>
+                        <div className="text-chip text-white/80">3D Photogrammetric Twin · 18th Floor East Panorama</div>
+                      </div>
+                      <span className="rounded-control bg-white/20 px-2.5 py-1 text-label font-medium backdrop-blur-md">
+                        {lightTime === 'morning' ? '☀ Morning Sunlight (8:00 - 11:30)' : '☾ Twilight Ambient Lighting'}
+                      </span>
+                    </div>
+                  </div>
                 )}
               </div>
             </Card>

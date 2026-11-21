@@ -16,7 +16,7 @@ function Check_({ checked, onChange, children }: { checked: boolean; onChange: (
   )
 }
 
-const TYPES: [PType, string][] = [['apartment', 'Apartment'], ['plot', 'Plot'], ['commercial', 'Commercial']]
+const TYPES: [PType, string][] = [['apartment', 'Apartment'], ['villa', 'Villa'], ['plot', 'Plot'], ['commercial', 'Commercial']]
 const toggle = <T,>(arr: T[], v: T) => (arr.includes(v) ? arr.filter((x) => x !== v) : [...arr, v])
 
 /** Filters drawer (F08-02). Changes apply live; the footer shows the live count. */

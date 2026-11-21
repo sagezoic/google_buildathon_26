@@ -1,5 +1,6 @@
 import { Check, Compass, Eye, Heart, Layers, Mail, MapPin, MessageSquare, Phone, Rotate3d, Share2, ShieldCheck, Sparkles } from 'lucide-react'
 import { useState } from 'react'
+import { useParams, useSearchParams } from 'react-router'
 import { Screen } from '../../app/Shell'
 import { path } from '../../app/nav'
 import { usePersistentState } from '../../app/persist'
@@ -8,41 +9,94 @@ import { Card } from '../../components/ui/card'
 import { Pill } from '../../components/ui/pill'
 import { RecordId } from '../../components/ui/record-id'
 import { Tour360 } from '../../components/ui/tour-360'
+import { VILLA_ID } from '../../data/fixtures/f08-search'
 import { getPropertyPhotos } from '../../data/property-images'
 import { BK } from '../../lib/buyer-store'
 import { cn } from '../../lib/cn'
 import OsmMap from '../../components/map/OsmMap'
 import OsmMarker from '../../components/map/OsmMarker'
 
-/** F09-03 · Single property buyer view (A-1804). */
+const APARTMENT_ID = 'RA-PUN-001-A-18-04'
+
+/** Copy and specs that differ between the two records this page can show. */
+const VIEW = {
+  apartment: {
+    id: APARTMENT_ID,
+    screenTitle: 'A-1804 · Baner Heights',
+    crumb: ['Baner Heights', 'Unit A-1804'],
+    heading: 'Unit A-1804 · 3 BHK Luxury Apartment',
+    address: 'Baner Heights, Tower A, 18th Floor · Baner, Pune 411045',
+    mediaNote: 'Sahyadri Hills Facing · Verified Architectural Layout',
+    specs: [
+      ['Carpet area', '1,180 sq ft'], ['Super built-up', '1,420 sq ft'], ['Facing', 'East (Vaastu Compliant)'], ['Balcony view', 'Baner Hill Reserve'],
+      ['Floor', '18 of 24'], ['Parking', '1 Covered Basement (P-118)'], ['Possession', 'Ready to Move'], ['MahaRERA ID', 'P52100018892'],
+    ],
+    price: '₹1,42,00,000',
+    perSqft: '₹12,034 / sq ft · Transparent builder pricing',
+    mutation: 'Mutation Entries (Ferfar #2291)',
+    fingerprint: '0x9f3a…c21e',
+    mapCenter: [73.7868, 18.5590] as [number, number],
+    mapLabel: 'Baner Heights · A-1804',
+    mapCaption: 'Baner Hill Reserve, Baner, Pune 411045 · Sahyadri Developers',
+  },
+  villa: {
+    id: VILLA_ID,
+    screenTitle: 'Villa 7 · Sahyadri Meadows',
+    crumb: ['Sahyadri Meadows', 'Villa 7'],
+    heading: 'Villa 7 · 4 BHK Luxury Villa',
+    address: 'Sahyadri Meadows Villas, Plot 7 · Baner, Pune 411045',
+    mediaNote: 'Verified 360° walkthrough · East facing garden villa',
+    specs: [
+      ['Carpet area', '2,850 sq ft'], ['Super built-up', '3,420 sq ft'], ['Facing', 'East (Vaastu Compliant)'], ['Outdoor', 'Private lawn & garden'],
+      ['Floors', 'Ground + 1'], ['Parking', '2 Covered + 2 Open'], ['Possession', 'Ready to Move'], ['MahaRERA ID', 'P52100027714'],
+    ],
+    price: '₹3,85,00,000',
+    perSqft: '₹13,509 / sq ft · Transparent builder pricing',
+    mutation: 'Mutation Entries (Ferfar #3318)',
+    fingerprint: '0x4c1d…7be2',
+    mapCenter: [73.7792, 18.5648] as [number, number],
+    mapLabel: 'Sahyadri Meadows · Villa 7',
+    mapCaption: 'Sahyadri Meadows, Baner, Pune 411045 · Sahyadri Developers',
+  },
+}
+
+/** F09-03 · Single property buyer view. Shows Villa 7 (with the 360° tour) or unit A-1804. */
 export default function PropertyBuyerScreen() {
-  const [shortlist, setShortlist] = usePersistentState<string[]>(BK.shortlist, ['RA-PUN-001-A-18-04'])
-  const [activeMedia, setActiveMedia] = useState<'photos' | 'floorplan' | 'tour' | 'map'>('photos')
+  const routeParams = useParams()
+  const [query] = useSearchParams()
+  const requested = query.get('id') ?? query.get('record') ?? query.get('unit') ?? routeParams.id
+  const isVilla = requested?.toLowerCase() === VILLA_ID.toLowerCase()
+  const view = isVilla ? VIEW.villa : VIEW.apartment
+
+  const [shortlist, setShortlist] = usePersistentState<string[]>(BK.shortlist, [APARTMENT_ID])
+  const [requestedMedia, setActiveMedia] = useState<'photos' | 'floorplan' | 'tour' | 'map'>('photos')
   const [activePhotoIdx, setActivePhotoIdx] = useState(0)
-  const isShortlisted = shortlist.includes('RA-PUN-001-A-18-04')
-  const photos = getPropertyPhotos('RA-PUN-001-A-18-04')
+  // The tour exists only on the villa, the floor plan only on the apartment.
+  const activeMedia = (requestedMedia === 'tour' && !isVilla) || (requestedMedia === 'floorplan' && isVilla) ? 'photos' : requestedMedia
+  const isShortlisted = shortlist.includes(view.id)
+  const photos = getPropertyPhotos(view.id)
 
   const toggleShortlist = () => {
     if (isShortlisted) {
-      setShortlist(shortlist.filter((id) => id !== 'RA-PUN-001-A-18-04'))
+      setShortlist(shortlist.filter((id) => id !== view.id))
     } else {
-      setShortlist([...shortlist, 'RA-PUN-001-A-18-04'])
+      setShortlist([...shortlist, view.id])
     }
   }
 
   return (
-    <Screen id="F09-03" back={path('F09-02')} title="A-1804 · Baner Heights">
+    <Screen id="F09-03" back={path('F09-02')} title={view.screenTitle}>
       <div className="mx-auto flex w-full max-w-[1240px] flex-col gap-6 px-4 py-6 xl:py-8">
         {/* Breadcrumbs & Actions */}
         <div className="flex flex-wrap items-center justify-between gap-3 text-small text-muted">
           <nav aria-label="Breadcrumb">
-            Baner › Baner Heights › <b className="text-text">Unit A-1804</b>
+            Baner › {view.crumb[0]} › <b className="text-text">{view.crumb[1]}</b>
           </nav>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" to={path('F11-03')} icon={<MessageSquare className="size-4" />}>
               Ask AI about this property
             </Button>
-            <Button variant="ghost" size="sm" to={`${path('F07-01')}?record=RA-PUN-001-A-18-04`} icon={<Share2 className="size-4" />}>
+            <Button variant="ghost" size="sm" to={`${path('F07-01')}?record=${view.id}`} icon={<Share2 className="size-4" />}>
               Share
             </Button>
           </div>
@@ -59,20 +113,23 @@ export default function PropertyBuyerScreen() {
               >
                 <Eye className="size-3.5" /> Photos ({photos.length})
               </button>
-              <button
-                type="button"
-                onClick={() => setActiveMedia('floorplan')}
-                className={cn('flex items-center gap-1.5 rounded-[4px] px-3 py-1.5 transition-colors', activeMedia === 'floorplan' ? 'bg-primary text-on-primary' : 'text-muted hover:text-text')}
-              >
-                <Layers className="size-3.5" /> Floor Plan & Walkthrough
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveMedia('tour')}
-                className={cn('flex items-center gap-1.5 rounded-[4px] px-3 py-1.5 transition-colors', activeMedia === 'tour' ? 'bg-primary text-on-primary' : 'text-muted hover:text-text')}
-              >
-                <Rotate3d className="size-3.5" /> 360° Tour
-              </button>
+              {isVilla ? (
+                <button
+                  type="button"
+                  onClick={() => setActiveMedia('tour')}
+                  className={cn('flex items-center gap-1.5 rounded-[4px] px-3 py-1.5 transition-colors', activeMedia === 'tour' ? 'bg-primary text-on-primary' : 'text-muted hover:text-text')}
+                >
+                  <Rotate3d className="size-3.5" /> 360° Tour
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setActiveMedia('floorplan')}
+                  className={cn('flex items-center gap-1.5 rounded-[4px] px-3 py-1.5 transition-colors', activeMedia === 'floorplan' ? 'bg-primary text-on-primary' : 'text-muted hover:text-text')}
+                >
+                  <Layers className="size-3.5" /> Floor Plan & Walkthrough
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => setActiveMedia('map')}
@@ -81,7 +138,7 @@ export default function PropertyBuyerScreen() {
                 <MapPin className="size-3.5" /> Neighborhood Map
               </button>
             </div>
-            <span className="text-label text-muted max-md:hidden">Sahyadri Hills Facing · Verified Architectural Layout</span>
+            <span className="text-label text-muted max-md:hidden">{view.mediaNote}</span>
           </div>
 
           {activeMedia === 'photos' ? (
@@ -90,7 +147,7 @@ export default function PropertyBuyerScreen() {
               <div className="relative aspect-[16/10] overflow-hidden bg-sunken md:col-span-2 md:row-span-2 md:aspect-auto">
                 <img
                   src={photos[activePhotoIdx]}
-                  alt="Baner Heights Unit A-1804 Primary View"
+                  alt={`${view.heading} primary view`}
                   className="size-full object-cover transition-all duration-300"
                 />
                 <div className="absolute bottom-3 left-3 rounded-control bg-surface/90 px-2.5 py-1 text-label font-semibold text-text shadow-e1 backdrop-blur-xs">
@@ -137,11 +194,11 @@ export default function PropertyBuyerScreen() {
             <Tour360 height="460px" />
           ) : (
             <div className="relative min-h-[460px] overflow-hidden rounded-card border border-line bg-sunken">
-              <OsmMap center={[73.7868, 18.5590]} zoom={15} showThemeToggle className="size-full min-h-[460px]">
-                <OsmMarker position={[73.7868, 18.5590]}>
+              <OsmMap center={view.mapCenter} zoom={15} showThemeToggle className="size-full min-h-[460px]">
+                <OsmMarker position={view.mapCenter}>
                   <div className="flex flex-col items-center">
                     <div className="rounded-control border-2 border-white bg-primary px-2.5 py-1 text-chip font-bold text-on-primary shadow-e2 whitespace-nowrap">
-                      Baner Heights · A-1804
+                      {view.mapLabel}
                     </div>
                     <div className="size-2 -translate-y-1 rotate-45 border-r border-b border-white bg-primary" />
                   </div>
@@ -163,7 +220,7 @@ export default function PropertyBuyerScreen() {
                 ))}
 
                 <div className="absolute bottom-3 left-3 z-10 rounded-control border border-line bg-surface/90 px-3 py-1.5 text-label font-medium text-text shadow-e1 backdrop-blur-xs">
-                  Baner Hill Reserve, Baner, Pune 411045 · Sahyadri Developers
+                  {view.mapCaption}
                 </div>
               </OsmMap>
             </div>
@@ -175,7 +232,7 @@ export default function PropertyBuyerScreen() {
           <div className="flex flex-col gap-6 xl:col-span-8">
             <div className="flex flex-col gap-3">
               <div className="flex flex-wrap items-center gap-2.5">
-                <RecordId id="RA-PUN-001-A-18-04" copyable />
+                <RecordId id={view.id} copyable />
                 <Pill tone="success" icon={<Check className="size-3.5" />}>
                   Lawyer Signed Off
                 </Pill>
@@ -184,48 +241,20 @@ export default function PropertyBuyerScreen() {
                 </Pill>
                 <Pill tone="brand" icon={<Sparkles className="size-3.5" />}>MahaRERA Sanctioned</Pill>
               </div>
-              <h1 className="text-h1 font-bold text-text">Unit A-1804 · 3 BHK Luxury Apartment</h1>
-              <p className="text-body text-muted">
-                Baner Heights, Tower A, 18th Floor · Baner, Pune 411045
-              </p>
+              <h1 className="text-h1 font-bold text-text">{view.heading}</h1>
+              <p className="text-body text-muted">{view.address}</p>
             </div>
 
             {/* Overview Card */}
             <Card className="flex flex-col gap-4">
               <h2 className="text-h2 font-semibold text-text">Property Specifications</h2>
               <div className="grid grid-cols-2 gap-4 border-t border-line pt-4 sm:grid-cols-4">
-                <div>
-                  <span className="text-label text-muted">Carpet area</span>
-                  <div className="text-body font-semibold">1,180 sq ft</div>
-                </div>
-                <div>
-                  <span className="text-label text-muted">Super built-up</span>
-                  <div className="text-body font-semibold">1,420 sq ft</div>
-                </div>
-                <div>
-                  <span className="text-label text-muted">Facing</span>
-                  <div className="text-body font-semibold">East (Vaastu Compliant)</div>
-                </div>
-                <div>
-                  <span className="text-label text-muted">Balcony view</span>
-                  <div className="text-body font-semibold">Baner Hill Reserve</div>
-                </div>
-                <div>
-                  <span className="text-label text-muted">Floor</span>
-                  <div className="text-body font-semibold">18 of 24</div>
-                </div>
-                <div>
-                  <span className="text-label text-muted">Parking</span>
-                  <div className="text-body font-semibold">1 Covered Basement (P-118)</div>
-                </div>
-                <div>
-                  <span className="text-label text-muted">Possession</span>
-                  <div className="text-body font-semibold">Ready to Move</div>
-                </div>
-                <div>
-                  <span className="text-label text-muted">MahaRERA ID</span>
-                  <div className="font-mono text-body font-semibold">P52100018892</div>
-                </div>
+                {view.specs.map(([label, value]) => (
+                  <div key={label}>
+                    <span className="text-label text-muted">{label}</span>
+                    <div className={cn('text-body font-semibold', label === 'MahaRERA ID' && 'font-mono')}>{value}</div>
+                  </div>
+                ))}
               </div>
             </Card>
 
@@ -252,7 +281,7 @@ export default function PropertyBuyerScreen() {
                 </div>
                 <div className="flex items-center justify-between py-2.5">
                   <div>
-                    <div className="text-body font-medium">Mutation Entries (Ferfar #2291)</div>
+                    <div className="text-body font-medium">{view.mutation}</div>
                     <div className="text-chip text-muted">Maharashtra Revenue Department · 7/12 land title clear</div>
                   </div>
                   <Pill tone="success" icon={<Check className="size-3" />}>No Encumbrance</Pill>
@@ -266,7 +295,7 @@ export default function PropertyBuyerScreen() {
                 </div>
               </div>
               <div className="rounded-control bg-canvas p-3 text-small text-muted">
-                Anchored to Ethereum Sepolia Ledger via Google Cloud KMS. SHA-256 fingerprint: <span className="font-mono text-text">0x9f3a…c21e</span>
+                Anchored to Ethereum Sepolia Ledger via Google Cloud KMS. SHA-256 fingerprint: <span className="font-mono text-text">{view.fingerprint}</span>
               </div>
             </Card>
           </div>
@@ -276,15 +305,15 @@ export default function PropertyBuyerScreen() {
             <Card className="sticky top-6 flex flex-col gap-5 p-6 shadow-e2">
               <div className="flex flex-col">
                 <span className="text-label text-muted">All-inclusive asking price</span>
-                <span className="text-h1 font-bold text-text">₹1,42,00,000</span>
-                <span className="text-small text-muted">₹12,034 / sq ft · Transparent builder pricing</span>
+                <span className="text-h1 font-bold text-text">{view.price}</span>
+                <span className="text-small text-muted">{view.perSqft}</span>
               </div>
 
               <div className="flex flex-col gap-2.5">
-                <Button size="lg" to={`${path('F12-01')}?unit=RA-PUN-001-A-18-04`} icon={<Mail className="size-4" />}>
+                <Button size="lg" to={`${path('F12-01')}?unit=${view.id}`} icon={<Mail className="size-4" />}>
                   Enquire with builder
                 </Button>
-                <Button size="lg" variant="secondary" to={`${path('F13-01')}?unit=RA-PUN-001-A-18-04`} icon={<Phone className="size-4" />}>
+                <Button size="lg" variant="secondary" to={`${path('F13-01')}?unit=${view.id}`} icon={<Phone className="size-4" />}>
                   Book verified visit
                 </Button>
                 <Button
@@ -295,14 +324,16 @@ export default function PropertyBuyerScreen() {
                 >
                   {isShortlisted ? 'Saved to shortlist' : 'Add to shortlist'}
                 </Button>
-                <Button
-                  size="lg"
-                  variant="ghost"
-                  to={path('GP-16')}
-                  icon={<Compass className="size-4" />}
-                >
-                  View digital twin passport
-                </Button>
+                {!isVilla && (
+                  <Button
+                    size="lg"
+                    variant="ghost"
+                    to={path('GP-16')}
+                    icon={<Compass className="size-4" />}
+                  >
+                    View digital twin passport
+                  </Button>
+                )}
               </div>
 
               <div className="border-t border-line pt-3 text-overline text-muted">
