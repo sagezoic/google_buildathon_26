@@ -28,17 +28,8 @@ locals {
   } : {})
 }
 
-# Consumer VPC network lookup for Valkey PSC connections
-data "google_compute_network" "valkey_net" {
-  count   = var.enable_valkey && var.valkey_network_id == "" ? 1 : 0
-  name    = var.valkey_network
-  project = var.project_id
-}
-
 locals {
-  effective_valkey_network = var.valkey_network_id != "" ? var.valkey_network_id : (
-    length(data.google_compute_network.valkey_net) > 0 ? data.google_compute_network.valkey_net[0].id : "projects/${var.project_id}/global/networks/${var.valkey_network}"
-  )
+  effective_valkey_network = var.valkey_network_id != "" ? var.valkey_network_id : "projects/${var.project_id}/global/networks/${var.valkey_network}"
 }
 
 # Memorystore for Valkey instance
