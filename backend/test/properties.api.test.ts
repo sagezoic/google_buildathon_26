@@ -89,6 +89,18 @@ describe.skipIf(!hasDatabase)('Properties API with database', () => {
     expect(extract[0].filename).toBe('7-12-v2.pdf');
   });
 
+  it('serves the original file inline with its real type', async () => {
+    const doc = (await (await upload(propertyId, 'extra', PDF, 'sale deed.pdf')).json()) as { id: string };
+    const res = await app.handle(new Request(`http://localhost/api/properties/${propertyId}/documents/${doc.id}/file`));
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toBe('application/pdf');
+    expect(res.headers.get('content-disposition')).toContain('inline');
+    expect(new Uint8Array(await res.arrayBuffer())).toEqual(PDF);
+
+    const missing = await app.handle(new Request(`http://localhost/api/properties/${propertyId}/documents/doc_missing/file`));
+    expect(missing.status).toBe(404);
+  });
+
   it('processes a Marathi document: OCR, detect, translate, extract', async () => {
     ocr.mockResolvedValue({ text: mrText, pageCount: 2 });
     toEnglish.mockResolvedValue({ lang: 'mr', confidence: 0.99, translated: 'Name of occupant: Prakash Kulkarni' });
