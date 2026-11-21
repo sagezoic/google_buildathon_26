@@ -229,7 +229,7 @@ export default function BuyerHome() {
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {RECENT.map((item) => (
+            {RECENT.slice(0, 4).map((item) => (
               <PropertyCard key={item.id} item={item} />
             ))}
           </div>
