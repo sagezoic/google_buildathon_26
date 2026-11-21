@@ -123,6 +123,20 @@ resource "google_sql_database_instance" "postgres" {
   ]
 }
 
+# Wait for Cloud SQL PostgreSQL engine to initialize and bind port 5432.
+# When a new instance is created, GCP marks the instance resource ready before the
+# internal PostgreSQL daemon has finished cluster initialization (initdb).
+# Without a brief delay, immediate calls to create users or databases fail with:
+# "failed to connect to db after 3 tries. Error: dial tcp 127.0.0.1:5432: connect: connection refused"
+resource "time_sleep" "wait_for_postgres" {
+  count           = var.deploy_database ? 1 : 0
+  create_duration = "45s"
+
+  depends_on = [
+    google_sql_database_instance.postgres
+  ]
+}
+
 resource "google_sql_database" "postgres_db" {
   count     = var.deploy_database ? 1 : 0
   name      = var.db_name
@@ -130,6 +144,10 @@ resource "google_sql_database" "postgres_db" {
   project   = var.project_id
   charset   = "UTF8"
   collation = "en_US.UTF8"
+
+  depends_on = [
+    time_sleep.wait_for_postgres
+  ]
 }
 
 resource "google_sql_user" "postgres_user" {
@@ -138,6 +156,11 @@ resource "google_sql_user" "postgres_user" {
   instance = google_sql_database_instance.postgres[0].name
   project  = var.project_id
   password = local.effective_db_password
+
+  depends_on = [
+    google_sql_database.postgres_db,
+    time_sleep.wait_for_postgres
+  ]
 }
 
 # Grant Cloud SQL Client role to Backend runtime Service Account
