@@ -278,6 +278,69 @@ variable "gcs_bucket_name" {
 }
 
 # ------------------------------------------------------------------------------
+# Pub/Sub, BigQuery and Cloud CDN
+# ------------------------------------------------------------------------------
+
+variable "enable_pubsub" {
+  description = "Create the Pub/Sub topics, subscriptions and dead-letter queue (document ingest, chain anchor, analytics events)"
+  type        = bool
+  default     = true
+}
+
+variable "enable_bigquery" {
+  description = "Create the BigQuery analytics dataset and events table"
+  type        = bool
+  default     = true
+}
+
+variable "bigquery_dataset_id" {
+  description = "BigQuery dataset id (letters, digits and underscores only)"
+  type        = string
+  default     = "realdha_analytics"
+}
+
+variable "bigquery_location" {
+  description = "BigQuery dataset location: the US multi-region or a US region. Keep in the US."
+  type        = string
+  default     = "US"
+
+  validation {
+    condition     = can(regex("^(US|us-[a-z0-9]+)$", var.bigquery_location))
+    error_message = "The BigQuery location must be in the United States: 'US' or a region starting with 'us-'."
+  }
+}
+
+variable "bigquery_deletion_protection" {
+  description = "Whether to block `terraform destroy` on the BigQuery events table"
+  type        = bool
+  default     = false
+}
+
+variable "enable_cdn" {
+  description = "Create the public Cloud Storage assets bucket fronted by Cloud CDN (global HTTP(S) load balancer; it bills a forwarding rule while it exists)"
+  type        = bool
+  default     = true
+}
+
+variable "cdn_bucket_name" {
+  description = "Name of the CDN assets bucket. If empty, realdha-cdn-<project_id> is used."
+  type        = string
+  default     = ""
+}
+
+variable "cdn_domain" {
+  description = "Optional custom domain for the CDN (e.g. cdn.example.com). When set, a Google-managed certificate, HTTPS and an HTTP to HTTPS redirect are created; point the domain's A record at the cdn_ip_address output. Empty serves plain HTTP on the reserved IP."
+  type        = string
+  default     = ""
+}
+
+variable "cdn_cors_origins" {
+  description = "Origins allowed to fetch CDN assets from a browser (CORS)"
+  type        = list(string)
+  default     = ["*"]
+}
+
+# ------------------------------------------------------------------------------
 # Blockchain property tokens
 # ------------------------------------------------------------------------------
 

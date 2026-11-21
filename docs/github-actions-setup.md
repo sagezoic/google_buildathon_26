@@ -100,7 +100,10 @@ for ROLE in \
   roles/resourcemanager.projectIamAdmin \
   roles/storage.admin \
   roles/cloudsql.admin \
-  roles/documentai.admin
+  roles/documentai.admin \
+  roles/pubsub.admin \
+  roles/bigquery.admin \
+  roles/compute.networkAdmin
 do
   gcloud projects add-iam-policy-binding $PROJECT_ID \
     --member="serviceAccount:${SA_EMAIL}" \

@@ -15,6 +15,9 @@ Automated CI/CD is provided via **GitHub Actions** located in `.github/workflows
   - Configurable unauthenticated access (`roles/run.invoker` for `allUsers`).
 - **Networking**: Cloud Run HTTPS ingress endpoints automatically provisioned with Google-managed SSL.
 - **Service Integration**: The UI service is automatically injected with the backend's Cloud Run URL (`BACKEND_URL`).
+- **Events (Pub/Sub)**: topics `document-ingest`, `chain-anchor`, `analytics-events` and a `dead-letter` queue (pull subscriptions, 5 delivery attempts). Uploads to `gcs_bucket_name` are announced on `document-ingest`. See `pubsub.tf`.
+- **Analytics (BigQuery)**: dataset `realdha_analytics` (US) with a `pubsub_events` table that `analytics-events` streams into. See `bigquery.tf`.
+- **Static assets (Cloud Storage + Cloud CDN)**: a public `realdha-cdn-<project-id>` bucket behind a global HTTP(S) load balancer with Cloud CDN. HTTP on a reserved IP by default; set `cdn_domain` for a managed certificate and HTTPS. Do not store private documents there. See `cdn.tf`.
 - **Cost Optimization**: Default auto-scaling configured with `min_instances = 0` (scale-to-zero when idle) up to `max_instances = 10`.
 
 ---
@@ -33,6 +36,9 @@ Automated CI/CD is provided via **GitHub Actions** located in `.github/workflows
 └── terraform/
     ├── locals.tf                 # Labels, image resolution, and endpoints
     ├── main.tf                   # Cloud Run, Artifact Registry, IAM & APIs
+    ├── pubsub.tf                 # Pub/Sub topics, subscriptions, dead-letter, GCS notification
+    ├── bigquery.tf               # BigQuery dataset, events table, Pub/Sub streaming
+    ├── cdn.tf                    # Public assets bucket + Cloud CDN load balancer
     ├── outputs.tf                # Service URLs and Docker push commands
     ├── providers.tf              # Google provider configuration
     ├── terraform.tf              # Required providers & version
@@ -141,6 +147,15 @@ backend_service_url = "https://realdha-backend-xxxxxxxxxx-uc.a.run.app"
 | `db_user` | PostgreSQL database user | `string` | `"realdha"` |
 | `db_password` | Database password (empty = auto-generate) | `string` | `""` |
 | `db_authorized_networks` | CIDRs allowed direct access | `list(object)` | `0.0.0.0/0` |
+| `enable_pubsub` | Create Pub/Sub topics, subscriptions and dead-letter queue | `bool` | `true` |
+| `enable_bigquery` | Create the BigQuery dataset and events table | `bool` | `true` |
+| `bigquery_dataset_id` | BigQuery dataset id | `string` | `"realdha_analytics"` |
+| `bigquery_location` | BigQuery location (`US` or `us-*`) | `string` | `"US"` |
+| `bigquery_deletion_protection` | Block destroy of the events table | `bool` | `false` |
+| `enable_cdn` | Create the assets bucket and Cloud CDN load balancer | `bool` | `true` |
+| `cdn_bucket_name` | Assets bucket name (empty = `realdha-cdn-<project_id>`) | `string` | `""` |
+| `cdn_domain` | Custom domain for HTTPS (empty = HTTP on the reserved IP) | `string` | `""` |
+| `cdn_cors_origins` | Origins allowed to fetch assets (CORS) | `list(string)` | `["*"]` |
 
 ---
 
@@ -164,6 +179,10 @@ backend_service_url = "https://realdha-backend-xxxxxxxxxx-uc.a.run.app"
 | `db_password` | Generated/configured database password (sensitive) |
 | `database_url` | Direct PostgreSQL connection string for local dev (sensitive) |
 | `database_url_proxy` | Localhost proxy connection string (sensitive) |
+| `pubsub_topics` / `pubsub_subscriptions` | Pub/Sub topic and subscription ids by logical name |
+| `bigquery_dataset_id` / `bigquery_events_table` | BigQuery dataset and the `project.dataset.table` receiving events |
+| `cdn_bucket_name` | Bucket to upload public assets to |
+| `cdn_ip_address` / `cdn_base_url` | CDN load balancer IP (for DNS) and the URL that serves assets |
 
 ---
 
