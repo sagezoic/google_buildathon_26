@@ -350,12 +350,12 @@ resource "google_cloud_run_v2_service" "backend" {
       }
 
       dynamic "env" {
-        for_each = google_secret_manager_secret.chain
+        for_each = local.chain_secret_keys
         content {
-          name = env.key
+          name = env.value
           value_source {
             secret_key_ref {
-              secret  = env.value.secret_id
+              secret  = google_secret_manager_secret.chain[env.value].secret_id
               version = "latest"
             }
           }

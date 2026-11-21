@@ -49,11 +49,13 @@ locals {
     } : k => v if v != ""
   } : {}
 
+  chain_secret_keys = nonsensitive(toset(keys(local.chain_secrets)))
+
   chain_kms_key_version = length(google_kms_crypto_key.registrar) > 0 ? "${google_kms_crypto_key.registrar[0].id}/cryptoKeyVersions/1" : ""
 }
 
 resource "google_secret_manager_secret" "chain" {
-  for_each  = nonsensitive(toset(keys(local.chain_secrets)))
+  for_each  = local.chain_secret_keys
   project   = var.project_id
   secret_id = "realdha-${lower(replace(each.value, "_", "-"))}"
   labels    = local.common_labels
@@ -66,15 +68,15 @@ resource "google_secret_manager_secret" "chain" {
 }
 
 resource "google_secret_manager_secret_version" "chain" {
-  for_each    = google_secret_manager_secret.chain
-  secret      = each.value.id
-  secret_data = local.chain_secrets[each.key]
+  for_each    = local.chain_secret_keys
+  secret      = google_secret_manager_secret.chain[each.value].id
+  secret_data = local.chain_secrets[each.value]
 }
 
 resource "google_secret_manager_secret_iam_member" "backend_chain" {
-  for_each  = google_secret_manager_secret.chain
+  for_each  = local.chain_secret_keys
   project   = var.project_id
-  secret_id = each.value.secret_id
+  secret_id = google_secret_manager_secret.chain[each.value].secret_id
   role      = "roles/secretmanager.secretAccessor"
   member    = "serviceAccount:${google_service_account.backend[0].email}"
 }
