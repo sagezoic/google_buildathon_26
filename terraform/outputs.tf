@@ -63,6 +63,15 @@ output "docai_processor_id" {
   value       = local.effective_docai_processor_id
 }
 
+output "gemini_config" {
+  description = "Gemini models and Vertex AI location passed to the backend"
+  value = var.enable_gemini ? {
+    location     = var.vertex_location
+    verify_model = var.gemini_verify_model
+    chat_model   = var.gemini_chat_model
+  } : null
+}
+
 output "docker_push_commands" {
   description = "Commands to build, tag, and push container images"
   value       = <<-EOT

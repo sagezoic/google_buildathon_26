@@ -8,7 +8,8 @@ import { useDemoState } from '../../app/useDemoState'
 import { Button } from '../../components/ui/button'
 import { Card } from '../../components/ui/card'
 import { Switch } from '../../components/ui/switch'
-import { INITIAL_CHECK, REPORTS, REVIEW_PLANS, type CheckState } from '../../data/fixtures/f05-check'
+import { REVIEW_PLANS } from '../../data/fixtures/f05-check'
+import { useCheckReport, useCheckState } from '../../lib/check-store'
 import { logAudit } from '../../lib/audit'
 import { cn } from '../../lib/cn'
 import { downloadBlob, makePdf } from '../../lib/mini-pdf'
@@ -23,19 +24,20 @@ const inputCls = 'w-full rounded-control border bg-field px-3 text-control text-
 export default function ShareAndReview() {
   const [mode] = useDemoState(['both', 'share', 'review'] as const)
   const navigate = useNavigate()
-  const [check] = usePersistentState<CheckState>('f05.check', INITIAL_CHECK)
+  const [check] = useCheckState()
   const [share, setShare] = usePersistentState<Share>('f05.share', { email: '', includeDocs: false })
   const [review, setReview] = usePersistentState<Review>('f05.review', { plan: 'standard', note: '', sent: false })
   const [emailError, setEmailError] = useState('')
   const [sentTo, setSentTo] = useState('')
   const [copied, setCopied] = useState(false)
-  const report = REPORTS[check.verdict ?? 'stop']
-  const back = path(check.verdict === 'proceed' ? 'F05-04' : 'F05-03')
-  const id = report.checkId.split('#')[1]
+  const { report } = useCheckReport(check.verdict ?? 'stop')
+  const back = path((report?.verdict ?? check.verdict) === 'proceed' ? 'F05-04' : 'F05-03')
+  const id = report?.checkId.split('#')[1] ?? 'report'
 
   const download = () => {
+    if (!report) return
     const lines = [
-      'REALDHA - Document check report', report.title, report.checkId, 'Sample data', '',
+      'REALDHA - Document check report', report.title, report.checkId, report.sample ? 'Sample data' : '', '',
       `Verdict: ${report.verdict === 'stop' ? 'STOP' : 'PROCEED'} - ${report.headline}`,
       `High ${report.counts.high} · Medium ${report.counts.medium} · Clear ${report.counts.clear}`, '',
       ...report.findings.flatMap((f, i) => [`${i + 1}. ${f.title} [${f.sev}]`, `   ${f.body}`, `   ${f.quote} (${f.source})`, '']),

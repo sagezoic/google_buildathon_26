@@ -278,6 +278,39 @@ variable "gcs_bucket_name" {
 }
 
 # ------------------------------------------------------------------------------
+# Gemini on Vertex AI (document checks and property chat)
+# ------------------------------------------------------------------------------
+
+variable "enable_gemini" {
+  description = "Enable Vertex AI and let the backend call Gemini for document checks and chat"
+  type        = bool
+  default     = true
+}
+
+variable "vertex_location" {
+  description = "Vertex AI location for Gemini calls. A US region keeps processing in the US; 'global' has the widest model availability but may process data outside the US."
+  type        = string
+  default     = "us-central1"
+
+  validation {
+    condition     = can(regex("^us-", var.vertex_location)) || var.vertex_location == "global"
+    error_message = "vertex_location must be a US region (us-*) or 'global'."
+  }
+}
+
+variable "gemini_verify_model" {
+  description = "Gemini model that reads property documents and writes the STOP / PROCEED check report"
+  type        = string
+  default     = "gemini-3.8-flash"
+}
+
+variable "gemini_chat_model" {
+  description = "Gemini model that answers chat questions about a property's documents"
+  type        = string
+  default     = "gemini-3.8-flash"
+}
+
+# ------------------------------------------------------------------------------
 # Pub/Sub, BigQuery and Cloud CDN
 # ------------------------------------------------------------------------------
 

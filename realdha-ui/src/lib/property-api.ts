@@ -80,7 +80,28 @@ export function uploadDocument(propertyId: string, slot: string, file: File) {
   return request<ServerDoc>(`/api/properties/${propertyId}/documents`, { method: 'POST', body: form })
 }
 
-export const deleteDocument = (propertyId: string, docId: string) =>
+/** Same upload as `uploadDocument`, reporting progress (0-100). Uses XHR because fetch has no upload progress. */
+export function uploadDocumentWithProgress(propertyId: string, slot: string, file: File, onProgress: (pct: number) => void): Promise<ServerDoc> {
+  const form = new FormData()
+  form.set('slot', slot)
+  form.set('file', file)
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest()
+    xhr.open('POST', `/api/properties/${propertyId}/documents`)
+    xhr.setRequestHeader('Accept', 'application/json')
+    xhr.upload.onprogress = (e) => { if (e.lengthComputable) onProgress(Math.min(99, Math.round((e.loaded / e.total) * 100))) }
+    xhr.onerror = () => reject(new Error('Could not reach the server. Check your connection and try again.'))
+    xhr.onload = () => {
+      let body: (ServerDoc & { message?: string }) | null = null
+      try { body = JSON.parse(xhr.responseText) } catch { /* not JSON */ }
+      if (xhr.status >= 200 && xhr.status < 300 && body) resolve(body)
+      else reject(new Error(body?.message || `Upload failed (${xhr.status})`))
+    }
+    xhr.send(form)
+  })
+}
+
+export const deleteDocument =(propertyId: string, docId: string) =>
   request<{ success: boolean }>(`/api/properties/${propertyId}/documents/${docId}`, { method: 'DELETE' })
 
 export const processDocument = (propertyId: string, docId: string, force = false) =>

@@ -1,25 +1,27 @@
 import { AlertCircle, CheckCircle2, Loader2, X } from 'lucide-react'
-import { useEffect, useRef, useState, type DragEvent } from 'react'
+import { useRef, useState, type DragEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { Screen } from '../../app/Shell'
 import { path } from '../../app/nav'
-import { usePersistentState } from '../../app/persist'
 import { useDemoState } from '../../app/useDemoState'
 import { Button } from '../../components/ui/button'
 import { Card } from '../../components/ui/card'
 import { Pill } from '../../components/ui/pill'
-import { FRAME_FILES, INITIAL_CHECK, KINDS, LAKEVIEW_FILES, SAMEER_FILES, decideVerdict, sizeLabel, type CheckFile, type CheckKind, type CheckState } from '../../data/fixtures/f05-check'
+import { FRAME_FILES, KINDS, SAMEER_FILES, sizeLabel, type CheckFile, type CheckKind } from '../../data/fixtures/f05-check'
 import { logAudit } from '../../lib/audit'
+import { PROPERTY_TYPE, useCheckState } from '../../lib/check-store'
 import { cn } from '../../lib/cn'
+import { createProperty, deleteDocument, updateProperty, uploadDocumentWithProgress } from '../../lib/property-api'
 
-const MAX_BYTES = 25 * 1024 * 1024
+/** Matches the backend's MAX_UPLOAD_MB. */
+const MAX_BYTES = 20 * 1024 * 1024
 const OK_TYPE = /\.(pdf|jpe?g|png)$/i
 
-/** F05-01 · Pick the kind of property, upload documents (names and progress persist), start the check. */
+/** F05-01 · Pick the kind of property, upload documents to a server property, start the Gemini check. */
 export default function CheckStart() {
   const [mode] = useDemoState(['live', 'uploading', 'uploaded'] as const)
   const navigate = useNavigate()
-  const [check, setCheck] = usePersistentState<CheckState>('f05.check', INITIAL_CHECK)
+  const [check, setCheck] = useCheckState()
   const [error, setError] = useState('')
   const [saved, setSaved] = useState(false)
   const [drag, setDrag] = useState(false)
@@ -29,32 +31,76 @@ export default function CheckStart() {
   const kind = KINDS.find((k) => k.id === check.kind) ?? KINDS[0]
   const busy = files.some((f) => f.status === 'uploading')
 
-  // Uploads advance on a timer in the live view.
-  useEffect(() => {
-    if (mode !== 'live' || !busy) return
-    const t = setInterval(() => {
-      setCheck((c) => ({ ...c, files: c.files.map((f) => (f.status === 'uploading' ? (f.pct + 18 >= 100 ? { ...f, pct: 100, status: 'uploaded' } : { ...f, pct: f.pct + 18 }) : f)) }))
-    }, 350)
-    return () => clearInterval(t)
-  }, [mode, busy, setCheck])
+  const patchFile = (name: string, patch: Partial<CheckFile> | null) =>
+    setCheck((c) => ({ ...c, files: patch ? c.files.map((f) => (f.name === name ? { ...f, ...patch } : f)) : c.files.filter((f) => f.name !== name) }))
 
-  const setFiles = (next: CheckFile[]) => { setCheck((c) => ({ ...c, files: next })); setError(''); setSaved(false) }
-  const add = (list: FileList | File[]) => {
+  /** The server property holding this check's documents, created on the first upload. */
+  const creating = useRef<Promise<string> | null>(null)
+  const ensureProperty = (fresh = false): Promise<string> => {
+    if (check.propertyId && !fresh) return Promise.resolve(check.propertyId)
+    // One creation at a time, so files picked in quick succession share a property.
+    creating.current ??= createProperty({ type: PROPERTY_TYPE[check.kind], stage: 'documents' })
+      .then(({ id }) => {
+        setCheck((c) => ({ ...c, propertyId: id, checkId: null, verdict: null, ...(fresh ? { files: c.files.filter((f) => !f.id) } : {}) }))
+        return id
+      })
+      .finally(() => { creating.current = null })
+    return creating.current
+  }
+
+  const uploadOne = async (file: File, propertyId: string, retried = false): Promise<void> => {
+    try {
+      const doc = await uploadDocumentWithProgress(propertyId, 'extra', file, (pct) => patchFile(file.name, { pct }))
+      patchFile(file.name, { id: doc.id, status: 'uploaded', pct: 100, pages: doc.pages ?? 0 })
+    } catch (e) {
+      const message = e instanceof Error ? e.message : 'Upload failed.'
+      // The server may have lost this property (fresh database): start a new one and try once more.
+      if (!retried && /property not found/i.test(message)) return uploadOne(file, await ensureProperty(true), true)
+      patchFile(file.name, null)
+      setError(`${file.name}: ${message}`)
+    }
+  }
+
+  const add = async (list: FileList | File[]) => {
     const picked = Array.from(list)
     const bad = picked.find((f) => !OK_TYPE.test(f.name) || f.size > MAX_BYTES)
     if (bad) {
-      setError(!OK_TYPE.test(bad.name) ? `${bad.name} is not a PDF, JPG or PNG.` : `${bad.name} is larger than 25 MB.`)
+      setError(!OK_TYPE.test(bad.name) ? `${bad.name} is not a PDF, JPG or PNG.` : `${bad.name} is larger than 20 MB.`)
       return
     }
-    const fresh: CheckFile[] = picked.filter((f) => !files.some((x) => x.name === f.name)).map((f) => ({ name: f.name, pages: 0, size: sizeLabel(f.size), status: 'uploading', pct: 0 }))
-    setFiles([...files, ...fresh])
+    const fresh = picked.filter((f) => !files.some((x) => x.name === f.name))
+    if (!fresh.length) return
+    setError(''); setSaved(false)
+    setCheck((c) => ({ ...c, checkId: null, verdict: null, files: [...c.files, ...fresh.map((f): CheckFile => ({ name: f.name, pages: 0, size: sizeLabel(f.size), status: 'uploading', pct: 0 }))] }))
+    let propertyId: string
+    try { propertyId = await ensureProperty() } catch (e) {
+      setCheck((c) => ({ ...c, files: c.files.filter((f) => !fresh.some((x) => x.name === f.name)) }))
+      setError(e instanceof Error ? e.message : 'Could not start the upload.')
+      return
+    }
+    await Promise.all(fresh.map((f) => uploadOne(f, propertyId)))
   }
-  const onDrop = (e: DragEvent) => { e.preventDefault(); setDrag(false); add(e.dataTransfer.files) }
+  const onDrop = (e: DragEvent) => { e.preventDefault(); setDrag(false); void add(e.dataTransfer.files) }
+
+  const remove = async (f: CheckFile) => {
+    if (f.id && check.propertyId) {
+      try { await deleteDocument(check.propertyId, f.id) } catch (e) {
+        if (!/not found/i.test(e instanceof Error ? e.message : '')) { setError(e instanceof Error ? e.message : 'Could not remove the file.'); return }
+      }
+    }
+    setCheck((c) => ({ ...c, checkId: null, verdict: null, files: c.files.filter((x) => x.name !== f.name) }))
+    setError('')
+  }
+
+  const pickKind = (id: CheckKind) => {
+    setCheck((c) => ({ ...c, kind: id }))
+    if (check.propertyId) void updateProperty(check.propertyId, { type: PROPERTY_TYPE[id] }).catch(() => {})
+  }
 
   const start = () => {
     if (!files.length) return setError('Add at least one document to check.')
     if (busy) return setError('Wait for the uploads to finish.')
-    setCheck((c) => ({ ...c, files, pct: 0, verdict: decideVerdict(files) }))
+    setCheck((c) => ({ ...c, pct: 0, verdict: null, checkId: null }))
     logAudit('You', `Started a document check (${kind.label}, ${files.length} files)`)
     navigate(path('F05-02'))
   }
@@ -79,7 +125,7 @@ export default function CheckStart() {
                   type="button"
                   role="radio"
                   aria-checked={on}
-                  onClick={() => setCheck((c) => ({ ...c, kind: k.id as CheckKind }))}
+                  onClick={() => pickKind(k.id)}
                   className={cn('flex min-h-11 cursor-pointer flex-col gap-1.5 rounded-card text-left max-md:p-3.5 md:p-5', on ? 'border-2 border-primary bg-primary-tint max-md:p-[13px] md:p-[19px]' : 'border border-line-strong bg-surface hover:bg-primary-tint')}
                 >
                   <span className="flex items-center justify-between">
@@ -106,14 +152,9 @@ export default function CheckStart() {
               className={cn('flex flex-col items-center gap-1.5 rounded-control border-2 border-dashed border-line-strong p-5 text-center md:p-[26px]', drag ? 'bg-primary-tint' : 'bg-canvas')}
             >
               <div className="text-control font-semibold"><span className="md:hidden">Choose files</span><span className="max-md:hidden">Drag files here, or choose files</span></div>
-              <div className="text-chip text-muted"><span className="md:hidden">{kind.needed.replace(/^./, (c) => c.toUpperCase())}</span><span className="max-md:hidden">PDF, JPG or PNG · up to 25 MB each</span></div>
-              <input ref={input} type="file" multiple accept=".pdf,.jpg,.jpeg,.png" className="sr-only" aria-label="Choose files" tabIndex={-1} onChange={(e) => { if (e.target.files) add(e.target.files); e.target.value = '' }} />
+              <div className="text-chip text-muted"><span className="md:hidden">{kind.needed.replace(/^./, (c) => c.toUpperCase())}</span><span className="max-md:hidden">PDF, JPG or PNG · up to 20 MB each</span></div>
+              <input ref={input} type="file" multiple accept=".pdf,.jpg,.jpeg,.png" className="sr-only" aria-label="Choose files" tabIndex={-1} onChange={(e) => { if (e.target.files) void add(e.target.files); e.target.value = '' }} />
               <Button variant="secondary" className="mt-1.5" onClick={() => input.current?.click()}>Choose files</Button>
-              <div className="mt-1 flex flex-wrap justify-center gap-2 text-chip text-muted">
-                <span>Sample files:</span>
-                <button type="button" onClick={() => setFiles(SAMEER_FILES)} className="cursor-pointer text-primary-text underline">Sameer's flat</button>
-                <button type="button" onClick={() => setFiles(LAKEVIEW_FILES)} className="cursor-pointer text-primary-text underline">Lake View flat</button>
-              </div>
             </div>
             <ul aria-label="Uploaded files">
               {files.map((f) => (
@@ -122,9 +163,9 @@ export default function CheckStart() {
                   <span className="text-chip text-muted max-md:hidden">{[f.pages ? `${f.pages} page${f.pages === 1 ? '' : 's'}` : '', f.size].filter(Boolean).join(' · ')}</span>
                   {f.status === 'uploaded'
                     ? <Pill tone="success" icon={<CheckCircle2 className="size-4" />}>Uploaded</Pill>
-                    : <Pill tone="info" icon={<Loader2 className="size-4 animate-spin motion-reduce:animate-none" />}>Uploading {f.pct}%</Pill>}
+                    : <Pill tone="info" icon={<Loader2 className="size-4 animate-spin motion-reduce:animate-none" />}>{f.pct ? `Uploading ${f.pct}%` : 'Uploading'}</Pill>}
                   {mode === 'live' && (
-                    <button type="button" aria-label={`Remove ${f.name}`} onClick={() => setFiles(files.filter((x) => x.name !== f.name))} className="-mr-2 inline-flex size-11 cursor-pointer items-center justify-center rounded-control text-muted hover:bg-primary-tint md:size-8">
+                    <button type="button" aria-label={`Remove ${f.name}`} onClick={() => void remove(f)} disabled={f.status === 'uploading'} className="-mr-2 inline-flex size-11 cursor-pointer items-center justify-center rounded-control text-muted hover:bg-primary-tint md:size-8">
                       <X className="size-4" aria-hidden />
                     </button>
                   )}
