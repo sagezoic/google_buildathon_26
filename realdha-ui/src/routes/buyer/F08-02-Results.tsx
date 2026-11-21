@@ -6,7 +6,6 @@ import { path } from '../../app/nav'
 import { useDemoState } from '../../app/useDemoState'
 import { Button } from '../../components/ui/button'
 import { ScrollArea } from '../../components/ui/scroll-area'
-import { SampleData } from '../../components/ui/record-id'
 import { FRAME_FILTERS, activeFilters, dropFilter, runSearch, inr, priceShort, type Property } from '../../data/fixtures/f08-search'
 import { cn } from '../../lib/cn'
 import { usePlace } from '../../lib/places'
@@ -105,10 +104,6 @@ export default function Results() {
   const map = (
     <div className={cn('relative min-h-0 flex-1 overflow-hidden rounded-card border border-line bg-sunken xl:rounded-none xl:border-0 xl:border-l', view === 'list' && 'max-xl:hidden')}>
       <OsmMap center={mapCenter} zoom={place ? 14 : 13} showThemeToggle className="size-full">
-        <div className="absolute top-3 left-3 z-10 rounded-control border border-line bg-surface px-2.5 py-1 text-label font-medium text-text shadow-e1 xl:top-4 xl:left-4">
-          {pins.length < results.length ? `Map shows ${pins.length} of ${results.length} properties` : `${results.length} propert${results.length === 1 ? 'y' : 'ies'} on map`}
-        </div>
-
         {/* Property markers */}
         {pins.map(({ p, coord, select }) => {
           const isSelected = selectedPropId === p.id
@@ -131,12 +126,12 @@ export default function Results() {
 
         {/* Selected Property Popup Card */}
         {selectedProp && (
-          <div role="dialog" aria-label="Property preview" className="absolute right-4 bottom-4 left-4 z-20 mx-auto max-w-sm rounded-card border border-line bg-surface p-4 shadow-e2">
+          <div role="dialog" aria-label="Property preview" className="absolute right-4 bottom-4 left-4 z-20 mx-auto max-w-sm rounded-card border border-line bg-surface p-4 shadow-e1">
             <div className="flex items-start justify-between gap-2">
               <div className="min-w-0">
                 <div className="text-chip text-muted">{selectedProp.locality}, {selectedProp.city}</div>
                 <div className="text-small font-semibold text-text">{selectedProp.unit} · {selectedProp.project}</div>
-                <div className="tabular mt-1 text-chip font-semibold text-primary-text">{inr(selectedProp.price)} · {selectedProp.label}</div>
+                <div className="tabular mt-1 text-chip font-semibold text-primary-text">{inr(selectedProp.price)}</div>
               </div>
               <button
                 type="button"
@@ -148,7 +143,7 @@ export default function Results() {
               </button>
             </div>
             <div className="mt-3 flex items-center justify-between gap-2 border-t border-line pt-3">
-              <div className="flex flex-wrap gap-1.5"><StatusPills p={selectedProp} short /></div>
+              <StatusPills p={selectedProp} short />
               <Button to={`${path('F09-03')}?id=${selectedProp.id}`} size="sm" className="shrink-0 max-md:h-11">View property</Button>
             </div>
           </div>
@@ -181,7 +176,7 @@ export default function Results() {
             </li>
           ))}
         </ul>
-        <div role="status" className="flex items-center gap-2 text-chip text-muted xl:ml-auto"><span className="tabular">{results.length} result{results.length === 1 ? '' : 's'}</span> · <SampleData /></div>
+        <p aria-live="polite" className="tabular text-chip text-muted xl:ml-auto">{results.length} result{results.length === 1 ? '' : 's'}</p>
       </div>
 
       <div className="flex min-h-0 flex-1 flex-col gap-3 bg-canvas p-4 xl:grid xl:grid-cols-[460px_minmax(0,1fr)] xl:grid-rows-1 xl:gap-0 xl:p-0">
