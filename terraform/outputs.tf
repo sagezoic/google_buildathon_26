@@ -168,3 +168,47 @@ output "local_connection_instructions" {
     # --------------------------------------------------------------------------
   EOT
 }
+
+# ------------------------------------------------------------------------------
+# Pub/Sub, BigQuery and Cloud CDN Outputs
+# ------------------------------------------------------------------------------
+
+output "pubsub_topics" {
+  description = "Pub/Sub topic ids by logical name (document-ingest, chain-anchor, analytics-events, dead-letter)"
+  value       = { for k, v in google_pubsub_topic.main : k => v.id }
+}
+
+output "pubsub_subscriptions" {
+  description = "Pub/Sub pull subscription ids by logical topic name"
+  value       = { for k, v in google_pubsub_subscription.pull : k => v.id }
+}
+
+output "bigquery_dataset_id" {
+  description = "BigQuery analytics dataset id"
+  value       = try(google_bigquery_dataset.analytics[0].dataset_id, "")
+}
+
+output "bigquery_events_table" {
+  description = "Fully qualified BigQuery table receiving analytics-events (project.dataset.table)"
+  value       = try("${var.project_id}.${google_bigquery_dataset.analytics[0].dataset_id}.${google_bigquery_table.pubsub_events[0].table_id}", "")
+}
+
+output "cdn_bucket_name" {
+  description = "Cloud Storage bucket behind the CDN (upload public assets here)"
+  value       = try(google_storage_bucket.cdn[0].name, "")
+}
+
+output "cdn_ip_address" {
+  description = "Reserved global IP of the CDN load balancer (point cdn_domain's A record here)"
+  value       = try(google_compute_global_address.cdn[0].address, "")
+}
+
+output "cdn_base_url" {
+  description = "Base URL that serves CDN assets"
+  value       = try(local.cdn_env["CDN_BASE_URL"], "")
+}
+
+output "chain_registrar_kms_key" {
+  description = "Cloud KMS key version that signs on-chain property token writes (derive its Ethereum address with `bun run chain:address`)"
+  value       = local.chain_kms_key_version
+}

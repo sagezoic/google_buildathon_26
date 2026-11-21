@@ -1,4 +1,4 @@
-import { Building2, CircleAlert, CircleCheck, Map as MapIcon, Search, Store, type LucideIcon } from 'lucide-react'
+import { Building2, CircleAlert, CircleCheck, Edit3, Map as MapIcon, Search, Store, type LucideIcon } from 'lucide-react'
 import { useMemo, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { useNavigate } from 'react-router'
 import { Screen } from '../../../app/Shell'
@@ -8,6 +8,9 @@ import { Button } from '../../../components/ui/button'
 import { Card } from '../../../components/ui/card'
 import { Field } from '../../../components/ui/field'
 import PlotMap from '../../../components/ui/plot-map'
+import OsmMap from '../../../components/map/OsmMap'
+import OsmPolygonEditor from '../../../components/map/OsmPolygonEditor'
+import { generateRectPolygon, type LngLat } from '../../../components/map/osm-geometry'
 import { Stepper } from '../../../components/ui/stepper'
 import { STEPS, type PropertyType } from '../../../data/fixtures/property-intake'
 import { cn } from '../../../lib/cn'
@@ -94,12 +97,103 @@ function useWide() {
   )
 }
 
-type MapPaneProps = { pin: GeoPin; dragged: boolean; onMove: (p: GeoPin) => void; shape: ReturnType<typeof plotFeature>; fitKey: string; compact?: boolean; children?: ReactNode; className?: string }
-function MapPane({ pin, dragged, onMove, shape, fitKey, compact, children, className }: MapPaneProps) {
+type MapPaneProps = {
+  pin: GeoPin
+  dragged: boolean
+  onMove: (p: GeoPin) => void
+  shape: ReturnType<typeof plotFeature>
+  fitKey: string
+  compact?: boolean
+  boundary?: [number, number][]
+  onBoundaryChange?: (boundary: [number, number][], areaSqm: number) => void
+  areaUnit: AreaUnit
+  areaVal: string
+  children?: ReactNode
+  className?: string
+}
+
+function MapPane({
+  pin,
+  dragged,
+  onMove,
+  shape,
+  fitKey,
+  compact,
+  boundary,
+  onBoundaryChange,
+  areaUnit,
+  areaVal,
+  children,
+  className,
+}: MapPaneProps) {
+  const [mode, setMode] = useState<'preset' | 'custom'>(
+    boundary && boundary.length >= 3 ? 'custom' : 'preset'
+  )
+
+  const initialCustomPolygon = useMemo<LngLat[]>(() => {
+    if (boundary && boundary.length >= 3) return boundary
+    const parsed = parseArea(areaVal) || 3200
+    return generateRectPolygon([pin.lng, pin.lat], parsed, areaUnit)
+  }, [boundary, pin, areaVal, areaUnit])
+
   return (
-    <PlotMap pin={pin} onPinChange={onMove} shape={shape} fitKey={fitKey} hint={!dragged} compact={compact} className={cn('rounded-lg border border-line-strong xl:rounded-card xl:border-line xl:shadow-e1', className)}>
-      {children}
-    </PlotMap>
+    <div className={cn('relative flex flex-col', className)}>
+      {!compact && (
+        <div className="absolute top-3.5 right-3.5 z-20 flex overflow-hidden rounded-control border border-line-strong bg-surface text-chip font-medium shadow-e1">
+          <button
+            type="button"
+            onClick={() => setMode('preset')}
+            className={cn(
+              'cursor-pointer px-2.5 py-1 transition-colors',
+              mode === 'preset'
+                ? 'bg-primary text-on-primary font-semibold'
+                : 'text-muted hover:text-text'
+            )}
+          >
+            Plot Pin
+          </button>
+          <button
+            type="button"
+            onClick={() => setMode('custom')}
+            className={cn(
+              'flex cursor-pointer items-center gap-1 px-2.5 py-1 transition-colors',
+              mode === 'custom'
+                ? 'bg-primary text-on-primary font-semibold'
+                : 'text-muted hover:text-text'
+            )}
+          >
+            <Edit3 className="size-3" /> Demarcate Boundary
+          </button>
+        </div>
+      )}
+
+      {mode === 'custom' ? (
+        <div className="relative size-full min-h-[380px] overflow-hidden rounded-lg border border-line-strong xl:rounded-card xl:border-line xl:shadow-e1">
+          <OsmMap center={[pin.lng, pin.lat]} zoom={17} showThemeToggle>
+            <OsmPolygonEditor
+              polygon={initialCustomPolygon}
+              pin={pin}
+              unit={areaUnit}
+              onChange={(pts, areaSqm) => onBoundaryChange?.(pts, areaSqm)}
+              onPinChange={([lng, lat]) => onMove({ lng, lat })}
+            />
+          </OsmMap>
+          {children}
+        </div>
+      ) : (
+        <PlotMap
+          pin={pin}
+          onPinChange={onMove}
+          shape={shape}
+          fitKey={fitKey}
+          hint={!dragged}
+          compact={compact}
+          className="size-full rounded-lg border border-line-strong xl:rounded-card xl:border-line xl:shadow-e1"
+        >
+          {children}
+        </PlotMap>
+      )}
+    </div>
   )
 }
 
@@ -215,8 +309,19 @@ export default function AddProperty() {
             {notes}
           </Card>
           {wide && (
-            <MapPane pin={pin} dragged={moved} onMove={onMove} shape={shape} fitKey={fitKey} className="min-w-0 flex-1">
-              <form role="search" onSubmit={(e) => { e.preventDefault(); search() }} className="absolute top-3.5 left-3.5 flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-chip">
+            <MapPane
+              pin={pin}
+              dragged={moved}
+              onMove={onMove}
+              shape={shape}
+              fitKey={fitKey}
+              boundary={draft.boundary}
+              onBoundaryChange={(pts) => set({ boundary: pts })}
+              areaUnit={areaUnit}
+              areaVal={area}
+              className="min-w-0 flex-1"
+            >
+              <form role="search" onSubmit={(e) => { e.preventDefault(); search() }} className="absolute top-3.5 left-3.5 z-20 flex items-center gap-2 rounded-lg border border-line bg-surface px-3 py-2 text-chip">
                 <Search className="size-4 text-muted" aria-hidden />
                 <input aria-label="Search village or Gat number" placeholder="Search village or Gat number" value={query} onChange={(e) => setQuery(e.target.value)} className="w-56 bg-transparent text-chip text-text outline-none placeholder:text-muted" />
               </form>
@@ -230,7 +335,21 @@ export default function AddProperty() {
         <div className="text-overline font-semibold tracking-[0.06em] text-muted uppercase">Step 1 of 4 · Property</div>
         <h1 className="text-h1 max-md:text-[24px] max-md:leading-8">Add a property</h1>
         <Tiles type={type} onType={setType} mobile />
-        {!wide && <MapPane pin={pin} dragged={moved} onMove={onMove} shape={shape} fitKey={fitKey} compact className="h-[200px]" />}
+        {!wide && (
+          <MapPane
+            pin={pin}
+            dragged={moved}
+            onMove={onMove}
+            shape={shape}
+            fitKey={fitKey}
+            boundary={draft.boundary}
+            onBoundaryChange={(pts) => set({ boundary: pts })}
+            areaUnit={areaUnit}
+            areaVal={area}
+            compact
+            className="h-[240px]"
+          />
+        )}
         <div className="text-label font-medium text-muted" aria-live="polite">GPS {gps}</div>
         <Field label="Village" value={mv} onChange={(e) => mobileVillage(e.target.value)} onBlur={() => { blur('village')(); blur('taluka')() }} error={err('village') ?? (err('taluka') && 'Add the taluka after a comma, like Kusgaon, Maval.')} className="[&_input]:h-12" />
         <Field label="Gat / survey number" value={draft.gat} onChange={(e) => set({ gat: e.target.value })} onBlur={blur('gat')} error={err('gat')} inputMode="text" autoComplete="off" className="[&_input]:h-12" />

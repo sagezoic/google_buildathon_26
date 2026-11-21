@@ -19,8 +19,13 @@ const initialTheme = (): Theme => {
   return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 }
 
+const initialLang = (): Lang => {
+  const stored = localStorage.getItem('rd-lang')
+  return stored === 'hi' || stored === 'mr' ? stored : 'en'
+}
+
 export function PrefsProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Lang>('en')
+  const [lang, setLang] = useState<Lang>(initialLang)
   const [theme, setTheme] = useState<Theme>(initialTheme)
 
   useEffect(() => {
@@ -30,6 +35,7 @@ export function PrefsProvider({ children }: { children: ReactNode }) {
   }, [theme])
   useEffect(() => {
     document.documentElement.lang = lang
+    localStorage.setItem('rd-lang', lang)
   }, [lang])
 
   const toggleTheme = useCallback(() => setTheme((t) => (t === 'dark' ? 'light' : 'dark')), [])

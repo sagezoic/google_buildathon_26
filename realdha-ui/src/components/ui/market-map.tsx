@@ -4,6 +4,7 @@ import 'maplibre-gl/dist/maplibre-gl.css'
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?worker&url'
 import { X } from 'lucide-react'
 import { cn } from '../../lib/cn'
+import { collapseAttribution } from '../map/attribution'
 import { generateShapes, hasCoords } from '../../lib/society-shapes'
 import { cardBadges, formatInr, type FlatMode, type SocietyCard } from '../../lib/flats-api'
 
@@ -143,6 +144,7 @@ export default function MarketMap({ societies, mode, center, zoom, onUnavailable
       onUnavailable?.()
       return
     }
+    collapseAttribution(map)
     map.touchZoomRotate.disableRotation()
     map.keyboard.disableRotation()
     map.addControl(new maplibregl.NavigationControl({ showCompass: false, visualizePitch: true }), 'top-right')

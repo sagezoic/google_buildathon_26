@@ -23,6 +23,8 @@ export interface PropertyDraft {
   /** Plot area as typed, with its unit. Drives the shape drawn on the map. */
   area: string
   areaUnit: AreaUnit
+  /** Custom parcel boundary polygon coordinates [[lng, lat], ...] */
+  boundary?: [number, number][]
   moved: boolean
   /** True once the owner pressed Save draft or Continue: GP-06 then lists the property. */
   saved: boolean
@@ -36,7 +38,10 @@ export const defaultDraft: PropertyDraft = {
 
 export const TYPE_LABEL: Record<PropertyType, string> = { apartment: 'Apartment', plot: 'Plot', commercial: 'Commercial' }
 
-export const usePropertyDraft = () => usePersistentState<PropertyDraft>('property.draft', defaultDraft)
+/** Drafts saved before `area` / `areaUnit` existed lack them; an unknown area stays empty instead of borrowing the demo plot's. */
+const migrateDraft = (d: PropertyDraft): PropertyDraft => ({ ...defaultDraft, ...{ area: '', areaUnit: 'sqm' as AreaUnit }, ...(d as Partial<PropertyDraft>) })
+
+export const usePropertyDraft = () => usePersistentState<PropertyDraft>('property.draft', defaultDraft, migrateDraft)
 export const usePropertyDocuments = () => usePersistentState<StoredDoc[]>('property.documents', seedDocuments)
 
 export interface StoredFinding { decision: Resolution; value?: string }

@@ -15,6 +15,18 @@ export interface EnvConfig {
   DOCAI_PROCESSOR_ID?: string;
   TRANSLATE_LOCATION: string;
   MAX_UPLOAD_MB: number;
+  CHAIN_RPC_URL?: string;
+  CHAIN_NETWORK: string;
+  CHAIN_CONTRACT_ADDRESS?: string;
+  /** Full Cloud KMS cryptoKeyVersion resource name (EC_SIGN_SECP256K1_SHA256). The registrar key; never leaves KMS. */
+  CHAIN_KMS_KEY?: string;
+  /** Local development only (e.g. a ganache account). Ignored in production. */
+  CHAIN_PRIVATE_KEY?: string;
+  CHAIN_OWNER_SALT: string;
+  CHAIN_EXPLORER_URL?: string;
+  /** Bearer token the lawyer console sends to approve and anchor a property. */
+  CHAIN_ADMIN_TOKEN?: string;
+  PUBLIC_API_URL?: string;
 }
 
 function parseEnv(): EnvConfig {
@@ -34,6 +46,15 @@ function parseEnv(): EnvConfig {
   const maxUploadMb = parseInt(process.env.MAX_UPLOAD_MB || '20', 10);
 
   return {
+    CHAIN_RPC_URL: process.env.CHAIN_RPC_URL || undefined,
+    CHAIN_NETWORK: process.env.CHAIN_NETWORK || 'sepolia',
+    CHAIN_CONTRACT_ADDRESS: process.env.CHAIN_CONTRACT_ADDRESS || undefined,
+    CHAIN_KMS_KEY: process.env.CHAIN_KMS_KEY || undefined,
+    CHAIN_PRIVATE_KEY: nodeEnv === 'production' ? undefined : process.env.CHAIN_PRIVATE_KEY || undefined,
+    CHAIN_OWNER_SALT: process.env.CHAIN_OWNER_SALT || 'realdha-dev-salt',
+    CHAIN_EXPLORER_URL: process.env.CHAIN_EXPLORER_URL || undefined,
+    CHAIN_ADMIN_TOKEN: process.env.CHAIN_ADMIN_TOKEN || undefined,
+    PUBLIC_API_URL: process.env.PUBLIC_API_URL || undefined,
     DOCAI_LOCATION: process.env.DOCAI_LOCATION || 'us',
     DOCAI_PROCESSOR_ID: process.env.DOCAI_PROCESSOR_ID,
     TRANSLATE_LOCATION: process.env.TRANSLATE_LOCATION || 'global',

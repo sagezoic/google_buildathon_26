@@ -1,13 +1,9 @@
 import {
   ArrowRight,
-  Building2,
   CheckCircle2,
-  Compass,
   FileCheck,
   Layers,
-  MapPin,
   ShieldCheck,
-  Sparkles,
 } from 'lucide-react'
 import { Link } from 'react-router'
 import { Screen } from '../../app/Shell'
@@ -45,8 +41,9 @@ function PropertyCard({ item }: { item: Listing }) {
           className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
         <div className="pointer-events-none absolute inset-x-2.5 top-2.5 flex items-center justify-between gap-1.5">
-          <RecordId id={item.id} className="bg-surface/90 backdrop-blur-xs font-mono text-[11px]" />
+          <RecordId id={item.id} className="mx-0 bg-surface px-2 py-1 text-[11px] text-text shadow-e1" />
           <Pill
+            className="rounded-control bg-surface px-2 py-1 shadow-e1"
             tone={isAnchored ? 'chain' : 'success'}
             icon={isAnchored ? <ShieldCheck className="size-3" /> : <CheckCircle2 className="size-3" />}
           >
@@ -90,12 +87,9 @@ function ProjectCard({ project }: { project: Launch }) {
           className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
         />
         <div className="pointer-events-none absolute inset-x-2.5 top-2.5 flex items-center justify-between gap-1.5">
-          <span className="rounded-control bg-surface/90 px-2 py-0.5 font-mono text-[11px] font-semibold text-text shadow-e1 backdrop-blur-xs">
+          <span className="rounded-control bg-surface/90 px-2 py-0.5 font-mono text-[11px] font-semibold text-text shadow-e1">
             {project.id}
           </span>
-          <Pill tone="brand" icon={<Sparkles className="size-3" />}>
-            New launch
-          </Pill>
         </div>
       </div>
       <div className="flex flex-1 flex-col justify-between p-4 gap-2">
@@ -122,13 +116,6 @@ export default function BuyerHome() {
   const [profile] = usePersistentState<Profile>('x.profile', PROFILE_DEFAULT)
   const first = profile.name.trim().split(/\s+/)[0]
 
-  const QUICK_LINKS = [
-    { label: 'Apartments', to: `${path('F08-02')}?q=apartment`, icon: Building2 },
-    { label: 'Plots in Lonavala', to: `${path('F08-02')}?q=plot`, icon: MapPin },
-    { label: 'New launches', to: path('F10-06'), icon: Sparkles },
-    { label: 'Market analysis', to: path('GP-21'), icon: Compass },
-    { label: 'Check documents', to: path('F05-01'), icon: FileCheck },
-  ]
 
   return (
     <Screen id="X-01">
@@ -137,54 +124,22 @@ export default function BuyerHome() {
         <div className="flex flex-col gap-5 pt-1">
           <div className="flex flex-col gap-2 max-w-3xl">
             <h1 className="text-h1 font-bold text-text sm:text-display tracking-tight">
-              {profile.saved ? `Welcome back, ${first}` : 'One permanent record for every property in Maharashtra'}
+              {profile.saved ? `Welcome back, ${first}` : 'Check a property before you pay'}
             </h1>
             <p className="text-body text-muted leading-relaxed">
-              Permanent 30-year revenue title verification, independent advocate sign-offs, and
-              on-chain cryptographic proofs for residential and commercial real estate.
+              Every property here has AI-checked documents, a lawyer's sign-off and a fingerprint anchored on-chain.
+              Check a title deed you already have, or search properties that are already verified.
             </p>
           </div>
 
           {/* Primary Action Buttons */}
           <div className="flex flex-wrap items-center gap-3 pt-1">
-            <Button to={path('F08-01')} size="lg" className="h-11 px-6 font-semibold shadow-e1">
-              Explore verified registry
+            <Button to={path('F05-01')} size="lg" className="h-11 px-6 font-semibold shadow-e1" icon={<ShieldCheck className="size-4" />}>
+              Verify a title deed
             </Button>
-            <Button
-              to={path('F05-01')}
-              variant="secondary"
-              size="lg"
-              className="h-11 px-5"
-              icon={<ShieldCheck className="size-4" />}
-            >
-              Verify title deed
+            <Button to={path('F08-01')} variant="secondary" size="lg" className="h-11 px-5">
+              Search verified properties
             </Button>
-            <Button
-              to={path('GP-07')}
-              variant="ghost"
-              size="lg"
-              className="h-11 px-4 text-muted hover:text-text"
-            >
-              Add a property
-            </Button>
-          </div>
-
-          {/* Quick Categories */}
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            <span className="text-chip font-medium text-muted max-sm:hidden">Quick filters:</span>
-            {QUICK_LINKS.map((q) => {
-              const Icon = q.icon
-              return (
-                <Link
-                  key={q.label}
-                  to={q.to}
-                  className="inline-flex items-center gap-1.5 rounded-pill border border-line bg-surface px-3 py-1 text-chip font-medium text-text no-underline transition-colors hover:border-line-hover hover:bg-canvas"
-                >
-                  <Icon className="size-3.5 text-muted" aria-hidden />
-                  {q.label}
-                </Link>
-              )
-            })}
           </div>
         </div>
 
@@ -297,10 +252,10 @@ export default function BuyerHome() {
         >
           <div className="flex flex-col gap-1 pb-6 border-b border-line">
             <h2 className="text-h2 font-semibold text-text">
-              Zero ambiguity. Built for Indian land records.
+              How a record gets verified
             </h2>
             <p className="text-small text-muted max-w-xl">
-              Every property transaction protected by sovereign title verification and verifiable provenance.
+              Three steps sit behind every verified property.
             </p>
           </div>
 
@@ -309,10 +264,9 @@ export default function BuyerHome() {
               <div className="flex size-9 items-center justify-center rounded-control bg-sunken text-primary-text">
                 <FileCheck className="size-5" />
               </div>
-              <h3 className="text-body font-semibold text-text">30-Year Revenue Checks</h3>
+              <h3 className="text-body font-semibold text-text">AI document check</h3>
               <p className="text-small text-muted">
-                Automated AI cross-referencing across 7/12 extracts, Ferfar mutation registers, non-agriculture (NA)
-                orders, and village maps in Marathi and English.
+                AI reads 7/12 extracts, mutation entries and NA orders in Marathi and English, and flags gaps.
               </p>
             </div>
 
@@ -320,10 +274,9 @@ export default function BuyerHome() {
               <div className="flex size-9 items-center justify-center rounded-control bg-sunken text-success-ink">
                 <CheckCircle2 className="size-5" />
               </div>
-              <h3 className="text-body font-semibold text-text">Independent Lawyer Sign-Off</h3>
+              <h3 className="text-body font-semibold text-text">Lawyer sign-off</h3>
               <p className="text-small text-muted">
-                Practicing land title advocates examine heir releases, pending litigation, encumbrance certificates,
-                and formal revenue sanctions before sign-off.
+                A land-title advocate reviews the findings and makes the legal call. The AI does not.
               </p>
             </div>
 
@@ -331,10 +284,9 @@ export default function BuyerHome() {
               <div className="flex size-9 items-center justify-center rounded-control bg-sunken text-chain-ink">
                 <ShieldCheck className="size-5" />
               </div>
-              <h3 className="text-body font-semibold text-text">Sepolia On-Chain Proof</h3>
+              <h3 className="text-body font-semibold text-text">On-chain proof</h3>
               <p className="text-small text-muted">
-                Document hashes and verification certificates are permanently anchored on the blockchain. Any later
-                tampering or alteration is immediately flagged.
+                Document fingerprints are anchored on the Sepolia test network, so any later change is detectable.
               </p>
             </div>
           </div>

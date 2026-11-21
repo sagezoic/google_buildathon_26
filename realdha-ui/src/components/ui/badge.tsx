@@ -2,19 +2,20 @@ import * as React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '../../lib/cn'
 
+/** Small inline marker. Text only, tinted by tone; no capsule or border. */
 const badgeVariants = cva(
-  'inline-flex items-center gap-1.5 rounded-pill px-2.5 py-0.5 text-label font-medium transition-colors select-none',
+  'inline-flex items-center gap-1.5 text-label font-medium select-none',
   {
     variants: {
       variant: {
-        default: 'bg-primary text-on-primary',
-        secondary: 'bg-sunken text-text border border-line',
-        outline: 'border border-line-strong text-text',
-        success: 'bg-success-tint text-success-ink border border-success',
-        warning: 'bg-warning-tint text-warning-ink border border-warning',
-        danger: 'bg-danger-tint text-danger-ink border border-danger',
-        chain: 'bg-chain-tint text-chain-ink border border-chain',
-        brand: 'bg-primary-tint text-primary-text border border-primary/20',
+        default: 'text-text',
+        secondary: 'text-muted',
+        outline: 'text-muted',
+        success: 'text-success-ink',
+        warning: 'text-warning-ink',
+        danger: 'text-danger-ink',
+        chain: 'text-chain-ink',
+        brand: 'text-primary-text',
       },
     },
     defaultVariants: {

@@ -1,4 +1,4 @@
-import { Check, Compass, Eye, Heart, Layers, Mail, MessageSquare, Phone, Share2, ShieldCheck, Sparkles } from 'lucide-react'
+import { Check, Compass, Eye, Heart, Layers, Mail, MapPin, MessageSquare, Phone, Share2, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { Screen } from '../../app/Shell'
 import { path } from '../../app/nav'
@@ -10,11 +10,13 @@ import { RecordId } from '../../components/ui/record-id'
 import { getPropertyPhotos } from '../../data/property-images'
 import { BK } from '../../lib/buyer-store'
 import { cn } from '../../lib/cn'
+import OsmMap from '../../components/map/OsmMap'
+import OsmMarker from '../../components/map/OsmMarker'
 
 /** F09-03 · Single property buyer view (A-1804). */
 export default function PropertyBuyerScreen() {
   const [shortlist, setShortlist] = usePersistentState<string[]>(BK.shortlist, ['RA-PUN-001-A-18-04'])
-  const [activeMedia, setActiveMedia] = useState<'photos' | 'floorplan'>('photos')
+  const [activeMedia, setActiveMedia] = useState<'photos' | 'floorplan' | 'map'>('photos')
   const [activePhotoIdx, setActivePhotoIdx] = useState(0)
   const isShortlisted = shortlist.includes('RA-PUN-001-A-18-04')
   const photos = getPropertyPhotos('RA-PUN-001-A-18-04')
@@ -63,6 +65,13 @@ export default function PropertyBuyerScreen() {
               >
                 <Layers className="size-3.5" /> Floor Plan & Walkthrough
               </button>
+              <button
+                type="button"
+                onClick={() => setActiveMedia('map')}
+                className={cn('flex items-center gap-1.5 rounded-[4px] px-3 py-1.5 transition-colors', activeMedia === 'map' ? 'bg-primary text-on-primary' : 'text-muted hover:text-text')}
+              >
+                <MapPin className="size-3.5" /> Neighborhood Map
+              </button>
             </div>
             <span className="text-label text-muted max-md:hidden">Sahyadri Hills Facing · Verified Architectural Layout</span>
           </div>
@@ -95,7 +104,7 @@ export default function PropertyBuyerScreen() {
                 </button>
               ))}
             </div>
-          ) : (
+          ) : activeMedia === 'floorplan' ? (
             <div className="relative flex min-h-[380px] flex-col items-center justify-center rounded-card border border-line bg-surface p-6 shadow-e1">
               <svg viewBox="0 0 700 360" className="max-h-[320px] w-full max-w-[620px]" fill="none" xmlns="http://www.w3.org/2000/svg">
                 {/* Master Bed */}
@@ -116,6 +125,38 @@ export default function PropertyBuyerScreen() {
               </svg>
               <div className="mt-2 text-label text-muted">Architectural Sanctioned Plan · Unit A-1804 (1,180 sq ft carpet)</div>
             </div>
+          ) : (
+            <div className="relative min-h-[460px] overflow-hidden rounded-card border border-line bg-sunken">
+              <OsmMap center={[73.7868, 18.5590]} zoom={15} showThemeToggle className="size-full min-h-[460px]">
+                <OsmMarker position={[73.7868, 18.5590]}>
+                  <div className="flex flex-col items-center">
+                    <div className="rounded-control border-2 border-white bg-primary px-2.5 py-1 text-chip font-bold text-on-primary shadow-e2 whitespace-nowrap">
+                      Baner Heights · A-1804
+                    </div>
+                    <div className="size-2 -translate-y-1 rotate-45 border-r border-b border-white bg-primary" />
+                  </div>
+                </OsmMarker>
+
+                {/* Nearby landmarks */}
+                {[
+                  { name: 'Baner Hill Reserve', dist: '350 m', coord: [73.7830, 18.5550] as [number, number] },
+                  { name: 'Balewadi High St', dist: '1.2 km', coord: [73.7780, 18.5720] as [number, number] },
+                  { name: 'The Orchid School', dist: '1.4 km', coord: [73.7920, 18.5630] as [number, number] },
+                  { name: 'Metro Station Line 3', dist: '2.1 km', coord: [73.7710, 18.5800] as [number, number] },
+                ].map((item) => (
+                  <OsmMarker key={item.name} position={item.coord}>
+                    <div className="flex items-center gap-1 rounded-pill border border-line bg-surface/95 px-2 py-0.5 text-[10px] font-medium text-text shadow-sm backdrop-blur-xs whitespace-nowrap">
+                      <span>{item.name}</span>
+                      <span className="text-muted">· {item.dist}</span>
+                    </div>
+                  </OsmMarker>
+                ))}
+
+                <div className="absolute bottom-3 left-3 z-10 rounded-control border border-line bg-surface/90 px-3 py-1.5 text-label font-medium text-text shadow-e1 backdrop-blur-xs">
+                  Baner Hill Reserve, Baner, Pune 411045 · Sahyadri Developers
+                </div>
+              </OsmMap>
+            </div>
           )}
         </div>
 
@@ -131,7 +172,6 @@ export default function PropertyBuyerScreen() {
                 <Pill tone="chain" icon={<ShieldCheck className="size-3.5" />}>
                   Anchored on-chain
                 </Pill>
-                <Pill tone="brand" icon={<Sparkles className="size-3.5" />}>MahaRERA Sanctioned</Pill>
               </div>
               <h1 className="text-h1 font-bold text-text">Unit A-1804 · 3 BHK Luxury Apartment</h1>
               <p className="text-body text-muted">
@@ -190,14 +230,14 @@ export default function PropertyBuyerScreen() {
                     <div className="text-body font-medium">MahaRERA Sanctioned Plan & Registration</div>
                     <div className="text-chip text-muted">Registration certificate verified against MahaRERA portal</div>
                   </div>
-                  <Pill tone="success" icon={<Check className="size-3" />}>Verified</Pill>
+                  <span className="inline-flex items-center text-success-ink"><Check className="size-4" aria-hidden /><span className="sr-only">Verified</span></span>
                 </div>
                 <div className="flex items-center justify-between py-2.5">
                   <div>
                     <div className="text-body font-medium">Occupancy Certificate (OC)</div>
                     <div className="text-chip text-muted">Issued by PMC Pune Municipal Corporation</div>
                   </div>
-                  <Pill tone="success" icon={<Check className="size-3" />}>Verified</Pill>
+                  <span className="inline-flex items-center text-success-ink"><Check className="size-4" aria-hidden /><span className="sr-only">Verified</span></span>
                 </div>
                 <div className="flex items-center justify-between py-2.5">
                   <div>

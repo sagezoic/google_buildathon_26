@@ -3,6 +3,7 @@ import * as maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { Feature, Polygon } from 'geojson'
 import { cn } from '../../lib/cn'
+import { collapseAttribution } from '../map/attribution'
 import type { GeoPin } from '../../lib/property-store'
 import { baseStyle, STREET_IDS, STREET_PAINT } from './market-map'
 
@@ -76,6 +77,7 @@ export default function PlotMap({ pin, onPinChange, shape, fitKey, hint, compact
       setFailed(true)
       return
     }
+    collapseAttribution(map)
     map.touchZoomRotate.disableRotation()
     map.keyboard.disableRotation()
     map.addControl(new maplibregl.NavigationControl({ showCompass: false, showZoom: true }), 'top-right')

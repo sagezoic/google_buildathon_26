@@ -37,7 +37,19 @@ const DEFAULT_VILLA_PHOTOS = [
   'https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=1200&q=80',
 ]
 
+const VILLA_TOUR_PHOTOS = [
+  'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=1200&q=80', // Villa exterior
+  'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=1200&q=80', // Front elevation and lawn
+  'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=1200&q=80', // Garden facade
+  'https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=1200&q=80', // Living room
+  'https://images.unsplash.com/photo-1600566753376-12c8ab7fb75b?auto=format&fit=crop&w=1200&q=80', // Master bedroom
+]
+
 export const SPECIFIC_PROPERTY_PHOTOS: Record<string, string[]> = {
+  // Villa 7, Sahyadri Meadows (the 360° tour property)
+  'RA-PUN-018-V-07-01': VILLA_TOUR_PHOTOS,
+  'RA-PUN-018-V': VILLA_TOUR_PHOTOS,
+
   // A-1804 Baner Heights (Golden Path Unit)
   'RA-PUN-001-A-18-04': [
     'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80', // High-rise exterior

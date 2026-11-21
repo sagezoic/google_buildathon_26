@@ -7,7 +7,7 @@ import { Button } from '../../components/ui/button'
 import { Card } from '../../components/ui/card'
 import { Pill } from '../../components/ui/pill'
 import { PROJECTS } from '../../data/fixtures/f09-area'
-import { PROPERTIES } from '../../data/fixtures/f08-search'
+import { PROPERTIES, VILLA_ID } from '../../data/fixtures/f08-search'
 import { inr } from '../../data/fixtures/f11-buyer'
 import { getPropertyThumbnail } from '../../data/property-images'
 import { cn } from '../../lib/cn'
@@ -102,7 +102,7 @@ export default function AreaListScreen() {
                           <div className="flex items-center gap-3">
                             <img src={thumb} alt="" className="size-11 rounded-control object-cover bg-sunken" />
                             <div>
-                              <div className="font-semibold text-text">{proj.name}</div>
+                              <div className="font-semibold text-text">{proj.name.replace(' · New launch', '')}</div>
                               <div className="text-overline text-muted">{proj.sub}</div>
                             </div>
                           </div>
@@ -119,7 +119,7 @@ export default function AreaListScreen() {
                           {proj.priceRange}
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <Button variant="secondary" size="sm" to={path('F09-03')}>
+                          <Button variant="secondary" size="sm" to={path('F09-03', { id: proj.id === 'RA-PUN-018-V' ? VILLA_ID : 'RA-PUN-001-A-18-04' })}>
                             View
                           </Button>
                         </td>
@@ -152,7 +152,7 @@ export default function AreaListScreen() {
                           {inr(prop.price)}
                         </td>
                         <td className="px-4 py-3 text-right">
-                          <Button variant="secondary" size="sm" to={path('F09-03')}>
+                          <Button variant="secondary" size="sm" to={path('F09-03', { id: prop.id })}>
                             View
                           </Button>
                         </td>

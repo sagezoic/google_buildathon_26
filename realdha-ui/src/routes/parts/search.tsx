@@ -79,42 +79,41 @@ export function StatusPills({ p, short }: { p: Property; short?: boolean }) {
   )
 }
 
+/** One status per card: lawyer review outranks anchoring, which outranks signed off. */
+function CardStatus({ p, short }: { p: Property; short?: boolean }) {
+  if (p.status !== 'signed-off') return <Pill tone="warning" icon={<TriangleAlert className="size-4" />}>Lawyer review</Pill>
+  if (p.onChain) return <Pill tone="chain" icon={<Link2 className="size-4" />}>{short ? 'On-chain' : 'Anchored on-chain'}</Pill>
+  return <Pill tone="success" icon={<CheckCircle2 className="size-4" />}>Signed off</Pill>
+}
+
 export const idChip = 'rounded-control border border-line bg-sunken px-1.5 py-0.5 font-mono text-label font-medium'
 
 /** Result card (F08-02, F09-01 mobile). Opens the full record. */
-export function PropertyCard({ p, sub, note, shortPills }: { p: Property; sub: string; note?: boolean; shortPills?: boolean }) {
+export function PropertyCard({ p, sub, shortPills }: { p: Property; sub: string; note?: boolean; shortPills?: boolean }) {
   const thumb = getPropertyThumbnail(p.id, p.type)
   return (
     <Link
       to={`${path('F09-03')}?id=${p.id}`}
-      className="group flex flex-col overflow-hidden rounded-card border border-line bg-surface text-text no-underline shadow-e1 transition-all duration-200 hover:border-line-hover hover:shadow-e2"
+      className="group flex flex-col overflow-hidden rounded-card border border-line bg-surface text-text no-underline transition-colors duration-200 hover:border-line-hover"
     >
       <div className="relative aspect-[16/10] w-full overflow-hidden bg-sunken">
         <img
           src={thumb}
-          alt={p.label}
+          alt=""
           loading="lazy"
           decoding="async"
-          className="size-full object-cover transition-transform duration-300 group-hover:scale-105"
+          className="size-full object-cover"
         />
-        <div className="pointer-events-none absolute inset-x-2 top-2 flex items-center justify-between gap-1.5">
-          <span className="rounded-control bg-surface/90 px-2 py-0.5 font-mono text-[11px] font-semibold text-text shadow-e1 backdrop-blur-xs">
-            {p.id}
-          </span>
-          <span className="rounded-control bg-primary px-2 py-0.5 text-[11px] font-semibold text-on-primary shadow-e1">
-            {priceShort(p.price)}
-          </span>
-        </div>
       </div>
       <div className="flex flex-col gap-1.5 p-3.5 md:p-4">
-        <div className="text-control font-semibold text-text group-hover:text-brand md:text-body">
-          {p.label}
+        <div className="flex items-baseline justify-between gap-3">
+          <div className="text-control font-semibold text-text group-hover:text-brand md:text-body">{p.label}</div>
+          <div className="tabular shrink-0 text-control font-semibold text-text md:text-body">{priceShort(p.price)}</div>
         </div>
         <div className="text-chip text-muted">{sub}</div>
         <div className="mt-1 flex flex-wrap gap-1.5">
-          <StatusPills p={p} short={shortPills} />
+          <CardStatus p={p} short={shortPills} />
         </div>
-        {note && <div className="mt-1 text-chip text-muted max-md:hidden">{p.note}</div>}
       </div>
     </Link>
   )

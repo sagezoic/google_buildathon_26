@@ -1,6 +1,6 @@
 /** F08 / F09 · Sample properties for buyer search. Sample data only. */
 
-export type PType = 'apartment' | 'plot' | 'commercial'
+export type PType = 'apartment' | 'villa' | 'plot' | 'commercial'
 export type VStatus = 'signed-off' | 'lawyer-review'
 export interface Property {
   id: string
@@ -32,7 +32,11 @@ const S = 'signed-off' as const
 const L = 'lawyer-review' as const
 const apt = (bhk: number, area: number) => `${bhk} BHK · ${area.toLocaleString('en-IN')} sq ft`
 
+/** The villa that carries the 360° tour. First verified record in every listing. */
+export const VILLA_ID = 'RA-PUN-018-V-07-01'
+
 export const PROPERTIES: Property[] = [
+  P(VILLA_ID, 'Villa 7', 'Sahyadri Meadows Villas', 'villa', 4, 2850, '4 BHK Villa · 2,850 sq ft', 'Baner', 'Pune', S, true, false, 38500000, 'East facing · Private garden', 'East', 'Garden', 'Ground + 1'),
   P('RA-PUN-001-A-18-04', 'A-1804', 'Baner Heights', 'apartment', 3, 1180, apt(3, 1180), 'Baner', 'Pune', S, true, false, 14200000, 'East facing · Hill view', 'East', 'Hill', '18 of 24'),
   P('RA-PUN-001-A-12-02', 'A-1202', 'Baner Heights', 'apartment', 2, 860, apt(2, 860), 'Baner', 'Pune', S, false, false, 9200000, 'North facing', 'North', 'Road', '12 of 24'),
   P('RA-PUN-001-A-09-01', 'A-0901', 'Baner Heights', 'apartment', 3, 1210, apt(3, 1210), 'Baner', 'Pune', S, false, false, 13400000, 'West facing · Garden view', 'West', 'Garden', '9 of 24'),
@@ -166,7 +170,7 @@ export function runSearch(q: string, f: Filters, extra: string[] = []): { parsed
 }
 
 export const activeFilters = (f: Filters): { key: string; label: string }[] => [
-  ...f.types.map((t) => ({ key: `type:${t}`, label: t === 'apartment' ? 'Apartment' : t === 'plot' ? 'Plot' : 'Commercial' })),
+  ...f.types.map((t) => ({ key: `type:${t}`, label: t === 'apartment' ? 'Apartment' : t === 'villa' ? 'Villa' : t === 'plot' ? 'Plot' : 'Commercial' })),
   ...f.bhk.map((b) => ({ key: `bhk:${b}`, label: `${b >= 4 ? '4+' : b} BHK` })),
   ...(f.priceMin.trim() || f.priceMax.trim() ? [{ key: 'price', label: 'Price' }] : []),
   ...(f.signedOff ? [{ key: 'signedOff', label: 'Signed off' }] : []),

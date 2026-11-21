@@ -54,7 +54,6 @@ export const NAV: Record<Role, NavItem[]> = {
   ],
   buyer: [
     { label: 'Home', to: path('X-01') },
-    { label: 'My properties', tab: 'Properties', to: path('F03-03') },
     { label: 'Search', to: path('F08-01') },
     { label: 'Market', to: path('GP-21') },
     { label: 'Watchlist', to: path('F18-01') },
@@ -67,10 +66,10 @@ export const NAV: Record<Role, NavItem[]> = {
   ],
   developer: [
     { label: 'Dashboard', to: path('F15-01') },
+    { label: 'New project', tab: 'Project', to: path('F10-01') },
+    { label: '3D twin', to: path('F14-01') },
     { label: 'Inventory', to: path('F15-02') },
     { label: 'Enquiries', to: path('F15-04') },
-    { label: 'Calls', to: path('F15-05') },
-    { label: 'Partners', to: path('F15-07') },
   ],
   partner: [
     { label: 'Availability', to: path('F16-01') },

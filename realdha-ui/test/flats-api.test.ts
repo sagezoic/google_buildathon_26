@@ -20,6 +20,14 @@ describe('flats-api unit tests', () => {
 
     const rent = lowestRent(prices)
     expect(rent).toBe(30000)
+
+    // Null safety tests to ensure no "Cannot convert undefined or null to object"
+    expect(grossYield(null)).toBeNull()
+    expect(grossYield(undefined)).toBeNull()
+    expect(grossYield({} as any)).toBeNull()
+    expect(lowestRent(null)).toBeNull()
+    expect(lowestRent(undefined)).toBeNull()
+    expect(lowestRent({} as any)).toBeNull()
   })
 
   it('fetchSocieties maps rent price sort to sort=rent and serializes bhk array', async () => {

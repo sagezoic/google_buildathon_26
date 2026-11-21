@@ -276,3 +276,121 @@ variable "gcs_bucket_name" {
   type        = string
   default     = ""
 }
+
+# ------------------------------------------------------------------------------
+# Pub/Sub, BigQuery and Cloud CDN
+# ------------------------------------------------------------------------------
+
+variable "enable_pubsub" {
+  description = "Create the Pub/Sub topics, subscriptions and dead-letter queue (document ingest, chain anchor, analytics events)"
+  type        = bool
+  default     = true
+}
+
+variable "enable_bigquery" {
+  description = "Create the BigQuery analytics dataset and events table"
+  type        = bool
+  default     = true
+}
+
+variable "bigquery_dataset_id" {
+  description = "BigQuery dataset id (letters, digits and underscores only)"
+  type        = string
+  default     = "realdha_analytics"
+}
+
+variable "bigquery_location" {
+  description = "BigQuery dataset location: the US multi-region or a US region. Keep in the US."
+  type        = string
+  default     = "US"
+
+  validation {
+    condition     = can(regex("^(US|us-[a-z0-9]+)$", var.bigquery_location))
+    error_message = "The BigQuery location must be in the United States: 'US' or a region starting with 'us-'."
+  }
+}
+
+variable "bigquery_deletion_protection" {
+  description = "Whether to block `terraform destroy` on the BigQuery events table"
+  type        = bool
+  default     = false
+}
+
+variable "enable_cdn" {
+  description = "Create the public Cloud Storage assets bucket fronted by Cloud CDN (global HTTP(S) load balancer; it bills a forwarding rule while it exists)"
+  type        = bool
+  default     = true
+}
+
+variable "cdn_bucket_name" {
+  description = "Name of the CDN assets bucket. If empty, realdha-cdn-<project_id> is used."
+  type        = string
+  default     = ""
+}
+
+variable "cdn_domain" {
+  description = "Optional custom domain for the CDN (e.g. cdn.example.com). When set, a Google-managed certificate, HTTPS and an HTTP to HTTPS redirect are created; point the domain's A record at the cdn_ip_address output. Empty serves plain HTTP on the reserved IP."
+  type        = string
+  default     = ""
+}
+
+variable "cdn_cors_origins" {
+  description = "Origins allowed to fetch CDN assets from a browser (CORS)"
+  type        = list(string)
+  default     = ["*"]
+}
+
+# ------------------------------------------------------------------------------
+# Blockchain property tokens
+# ------------------------------------------------------------------------------
+
+variable "enable_chain" {
+  description = "Create the Cloud KMS registrar key and pass chain settings to the backend"
+  type        = bool
+  default     = true
+}
+
+variable "chain_network" {
+  description = "Name of the EVM network the property registry contract lives on"
+  type        = string
+  default     = "sepolia"
+}
+
+variable "chain_contract_address" {
+  description = "Deployed PropertyRegistry address (run `bun run chain:deploy` in backend/ once). Empty until deployed."
+  type        = string
+  default     = ""
+}
+
+variable "chain_explorer_url" {
+  description = "Block explorer base URL used for transaction links"
+  type        = string
+  default     = "https://sepolia.etherscan.io"
+}
+
+variable "chain_rpc_url" {
+  description = "JSON-RPC endpoint for the chain (Blockchain Node Engine, Infura, Alchemy...). Stored in Secret Manager."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "chain_admin_token" {
+  description = "Bearer token the lawyer console uses to approve and anchor a property. Stored in Secret Manager."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "chain_owner_salt" {
+  description = "Secret salt mixed into the on-chain owner reference so it cannot be reversed to a name. Stored in Secret Manager; never change it after tokens exist."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "chain_public_api_url" {
+  description = "Public base URL of the backend (used in token metadata URLs). Empty falls back to localhost."
+  type        = string
+  default     = ""
+}

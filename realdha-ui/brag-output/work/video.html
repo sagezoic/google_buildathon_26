@@ -1,0 +1,218 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face { font-family: 'Serif'; src: url(fonts/source-serif-4-latin-wght-normal.woff2) format('woff2'); font-weight: 200 900; }
+@font-face { font-family: 'Sans'; src: url(fonts/hanken-grotesk-latin-wght-normal.woff2) format('woff2'); font-weight: 100 900; }
+@font-face { font-family: 'Deva'; src: url(fonts/noto-sans-devanagari-devanagari-wght-normal.woff2) format('woff2'); font-weight: 100 900; }
+@font-face { font-family: 'Mono'; src: url(fonts/ibm-plex-mono-latin-500-normal.woff2) format('woff2'); font-weight: 500; }
+:root { --canvas:#F4EFE4; --surface:#FBF9F3; --ink:#1B1A17; --muted:#4F4A3E; --indigo:#23306B; --seal:#B3261E; --teal:#0F6B6B; --line:#DDD5C3; }
+* { margin:0; padding:0; box-sizing:border-box; }
+html, body { width:1920px; height:1080px; overflow:hidden; background:var(--canvas); }
+#stage { position:absolute; inset:0; overflow:hidden; font-family:'Sans', sans-serif; color:var(--ink);
+  background:
+    repeating-linear-gradient(to bottom, transparent 0 59px, rgba(141,125,95,.10) 59px 60px),
+    var(--canvas); }
+#stage::before { content:''; position:absolute; left:120px; top:0; bottom:0; width:1px; background:rgba(179,38,30,.16); }
+.scene { position:absolute; inset:0; display:none; }
+.abs { position:absolute; }
+.serif { font-family:'Serif', serif; font-weight:600; letter-spacing:-0.02em; }
+.deva { font-family:'Deva', sans-serif; }
+img { display:block; }
+.card { position:absolute; box-shadow: 0 1px 0 rgba(27,26,23,.04), 0 24px 60px -24px rgba(60,48,25,.28); }
+.stamp { position:absolute; border:6px solid var(--seal); border-radius:50%; }
+.cap { position:absolute; left:0; right:0; text-align:center; font-size:64px; }
+.kicker { font-family:'Sans'; font-weight:600; font-size:22px; letter-spacing:.16em; text-transform:uppercase; color:var(--muted); }
+</style></head>
+<body><div id="stage">
+
+<!-- 1 Hook -->
+<div class="scene" id="s1">
+  <div class="abs kicker" id="s1k" style="left:0;right:0;top:290px;text-align:center">7/12 extract · page 1</div>
+  <div class="abs deva" id="s1d" style="left:0;right:0;top:340px;text-align:center;font-size:76px;font-weight:600;color:var(--muted)">एकूण क्षेत्र: ०.०४१८ हे.आर</div>
+  <div class="abs serif" id="s1a" style="left:0;right:0;top:540px;text-align:center;font-size:84px">The land record says <span style="color:var(--indigo)">418 sq m.</span></div>
+  <div class="abs serif" id="s1b" style="left:0;right:0;top:680px;text-align:center;font-size:84px">The draft agreement says <span id="s1n" style="color:var(--seal);position:relative;margin-left:18px">465 sq m.</span></div>
+  <div class="stamp" id="s1s"></div>
+</div>
+
+<!-- 2 Reveal -->
+<div class="scene" id="s2">
+  <img id="s2l" class="abs" src="realdha-logo.png" style="left:810px;top:220px;width:300px;height:300px">
+  <div class="abs serif" id="s2w" style="left:0;right:0;top:540px;text-align:center;font-size:132px;color:var(--ink)">Realdha</div>
+  <div class="abs" id="s2t" style="left:0;right:0;top:730px;text-align:center;font-size:50px;font-weight:500;color:var(--muted)">One permanent record for every property in India</div>
+</div>
+
+<!-- 3 Reads Marathi -->
+<div class="scene" id="s3">
+  <div class="cap serif" id="s3c" style="top:130px">Reads <span style="color:var(--indigo)">Marathi</span> 7/12 extracts</div>
+  <div class="card" id="s3card" style="left:310px;top:330px;width:1300px;height:534px;background:transparent;box-shadow:none"></div>
+  <div class="abs" id="s3scan" style="border:4px solid var(--indigo);border-radius:6px"></div>
+</div>
+
+<!-- 4 Flags -->
+<div class="scene" id="s4">
+  <div class="cap serif" id="s4c" style="top:110px">Flags the <span style="color:var(--seal)">47 sq m</span> before you pay</div>
+  <div id="s4z" class="abs" style="inset:0">
+    <img class="card" id="s4a" src="el/rep-0.png" style="left:360px;top:270px;width:1200px">
+    <img class="card" id="s4b" src="el/rep-1.png" style="left:360px;top:440px;width:1200px">
+    <div class="stamp" id="s4s"></div>
+  </div>
+</div>
+
+<!-- 5 On-chain -->
+<div class="scene" id="s5">
+  <div class="abs serif" id="s5a" style="left:150px;top:390px;font-size:70px;white-space:nowrap">A lawyer signs off.</div>
+  <div class="abs serif" id="s5b" style="left:150px;top:490px;font-size:70px;white-space:nowrap;color:var(--teal)">Fingerprints go on-chain.</div>
+  <img class="card" id="s5c1" src="el/anc-checked.png" style="left:1060px;top:110px;width:754px">
+  <img class="card" id="s5c2" src="el/anc-done.png" style="left:1060px;top:110px;width:754px">
+  <div class="abs" id="s5g" style="left:1060px;top:110px;width:754px;height:712px;border:5px solid var(--teal);border-radius:4px"></div>
+  <svg id="cur" class="abs" width="44" height="56" viewBox="0 0 22 28"><path d="M2 2 L2 22 L7.5 17 L11 25.5 L14.5 24 L11 15.8 L18.5 15.8 Z" fill="#1B1A17" stroke="#FBF9F3" stroke-width="1.6" stroke-linejoin="round"/></svg>
+</div>
+
+<!-- 6 Outro -->
+<div class="scene" id="s6">
+  <img id="s6l" class="abs" src="realdha-logo.png" style="left:840px;top:200px;width:240px;height:240px">
+  <div class="abs serif" id="s6w" style="left:0;right:0;top:460px;text-align:center;font-size:132px">Realdha</div>
+  <div class="abs serif" id="s6t" style="left:0;right:0;top:660px;text-align:center;font-size:62px;color:var(--indigo)">Check a title before you pay.</div>
+  <div class="abs" id="s6u" style="left:0;right:0;top:790px;text-align:center;font-size:32px;font-weight:500;color:var(--muted)">One permanent record for every property in India</div>
+</div>
+
+</div>
+<script>
+const $ = id => document.getElementById(id);
+const clamp = (x, a=0, b=1) => Math.min(b, Math.max(a, x));
+const prog = (t, a, b) => clamp((t - a) / (b - a));
+const outCubic = x => 1 - Math.pow(1 - x, 3);
+const outBack = x => { const c = 1.6; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const inCubic = x => x * x * x;
+// fade+rise in at a..a+d, out at o..o+0.25
+function show(el, t, a, d = 0.35, o = null, rise = 28) {
+  const i = outCubic(prog(t, a, a + d));
+  const x = o == null ? 0 : inCubic(prog(t, o, o + 0.25));
+  el.style.opacity = i * (1 - x);
+  el.style.transform = `translateY(${(1 - i) * rise - x * 20}px)`;
+}
+const SCENES = [['s1',0,4],['s2',4,7],['s3',7,11],['s4',11,15],['s5',15,18],['s6',18,21.01]];
+
+// Upload list rows (real card, split into its 5 rows)
+const ROWS = 5, CSS_W = 793, CSS_H = 326, SC = 1300 / CSS_W, ROW_H = CSS_H / ROWS * SC;
+const card3 = $('s3card');
+for (let i = 0; i < ROWS; i++) {
+  const r = document.createElement('div');
+  r.className = 'abs'; r.id = 'row' + i;
+  r.style.cssText = `left:0;top:${i*ROW_H}px;width:1300px;height:${ROW_H+0.5}px;overflow:hidden;background:#FBF9F3;box-shadow:0 18px 40px -26px rgba(60,48,25,.35)`;
+  r.innerHTML = `<img src="el/uplist.png" style="position:absolute;left:0;top:${-i*ROW_H}px;width:1300px">`;
+  card3.appendChild(r);
+}
+// Detected-badge boxes in the card (css px), rows 0,1,2,4
+const BADGES = [[0, 493, 592], [1, 493, 592], [2, 493, 592], [4, 444, 592]];
+
+function render(t) {
+  for (const [id, a, b] of SCENES) $(id).style.display = (t >= a && t < b) ? 'block' : 'none';
+
+  if (t < 4) {
+    // Devanagari writes in left to right
+    const w = outCubic(prog(t, 0.0, 0.9));
+    $('s1d').style.clipPath = `inset(0 ${(1 - w) * 100}% 0 0)`;
+    $('s1d').style.opacity = 1 - inCubic(prog(t, 3.75, 4.0));
+    show($('s1k'), t, 0.1, 0.4, 3.75, 10);
+    show($('s1a'), t, 0.5, 0.4, 3.75);
+    show($('s1b'), t, 2.0, 0.4, 3.75);
+    // seal stamp on 465 at beat 5 (2.5s)
+    const s = $('s1s'), n = $('s1n');
+    const r = n.getBoundingClientRect();
+    const p = prog(t, 2.5, 2.7), q = inCubic(prog(t, 3.75, 4.0));
+    s.style.left = (r.left - 12) + 'px'; s.style.top = (r.top + 2) + 'px';
+    s.style.width = (r.width + 30) + 'px'; s.style.height = (r.height - 4) + 'px';
+    s.style.opacity = (t < 2.5 ? 0 : clamp(p * 3)) * (1 - q);
+    s.style.transform = `rotate(-3deg) scale(${1.35 - 0.35 * outCubic(p)})`;
+  }
+  else if (t < 7) {
+    const l = outBack(prog(t, 4.0, 4.45));
+    const o = inCubic(prog(t, 6.75, 7.0));
+    $('s2l').style.opacity = clamp(prog(t, 4.0, 4.2)) * (1 - o);
+    $('s2l').style.transform = `scale(${0.7 + 0.3 * l}) translateY(${-o*20}px)`;
+    show($('s2w'), t, 4.15, 0.4, 6.75);
+    show($('s2t'), t, 4.4, 0.4, 6.75);
+  }
+  else if (t < 11) {
+    show($('s3c'), t, 7.0, 0.35, 10.75);
+    const out = inCubic(prog(t, 10.75, 11.0));
+    for (let i = 0; i < ROWS; i++) {
+      const p = outCubic(prog(t, 7.5 + 0.25 * i, 7.5 + 0.25 * i + 0.3));
+      const r = $('row' + i);
+      r.style.opacity = p * (1 - out);
+      r.style.transform = `translateY(${(1 - p) * 40 - out * 20}px)`;
+    }
+    // scan across the Detected badges, one per 8th note from 9.0s
+    const sc = $('s3scan');
+    const k = Math.floor((t - 9.0) / 0.25);
+    if (t >= 9.0 && k < BADGES.length + 3) {
+      const [row, x0, x1] = BADGES[Math.min(k, BADGES.length - 1)];
+      const local = (t - 9.0) - k * 0.25;
+      const hold = k >= BADGES.length - 1;
+      const pop = hold ? 1 : outCubic(clamp(local / 0.12));
+      sc.style.display = 'block';
+      const cx = 310 + x0 * SC - 10, cy = 330 + row * ROW_H + ROW_H * 0.22;
+      sc.style.left = cx + 'px'; sc.style.top = cy + 'px';
+      sc.style.width = ((x1 - x0) * SC + 20) + 'px'; sc.style.height = (ROW_H * 0.56) + 'px';
+      sc.style.opacity = (hold ? clamp(1 - (t - 10.0) / 0.5) : 1) * (1 - out);
+      sc.style.transform = `scale(${1.15 - 0.15 * pop})`;
+    } else sc.style.display = 'none';
+  }
+  else if (t < 15) {
+    show($('s4c'), t, 11.0, 0.35, 14.75);
+    show($('s4a'), t, 11.25, 0.35, 14.75, 40);
+    show($('s4b'), t, 11.75, 0.35, 14.75, 40);
+    const z = 1 + 0.035 * outCubic(prog(t, 11.5, 15));
+    $('s4z').style.transform = `scale(${z})`; $('s4z').style.transformOrigin = '960px 640px';
+    const s = $('s4s');
+    const SC4 = 1200 / 960;
+    const cx = 360 + 362 * SC4, cy = 440 + 76 * SC4;
+    const w = 230, h = 92;
+    s.style.left = (cx - w / 2) + 'px'; s.style.top = (cy - h / 2) + 'px';
+    s.style.width = w + 'px'; s.style.height = h + 'px';
+    const p = prog(t, 12.5, 12.7), q = inCubic(prog(t, 14.75, 15.0));
+    s.style.opacity = (t < 12.5 ? 0 : clamp(p * 3)) * (1 - q);
+    s.style.transform = `rotate(-4deg) scale(${1.35 - 0.35 * outCubic(p)})`;
+  }
+  else if (t < 18) {
+    show($('s5a'), t, 15.0, 0.35, 17.75);
+    show($('s5b'), t, 15.25, 0.35, 17.75);
+    const out = inCubic(prog(t, 17.75, 18.0));
+    const cin = outCubic(prog(t, 15.0, 15.4));
+    const SC5 = 754 / 560;
+    const c1 = $('s5c1'), c2 = $('s5c2');
+    const swapOut = prog(t, 16.0, 16.12), swapIn = outCubic(prog(t, 16.1, 16.4));
+    c1.style.opacity = cin * (1 - swapOut);
+    c1.style.transform = `translateY(${(1 - cin) * 40}px)`;
+    c2.style.opacity = swapIn * (1 - out);
+    c2.style.transform = `translateY(${-out * 20}px) scale(${0.97 + 0.03 * swapIn})`;
+    const g = $('s5g');
+    const gp = prog(t, 16.1, 16.9);
+    g.style.opacity = t < 16.1 ? 0 : (1 - gp) * 0.9;
+    g.style.transform = `scale(${1 + 0.05 * outCubic(gp)})`;
+    g.style.height = (529 * SC5) + 'px';
+    // cursor glides to "Approve and anchor", clicks on beat 32 (16.0s)
+    const bx = 1060 + 280 * SC5, by = 110 + 532 * SC5;
+    const m = (x => x < .5 ? 4*x*x*x : 1 - Math.pow(-2*x + 2, 3) / 2)(prog(t, 15.35, 15.95));
+    const cur = $('cur');
+    const x0 = 1720, y0 = 1060;
+    cur.style.left = (x0 + (bx - x0) * m) + 'px'; cur.style.top = (y0 + (by - y0) * m) + 'px';
+    const press = t > 15.95 && t < 16.12 ? 0.85 : 1;
+    cur.style.transform = `scale(${press})`;
+    cur.style.opacity = clamp(prog(t, 15.3, 15.45)) * (1 - prog(t, 16.4, 16.65));
+  }
+  else {
+    const l = outBack(prog(t, 18.0, 18.45));
+    $('s6l').style.opacity = clamp(prog(t, 18.0, 18.2));
+    $('s6l').style.transform = `scale(${0.7 + 0.3 * l})`;
+    show($('s6w'), t, 18.15, 0.4);
+    show($('s6t'), t, 18.4, 0.4);
+    show($('s6u'), t, 18.6, 0.4);
+  }
+}
+window.render = render;
+window.ready = Promise.all([document.fonts.load('600 80px Serif'), document.fonts.load('500 40px Sans'), document.fonts.load('600 70px Deva', 'एकूण क्षेत्र'), document.fonts.ready,
+  ...[...document.images].map(i => i.decode())]);
+render(0);
+</script></body></html>

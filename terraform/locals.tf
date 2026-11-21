@@ -12,13 +12,29 @@ locals {
       "artifactregistry.googleapis.com",
       "iam.googleapis.com",
       "documentai.googleapis.com",
-      "translate.googleapis.com"
+      "translate.googleapis.com",
+      "cloudkms.googleapis.com",
+      "secretmanager.googleapis.com"
     ] : [],
     var.enable_apis && var.deploy_database ? [
       "sqladmin.googleapis.com",
       "compute.googleapis.com"
+    ] : [],
+    var.enable_apis && var.enable_pubsub ? [
+      "pubsub.googleapis.com",
+      "storage.googleapis.com"
+    ] : [],
+    var.enable_apis && var.enable_bigquery ? [
+      "bigquery.googleapis.com"
+    ] : [],
+    var.enable_apis && var.enable_cdn ? [
+      "compute.googleapis.com",
+      "storage.googleapis.com"
     ] : []
   )
+
+  # Env vars for the backend from the Pub/Sub, BigQuery and CDN modules (keys are known at plan time)
+  backend_data_env = merge(local.pubsub_env, local.bigquery_env, local.cdn_env)
 
   artifact_repo_host = "${var.region}-docker.pkg.dev"
 

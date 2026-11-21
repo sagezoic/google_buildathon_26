@@ -3,14 +3,13 @@ import {
   ArrowLeft,
   Bell,
   Building2,
+  Check,
   ChevronDown,
   FileCheck,
   LogOut,
-  MapPin,
   Menu,
   Moon,
   Plus,
-  Search,
   Settings,
   Shield,
   Sparkles,
@@ -22,10 +21,12 @@ import { Link, NavLink, useNavigate } from 'react-router'
 import { cn } from '../lib/cn'
 import { type Role } from '../app/screens'
 import { NAV, INITIALS, path } from '../app/nav'
+import { useActiveRole } from '../app/active-role'
 import { usePrefs, type Lang } from '../app/prefs'
 import { Button } from './ui/button'
-import { Input } from './ui/input'
+import { PlaceSearch } from './place-search'
 import { Badge } from './ui/badge'
+import { useRunSearch } from '../routes/parts/search'
 import { Avatar, AvatarFallback } from './ui/avatar'
 import {
   Sheet,
@@ -61,7 +62,7 @@ const ROLE_PROFILES: Record<
   buyer: {
     name: 'Bhavna Patel',
     title: 'Due Diligence Buyer',
-    route: path('F08-01'),
+    route: path('X-01'),
     icon: <Users className="size-4" />,
   },
   lawyer: {
@@ -96,32 +97,55 @@ const ROLE_PROFILES: Record<
   },
 }
 
-const SAMPLE_SEARCH_RESULTS = [
-  {
-    id: 'RA-PUN-001-A-18-04',
-    title: 'Amanora Park Town, Tower A-1804',
-    locality: 'Hadapsar, Pune',
-    badge: 'On-chain Anchored',
-    tone: 'chain' as const,
-    route: '/ra-pun-001-a-18-04',
-  },
-  {
-    id: 'RA-LON-004-P-112-2',
-    title: 'Gat No. 84, NA Plot (418 sq m)',
-    locality: 'Lonavala, Pune',
-    badge: 'Discrepancy Flag',
-    tone: 'warning' as const,
-    route: '/ra-lon-004-p-112-2',
-  },
-  {
-    id: 'P52100018892',
-    title: 'MahaRERA Sanctioned Project Record',
-    locality: 'Amanora Gateway Towers, Pune',
-    badge: 'Sanctioned',
-    tone: 'success' as const,
-    route: '/properties/P52100018892',
-  },
+const ROLE_LABEL: Record<Role, string> = {
+  public: 'Guest',
+  owner: 'Owner',
+  buyer: 'Buyer',
+  developer: 'Developer',
+  partner: 'Channel partner',
+  lawyer: 'Lawyer',
+  admin: 'Admin',
+  government: 'Government',
+}
+
+const ROLE_GROUPS: { label: string; roles: Role[] }[] = [
+  { label: 'Walk-throughs', roles: ['owner', 'developer', 'buyer'] },
+  { label: 'Also in the product', roles: ['lawyer', 'partner', 'admin', 'government'] },
 ]
+
+/** Always-visible role switcher: shows who the visitor is viewing as and lists every role. */
+function RoleMenu({ role, onPick, onStart }: { role: Role; onPick: (r: Role) => void; onStart: () => void }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger
+        aria-label={`Viewing as ${ROLE_LABEL[role]}. Switch role`}
+        className="hidden h-9 shrink-0 cursor-pointer items-center gap-2 rounded-control border border-line-strong bg-surface px-2.5 text-chip font-medium text-text transition-colors hover:bg-primary-tint md:flex"
+      >
+        {ROLE_PROFILES[role]?.icon}
+        <span className="max-xl:hidden">Viewing as {ROLE_LABEL[role]}</span>
+        <ChevronDown className="size-3 text-muted" aria-hidden />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-60 p-1.5">
+        {ROLE_GROUPS.map((g) => (
+          <React.Fragment key={g.label}>
+            <DropdownMenuLabel className="px-2.5 py-1 text-xs font-semibold text-muted">{g.label}</DropdownMenuLabel>
+            {g.roles.map((r) => (
+              <DropdownMenuItem key={r} onSelect={() => onPick(r)} className="justify-between">
+                <span className="flex items-center gap-2">
+                  {ROLE_PROFILES[r]?.icon}
+                  {ROLE_LABEL[r]}
+                </span>
+                {role === r && <Check className="size-4 text-primary-text" aria-hidden />}
+              </DropdownMenuItem>
+            ))}
+            <DropdownMenuSeparator />
+          </React.Fragment>
+        ))}
+        <DropdownMenuItem onSelect={onStart}>Choose a role from the start screen</DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
 
 const LANGS: { id: Lang; label: string }[] = [
   { id: 'en', label: 'EN' },
@@ -207,9 +231,7 @@ export function SiteHeader({
 }: SiteHeaderProps) {
   const navigate = useNavigate()
   const [mobileOpen, setMobileOpen] = React.useState(false)
-  const [searchQuery, setSearchQuery] = React.useState('')
-  const [searchFocused, setSearchFocused] = React.useState(false)
-  const searchContainerRef = React.useRef<HTMLDivElement | null>(null)
+  const runSearch = useRunSearch()
 
   // Keep "Market", remove only "Search" text link (since search bar is present) and "Marketplace"
   const items = (NAV[role] || []).filter(
@@ -217,40 +239,16 @@ export function SiteHeader({
   )
   const currentProfile = ROLE_PROFILES[role] || ROLE_PROFILES.owner
 
-  // Handle outside click for search suggestions popup
-  React.useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        searchContainerRef.current &&
-        !searchContainerRef.current.contains(e.target as Node)
-      ) {
-        setSearchFocused(false)
-      }
-    }
-    document.addEventListener('pointerdown', handleClickOutside)
-    return () => document.removeEventListener('pointerdown', handleClickOutside)
-  }, [])
-
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!searchQuery.trim()) return
-    setSearchFocused(false)
-    if (onSearch) {
-      onSearch(searchQuery)
-    } else {
-      navigate(`${path('F08-02')}?q=${encodeURIComponent(searchQuery.trim())}`)
-    }
+  const handleSearchSubmit = (q: string) => {
+    if (onSearch) onSearch(q)
+    else runSearch(q)
   }
 
-  const handleSelectSample = (route: string) => {
-    setSearchFocused(false)
-    setSearchQuery('')
-    navigate(route)
-  }
-
+  const [, setActiveRole] = useActiveRole()
   const handleRoleSwitch = (newRole: Role) => {
     const profile = ROLE_PROFILES[newRole]
     if (profile) {
+      if (newRole === 'owner' || newRole === 'buyer') setActiveRole(newRole)
       setMobileOpen(false)
       navigate(profile.route)
     }
@@ -328,9 +326,6 @@ export function SiteHeader({
                     <span className="text-h3 font-bold tracking-tight text-brand">
                       Realdha
                     </span>
-                    <Badge variant="secondary" className="text-[10px] py-0 px-1.5 font-mono">
-                      Testnet
-                    </Badge>
                   </div>
                   <p className="text-xs text-muted">
                     One permanent record for every property in India
@@ -378,23 +373,19 @@ export function SiteHeader({
                     )
                   })}
 
-                  <div className="mt-3 px-2 pb-1 text-xs font-semibold tracking-wider text-muted uppercase">
-                    Quick Portals
-                  </div>
                   <NavLink
-                    to="/dev/flows"
+                    to="/"
                     onClick={() => setMobileOpen(false)}
-                    className="flex min-h-11 items-center justify-between rounded-control px-3 text-small text-text no-underline hover:bg-primary-tint"
+                    className="mt-3 flex min-h-11 items-center rounded-control px-3 text-small text-text no-underline hover:bg-primary-tint"
                   >
-                    <span>Prototype Flow Index</span>
-                    <span className="font-mono text-xs text-muted">123 screens</span>
+                    Choose a role
                   </NavLink>
                 </nav>
 
                 {/* Mobile Role Switcher */}
                 <div className="border-t border-line pt-3">
                   <div className="mb-2 text-xs font-semibold text-muted">
-                    Switch Test Persona
+                    Switch role
                   </div>
                   <div className="grid grid-cols-2 gap-1.5">
                     {(
@@ -403,6 +394,7 @@ export function SiteHeader({
                         'buyer',
                         'lawyer',
                         'developer',
+                        'partner',
                         'admin',
                         'government',
                       ] as Role[]
@@ -486,77 +478,22 @@ export function SiteHeader({
         })}
       </nav>
 
-      {/* CENTER-RIGHT: Global Search Bar */}
-      <div
-        ref={searchContainerRef}
+      {/* CENTER-RIGHT: Global search (OpenStreetMap places + property IDs) */}
+      <PlaceSearch
+        variant="header"
+        placeholder="Search a place or ID"
+        onSubmit={handleSearchSubmit}
         className={cn(
-          'relative ml-auto flex-1 max-w-[170px] sm:max-w-[210px] md:max-w-[240px] lg:max-w-[280px] shrink',
+          'ml-auto flex-1 max-w-[190px] sm:max-w-[240px] md:max-w-[280px] lg:max-w-[320px] shrink',
           back && title && 'hidden sm:block',
         )}
-      >
-        <form onSubmit={handleSearchSubmit} className="relative">
-          <Search
-            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted"
-            aria-hidden
-          />
-          <Input
-            type="search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onFocus={() => setSearchFocused(true)}
-            placeholder="Search ID, society, RERA..."
-            aria-label="Search property records or RERA numbers"
-            className="h-9 pl-9 pr-3 text-small rounded-control bg-field border-line shadow-none focus-visible:border-focus"
-          />
-        </form>
-
-        {/* Interactive Search Suggestions Popup */}
-        {searchFocused && (
-          <div className="absolute top-full right-0 sm:left-0 mt-1.5 w-[280px] sm:w-[320px] rounded-control border border-line bg-surface p-2 shadow-e2 z-50">
-            <div className="px-2 py-1 text-xs font-semibold text-muted uppercase">
-              Quick Case Studies &amp; Records
-            </div>
-            <div className="flex flex-col gap-1 mt-1">
-              {SAMPLE_SEARCH_RESULTS.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  onMouseDown={(e) => {
-                    e.preventDefault()
-                    handleSelectSample(item.route)
-                  }}
-                  className="flex items-start justify-between gap-2 rounded-control p-2 text-left hover:bg-primary-tint transition-colors cursor-pointer"
-                >
-                  <div className="min-w-0 flex-1">
-                    <div className="font-mono text-xs font-semibold text-text">
-                      {item.id}
-                    </div>
-                    <div className="truncate text-xs text-text font-medium">
-                      {item.title}
-                    </div>
-                    <div className="flex items-center gap-1 text-[11px] text-muted">
-                      <MapPin className="size-3" />
-                      <span>{item.locality}</span>
-                    </div>
-                  </div>
-                  <Badge variant={item.tone} className="text-[10px] shrink-0">
-                    {item.badge}
-                  </Badge>
-                </button>
-              ))}
-            </div>
-            <div className="border-t border-line mt-2 pt-2 px-2 flex items-center justify-between text-[11px] text-muted">
-              <span>Press Enter to search</span>
-              <span className="font-mono">⌘K</span>
-            </div>
-          </div>
-        )}
-      </div>
+      />
 
       {/* RIGHT ACTION CONTROLS */}
       <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
         {/* Quick Action Button: Add Property */}
-        <div className="hidden xl:flex items-center shrink-0">
+        <RoleMenu role={role} onPick={handleRoleSwitch} onStart={() => navigate('/')} />
+        <div className={cn('hidden items-center shrink-0', role === 'owner' && 'xl:flex')}>
           <Button
             to={path('GP-07')}
             size="sm"
@@ -614,40 +551,6 @@ export function SiteHeader({
 
               <DropdownMenuSeparator />
 
-              {/* Persona Switcher Section */}
-              <div className="px-2.5 py-1 text-[11px] font-semibold text-muted uppercase">
-                Switch Persona
-              </div>
-              <div className="grid grid-cols-2 gap-1 p-1">
-                {(
-                  [
-                    'owner',
-                    'buyer',
-                    'lawyer',
-                    'developer',
-                    'admin',
-                    'government',
-                  ] as Role[]
-                ).map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => handleRoleSwitch(r)}
-                    className={cn(
-                      'flex items-center gap-1.5 rounded-control px-2 py-1 text-xs text-left capitalize transition-colors cursor-pointer',
-                      role === r
-                        ? 'bg-primary text-on-primary font-semibold'
-                        : 'text-text hover:bg-primary-tint',
-                    )}
-                  >
-                    {ROLE_PROFILES[r]?.icon}
-                    <span className="truncate">{r}</span>
-                  </button>
-                ))}
-              </div>
-
-              <DropdownMenuSeparator />
-
               {/* Navigation Shortcuts */}
               <DropdownMenuItem onSelect={() => navigate(path('X-03'))}>
                 <Settings className="size-4 text-muted" />
@@ -665,7 +568,7 @@ export function SiteHeader({
 
               {/* Sign Out / Reset */}
               <DropdownMenuItem
-                onSelect={() => navigate(path('GP-01'))}
+                onSelect={() => navigate('/')}
                 className="text-danger hover:bg-danger-tint hover:text-danger-ink"
               >
                 <LogOut className="size-4" />

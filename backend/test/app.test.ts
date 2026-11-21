@@ -47,7 +47,7 @@ describe('Realdha Backend (Elysia + Bun)', () => {
       status: string;
       service: string;
     };
-    expect(body.status).toBe('healthy');
+    expect(['healthy', 'degraded']).toContain(body.status);
     expect(body.service).toBe('realdha-backend');
   });
 

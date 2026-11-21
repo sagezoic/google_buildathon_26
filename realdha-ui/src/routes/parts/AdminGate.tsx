@@ -1,4 +1,4 @@
-import { Lock, X } from 'lucide-react'
+import { Lock } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import { Screen } from '../../app/Shell'
 import { path } from '../../app/nav'
@@ -6,7 +6,6 @@ import { usePersistentState } from '../../app/persist'
 import type { Role } from '../../app/screens'
 import { Button } from '../../components/ui/button'
 import { Card } from '../../components/ui/card'
-import { Pill } from '../../components/ui/pill'
 import { logAudit } from '../../lib/audit'
 import { ROLE_LABEL, useSessionRole } from '../../lib/access'
 import { Resp } from './f-bits'
@@ -23,7 +22,6 @@ export function DeniedCard({ role }: { role: Role }) {
   return (
     <div className="mx-auto flex w-full max-w-[600px] flex-1 flex-col gap-4 px-4 py-6 xl:py-16">
       <Card role="alert" className="flex flex-col gap-4 p-6 max-xl:border-danger max-xl:bg-danger-tint">
-        <Pill tone="danger" icon={<X className="size-3" />} className="self-start max-xl:hidden">Access denied</Pill>
         <Lock className="size-6 text-danger-ink xl:hidden" aria-hidden />
         <h1 className="text-h1 max-xl:text-h3"><Resp d="You do not have access to the admin console" m="You do not have access" /></h1>
         <p className="text-small"><Resp d={`This area is for Realdha admins. You are signed in as ${name || 'Prakash Kulkarni'} (${ROLE_LABEL[role] ?? role}).`} m="This area is for Realdha admins." /></p>

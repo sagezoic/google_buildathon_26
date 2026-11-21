@@ -6,6 +6,8 @@ import { Button } from '../../../components/ui/button'
 import { Card } from '../../../components/ui/card'
 import { StepPills, TextField } from '../../../components/ui/f10-parts'
 import { useProject } from '../../../lib/f10-store'
+import OsmMap from '../../../components/map/OsmMap'
+import OsmPolygonEditor from '../../../components/map/OsmPolygonEditor'
 
 /** F10-01 · Create project details. */
 export default function CreateProjectScreen() {
@@ -15,10 +17,10 @@ export default function CreateProjectScreen() {
 
   const validate = () => {
     const err: Record<string, string> = {}
-    if (!project.name.trim()) err.name = 'Enter project name'
-    if (!project.rera.trim()) err.rera = 'Enter RERA registration number'
-    if (!project.city.trim()) err.city = 'Enter city'
-    if (!project.locality.trim()) err.locality = 'Enter locality'
+    if (!project.name.trim()) err.name = 'Enter the project name'
+    if (!project.rera.trim()) err.rera = 'Enter the RERA registration number'
+    if (!project.city.trim()) err.city = 'Enter the city'
+    if (!project.locality.trim()) err.locality = 'Enter the locality'
     setErrors(err)
     return Object.keys(err).length === 0
   }
@@ -37,7 +39,7 @@ export default function CreateProjectScreen() {
         <div className="flex flex-col gap-1 border-b border-line pb-4">
           <h1 className="text-h1 font-bold text-text">Create project</h1>
           <p className="text-body text-muted">
-            Enter basic project details and RERA information to register new units.
+            Add the project's name, RERA number and location. You'll add towers and floors next.
           </p>
         </div>
 
@@ -78,26 +80,46 @@ export default function CreateProjectScreen() {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <TextField
-              label="Possession date"
+              label="Possession date (optional)"
               value={project.possession}
               onChange={(e) => setProject({ ...project, possession: e.target.value })}
               placeholder="e.g. Dec 2027"
             />
             <TextField
-              label="Description"
+              label="Description (optional)"
               value={project.description}
               onChange={(e) => setProject({ ...project, description: e.target.value })}
               placeholder="e.g. Two towers, 3 and 4 BHK."
             />
           </div>
 
-          {/* Interactive pin preview */}
+          {/* Interactive location and site boundary creator */}
           <div className="flex flex-col gap-2 border-t border-line pt-4">
-            <span className="text-chip font-semibold text-text">Map location pin</span>
-            <div className="relative h-44 w-full overflow-hidden rounded-control border border-line bg-sunken flex items-center justify-center">
-              <span className="text-small text-muted">
-                Pune · Baner ({project.pin.x * 5}%, {project.pin.y * 5}%)
+            <div className="flex flex-wrap items-center justify-between gap-1">
+              <span className="text-chip font-semibold text-text">Site location and boundary</span>
+              <span className="text-label text-muted">
+                Drag the pin to the site, then mark its boundary corners
               </span>
+            </div>
+            <div className="relative h-80 w-full overflow-hidden rounded-control border border-line bg-sunken">
+              <OsmMap
+                center={[project.pin.lng ?? 73.7868, project.pin.lat ?? 18.559]}
+                zoom={16}
+                showThemeToggle
+              >
+                <OsmPolygonEditor
+                  polygon={project.boundary ?? []}
+                  pin={{ lng: project.pin.lng ?? 73.7868, lat: project.pin.lat ?? 18.559 }}
+                  unit="acre"
+                  onChange={(pts) => setProject({ ...project, boundary: pts })}
+                  onPinChange={([lng, lat]) =>
+                    setProject({
+                      ...project,
+                      pin: { ...project.pin, lng, lat },
+                    })
+                  }
+                />
+              </OsmMap>
             </div>
           </div>
 

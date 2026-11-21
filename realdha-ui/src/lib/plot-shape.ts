@@ -17,12 +17,13 @@ const RATIO = 4 / 3 // width : depth when only the area is known
 const ANGLE = (-6 * Math.PI) / 180
 
 /** Parses "4,800" or "1.5". Returns null for empty, zero, negative or non-numeric input. */
-export function parseArea(value: string): number | null {
+export function parseArea(value: string | null | undefined): number | null {
+  if (!value) return null
   const n = Number(value.replace(/,/g, '').trim())
   return Number.isFinite(n) && n > 0 ? n : null
 }
 
-export function areaToSqm(value: string, unit: AreaUnit): number | null {
+export function areaToSqm(value: string | null | undefined, unit: AreaUnit): number | null {
   const n = parseArea(value)
   if (n === null) return null
   const sqm = n * (AREA_UNITS.find((u) => u.value === unit)?.sqm ?? 1)

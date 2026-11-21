@@ -1,4 +1,5 @@
-import { Building2, Calendar, MessageSquare, Plus, TrendingUp, Users, ArrowUpRight } from 'lucide-react'
+import { Box, Building2, Calendar, FolderPlus, MessageSquare, Plus, TrendingUp, Users } from 'lucide-react'
+import { Link } from 'react-router'
 import { useState } from 'react'
 import { Screen } from '../../../app/Shell'
 import { path } from '../../../app/nav'
@@ -6,6 +7,28 @@ import { Button } from '../../../components/ui/button'
 import { Card } from '../../../components/ui/card'
 import { DEV_STATS } from '../../../data/fixtures/f15-devconsole'
 import { cn } from '../../../lib/cn'
+
+const GROUPS = [
+  {
+    title: 'Set up a project',
+    sub: 'Put each unit on a verified record and give buyers something to walk through.',
+    items: [
+      { Icon: FolderPlus, name: 'Create a project', desc: 'Towers, floors and units, by form or CSV.', to: path('F10-01'), cta: 'Start a project' },
+      { Icon: Box, name: '3D digital twin', desc: 'Upload a model or request one.', to: path('F14-01'), cta: 'Add a 3D twin' },
+      { Icon: Building2, name: 'Unit inventory', desc: 'Change prices inline and release availability.', to: path('F15-02'), cta: 'Manage inventory' },
+    ],
+  },
+  {
+    title: 'See buyer interest',
+    sub: 'Who is asking, when they want a call, and which units draw attention.',
+    items: [
+      { Icon: MessageSquare, name: 'Enquiries', desc: 'Buyer questions and loan requirements.', to: path('F15-04'), cta: 'Open inbox' },
+      { Icon: Calendar, name: 'Calls and visits', desc: 'Upcoming video calls and site visits.', to: path('F15-05'), cta: 'View calendar' },
+      { Icon: TrendingUp, name: 'Demand heatmap', desc: 'Interest by floor, facing and configuration.', to: path('F15-06'), cta: 'View heatmap' },
+      { Icon: Users, name: 'Channel partners', desc: 'Authorise brokers and track their bookings.', to: path('F15-07'), cta: 'Manage partners' },
+    ],
+  },
+]
 
 const RANGES = ['Today', '7 days', '30 days']
 
@@ -68,83 +91,28 @@ export default function DevDashboardScreen() {
           </Card>
         </div>
 
-        {/* Console Hub Grid */}
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
-          <Card className="flex flex-col justify-between gap-4 p-5">
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2 font-semibold text-text">
-                <Building2 className="size-5 text-primary" />
-                <span>Unit Inventory</span>
-              </div>
-              <p className="text-small text-muted">
-                Inspect unit grid across towers, change prices inline, and manage release availability.
-              </p>
+        {GROUPS.map((g) => (
+          <section key={g.title} aria-labelledby={`h-${g.title}`} className="flex flex-col gap-3">
+            <div>
+              <h2 id={`h-${g.title}`} className="text-h3 font-semibold text-text">{g.title}</h2>
+              <p className="text-small text-muted">{g.sub}</p>
             </div>
-            <Button variant="secondary" to={path('F15-02')} icon={<ArrowUpRight className="size-3.5" />}>
-              Manage inventory
-            </Button>
-          </Card>
-
-          <Card className="flex flex-col justify-between gap-4 p-5">
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2 font-semibold text-text">
-                <MessageSquare className="size-5 text-primary" />
-                <span>Enquiries Inbox</span>
-              </div>
-              <p className="text-small text-muted">
-                Review buyer questions on Baner Heights, view loan requirements, and send direct replies.
-              </p>
-            </div>
-            <Button variant="secondary" to={path('F15-04')} icon={<ArrowUpRight className="size-3.5" />}>
-              Open inbox ({stats.newEnquiries})
-            </Button>
-          </Card>
-
-          <Card className="flex flex-col justify-between gap-4 p-5">
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2 font-semibold text-text">
-                <Calendar className="size-5 text-primary" />
-                <span>Sales Calls & Visits</span>
-              </div>
-              <p className="text-small text-muted">
-                Calendar schedule of upcoming buyer video consultations and onsite sample flat visits.
-              </p>
-            </div>
-            <Button variant="secondary" to={path('F15-05')} icon={<ArrowUpRight className="size-3.5" />}>
-              View calendar
-            </Button>
-          </Card>
-
-          <Card className="flex flex-col justify-between gap-4 p-5">
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2 font-semibold text-text">
-                <TrendingUp className="size-5 text-primary" />
-                <span>Activity Heatmap</span>
-              </div>
-              <p className="text-small text-muted">
-                Buyer demand analytics by tower floor, facing, and unit configuration.
-              </p>
-            </div>
-            <Button variant="secondary" to={path('F15-06')} icon={<ArrowUpRight className="size-3.5" />}>
-              View heatmap
-            </Button>
-          </Card>
-
-          <Card className="flex flex-col justify-between gap-4 p-5">
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-2 font-semibold text-text">
-                <Users className="size-5 text-primary" />
-                <span>Channel Partners</span>
-              </div>
-              <p className="text-small text-muted">
-                Authorize verified real estate brokers and track broker-assisted unit registrations.
-              </p>
-            </div>
-            <Button variant="secondary" to={path('F15-07')} icon={<ArrowUpRight className="size-3.5" />}>
-              Manage partners
-            </Button>
-          </Card>
-        </div>
+            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              {g.items.map(({ Icon, name, desc, to, cta }) => (
+                <li key={name}>
+                  <Link to={to} className="flex h-full items-start gap-3 rounded-card border border-line bg-surface p-4 text-text no-underline transition-colors hover:border-line-hover hover:bg-sunken">
+                    <Icon className="mt-0.5 size-5 flex-none text-primary-text" aria-hidden />
+                    <span className="flex min-w-0 flex-col gap-0.5">
+                      <span className="font-semibold">{name}</span>
+                      <span className="text-small text-muted">{desc}</span>
+                      <span className="pt-1 text-chip font-medium text-primary-text">{cta}</span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        ))}
       </div>
     </Screen>
   )

@@ -213,7 +213,8 @@ resource "google_cloud_run_v2_service" "backend" {
 
     scaling {
       min_instance_count = var.backend_min_instance_count
-      max_instance_count = var.backend_max_instance_count
+      # One instance while chain writes are enabled: registrar nonces are serialised per instance only
+      max_instance_count = var.enable_chain ? 1 : var.backend_max_instance_count
     }
 
     dynamic "volumes" {
@@ -323,6 +324,43 @@ resource "google_cloud_run_v2_service" "backend" {
           value = var.gcs_bucket_name
         }
       }
+
+      dynamic "env" {
+        for_each = local.backend_data_env
+        content {
+          name  = env.key
+          value = env.value
+        }
+      }
+
+      dynamic "env" {
+        for_each = var.enable_chain ? {
+          for k, v in {
+            CHAIN_NETWORK          = var.chain_network
+            CHAIN_KMS_KEY          = local.chain_kms_key_version
+            CHAIN_CONTRACT_ADDRESS = var.chain_contract_address
+            CHAIN_EXPLORER_URL     = var.chain_explorer_url
+            PUBLIC_API_URL         = var.chain_public_api_url
+          } : k => v if v != ""
+        } : {}
+        content {
+          name  = env.key
+          value = env.value
+        }
+      }
+
+      dynamic "env" {
+        for_each = google_secret_manager_secret.chain
+        content {
+          name = env.key
+          value_source {
+            secret_key_ref {
+              secret  = env.value.secret_id
+              version = "latest"
+            }
+          }
+        }
+      }
     }
   }
 
@@ -331,7 +369,13 @@ resource "google_cloud_run_v2_service" "backend" {
     google_artifact_registry_repository.backend,
     google_sql_database_instance.postgres,
     google_sql_database.postgres_db,
-    google_sql_user.postgres_user
+    google_sql_user.postgres_user,
+    google_secret_manager_secret_version.chain,
+    google_secret_manager_secret_iam_member.backend_chain,
+    google_pubsub_topic_iam_member.backend_publisher,
+    google_pubsub_subscription_iam_member.backend_subscriber,
+    google_bigquery_dataset_iam_member.backend_editor,
+    google_storage_bucket_iam_member.backend_cdn
   ]
 }
 

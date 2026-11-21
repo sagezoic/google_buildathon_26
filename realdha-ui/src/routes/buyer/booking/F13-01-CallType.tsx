@@ -1,10 +1,9 @@
-import { CircleCheck, Phone, Users, Video } from 'lucide-react'
+import { Phone, Users, Video } from 'lucide-react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { Screen } from '../../../app/Shell'
 import { path } from '../../../app/nav'
 import { usePersistentState } from '../../../app/persist'
 import { Button } from '../../../components/ui/button'
-import { Pill } from '../../../components/ui/pill'
 import { RecordId } from '../../../components/ui/record-id'
 import { CALL_TYPES, UNITS, inr, unitById, type CallType } from '../../../data/fixtures/f11-buyer'
 import { BK, defaultDraft, type CallDraft } from '../../../lib/buyer-store'
@@ -39,7 +38,6 @@ export default function CallTypeScreen() {
                 <input type="radio" name="call-type" className="sr-only" checked={on} onChange={() => pick(c.id)} />
                 <span className="flex items-center gap-2"><Icon className="size-[18px] text-muted" aria-hidden /><b>{c.title}</b></span>
                 <span className="text-chip text-muted"><span className="max-xl:hidden">{c.line}</span><span className="xl:hidden">{c.short}</span></span>
-                {on && <span className="max-xl:hidden"><Pill tone="success" icon={<CircleCheck className="size-3.5" />}>Selected</Pill></span>}
               </label>
             )
           })}

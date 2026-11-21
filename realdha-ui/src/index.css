@@ -1,4 +1,5 @@
-@import "@fontsource-variable/ibm-plex-sans";
+@import "@fontsource-variable/hanken-grotesk";
+@import "@fontsource-variable/source-serif-4";
 @import "@fontsource-variable/noto-sans-devanagari";
 @import "@fontsource/ibm-plex-mono/500.css";
 @import "tailwindcss";
@@ -67,9 +68,10 @@
   --color-transparent: transparent;
   --color-current: currentColor;
 
-  --font-sans: "IBM Plex Sans Variable", "Noto Sans Devanagari Variable", system-ui, sans-serif;
+  --font-sans: "Hanken Grotesk Variable", "Noto Sans Devanagari Variable", system-ui, sans-serif;
+  --font-serif: "Source Serif 4 Variable", "Noto Sans Devanagari Variable", Georgia, serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
-  --font-deva: "Noto Sans Devanagari Variable", "IBM Plex Sans Variable", sans-serif;
+  --font-deva: "Noto Sans Devanagari Variable", "Hanken Grotesk Variable", sans-serif;
 
   /* Type scale from the artifact: size / line-height / weight / tracking */
   --text-display: 36px;
@@ -138,6 +140,17 @@
     color: var(--rd-on-primary-tint);
   }
 
+  /* Headings speak in the ledger serif. */
+  h1,
+  h2,
+  .text-display,
+  .text-h1,
+  .text-h2 {
+    font-family: var(--font-serif);
+    font-weight: 560;
+    text-wrap: balance;
+  }
+
   /* Devanagari: same size as Latin, taller lines so matras and conjuncts never clip. */
   :lang(hi),
   :lang(mr) {
@@ -157,7 +170,7 @@
     text-decoration-thickness: 1px;
   }
 
-  /* One focus ring for every interactive element: 2px gap, 3px blue. */
+  /* One focus ring for every interactive element: 2px gap, 3px indigo. */
   :focus-visible {
     outline: 3px solid var(--rd-focus);
     outline-offset: 2px;

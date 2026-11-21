@@ -10,7 +10,7 @@ Realdha (Google Buildathon 26): a monorepo with a Bun/Elysia API, a React UI, an
 | `realdha-ui/` | Frontend (`src/App.tsx`, `src/main.tsx`) served by nginx (`nginx.conf.template`, `BACKEND_URL` injected) | React 19, Vite, oxlint, npm |
 | `terraform/` | Cloud Run v2 services, Artifact Registry, IAM, service accounts (`us-central1`, US regions only) | Terraform 1.9.5 |
 | `.github/workflows/` | `deploy.yml` (CD on push to `main`), `terraform-plan.yml` (PR plan/lint) | GitHub Actions, Workload Identity Federation |
-| `docs/` | `github-actions-setup.md` (secrets and WIF setup) | |
+| `docs/` | `github-actions-setup.md` (secrets and WIF setup), `blockchain.md` (property tokens: design, setup, plan review) | |
 | `.agents/skills/` | Installed agent skills (Bun, Clerk, Gemini, GCloud, Terraform, BigQuery, ...); tracked in `skills-lock.json` | |
 
 ## Commands
@@ -20,6 +20,7 @@ Backend (`cd backend`):
 - `bun run dev`: watch mode on port 8080
 - `bun test`
 - `bun run typecheck`
+- Blockchain tokens: `bun run chain:compile | chain:deploy | chain:seed-demo | chain:address`. Details in `docs/blockchain.md`.
 
 Frontend (`cd realdha-ui`):
 - `npm ci`
@@ -40,6 +41,7 @@ Terraform (`cd terraform`):
 - Error shape is `{ error, message, code }`, set in the global `onError` in `app.ts`. Reuse it; don't hand-roll error bodies.
 - Read config only through `src/config/env.ts`, not `process.env` directly. Cloud Run supplies `PORT` (default 8080).
 - Keep `/health` stable: it is the Cloud Run probe.
+- Blockchain code is in `src/modules/chain/` (contract in `backend/contracts/`). Recompile with `bun run chain:compile` after editing the `.sol` and commit the JSON. Chain tests run an in-process ganache and need a database.
 - Tests are in `backend/test/*.test.ts`, using `bun:test` against the exported `app`. Fixtures are in `backend/test/fixtures/`. Add a test with every route.
 - ESM only (`"type": "module"`). Use `bun`, not npm/yarn, in `backend/`.
 

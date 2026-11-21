@@ -1,18 +1,38 @@
 import { SlidersHorizontal, X } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router'
 import { Screen } from '../../app/Shell'
 import { path } from '../../app/nav'
 import { useDemoState } from '../../app/useDemoState'
 import { Button } from '../../components/ui/button'
-import { SampleData } from '../../components/ui/record-id'
-import { FRAME_FILTERS, activeFilters, dropFilter, runSearch } from '../../data/fixtures/f08-search'
+import { ScrollArea } from '../../components/ui/scroll-area'
+import { FRAME_FILTERS, activeFilters, dropFilter, runSearch, inr, priceShort, type Property } from '../../data/fixtures/f08-search'
 import { cn } from '../../lib/cn'
+import { usePlace } from '../../lib/places'
 import { FilterDrawer } from '../parts/FilterPanel'
-import { EMPTY_ERROR, Pager, PropertyCard, SearchBar, Seg, useRecent, useSearch } from '../parts/search'
+import { EMPTY_ERROR, Pager, PropertyCard, SearchBar, Seg, StatusPills, useRecent, useSearch } from '../parts/search'
+import OsmMap from '../../components/map/OsmMap'
+import OsmMarker from '../../components/map/OsmMarker'
 
 const PAGE = 5
-const PINS = ['left-[22%] top-[26%]', 'left-[48%] top-[44%]', 'left-[66%] top-[22%]', 'left-[30%] top-[66%]', 'left-[72%] top-[70%]', 'left-[12%] top-[48%]']
+const MAP_PINS = 30
+
+const LOCALITY_COORDS: Record<string, [number, number]> = {
+  Baner: [73.7868, 18.5590],
+  Balewadi: [73.7707, 18.5789],
+  Wakad: [73.7631, 18.5987],
+  Hinjewadi: [73.7299, 18.5913],
+  Aundh: [73.8055, 18.5580],
+  Kothrud: [73.8118, 18.5074],
+  Kusgaon: [73.4062, 18.7546],
+}
+
+function propertyCoord(p: Property, index: number): [number, number] {
+  const base = LOCALITY_COORDS[p.locality] ?? [73.8567, 18.5204]
+  const angle = (index * 137.5 * Math.PI) / 180
+  const r = 0.0035 * Math.sqrt((index % 6) + 1)
+  return [base[0] + r * Math.cos(angle), base[1] + r * Math.sin(angle) * 0.8]
+}
 
 /** F08-02 · Results. 1440: list + map, filters drawer. 834/390: list or map toggle, filters sheet. Filters really narrow the sample dataset. */
 export default function Results() {
@@ -49,7 +69,6 @@ export default function Results() {
   const pages = Math.max(1, Math.ceil(results.length / PAGE))
   const cur = Math.min(page, pages)
   const shown = results.slice((cur - 1) * PAGE, cur * PAGE)
-  const localities = Array.from(new Set(results.map((p) => p.locality)))
   const sub = (p: (typeof results)[number]) => `${p.locality}, ${p.city}`
 
   // A query that is an ID, or that finds nothing at all, belongs on the F08-03 / F08-04 screens.
@@ -67,14 +86,69 @@ export default function Results() {
   const apply = (f: typeof search.filters) => { setSearch((s) => ({ ...s, filters: f })); setPage(1) }
   const setFilters = (f: typeof search.filters) => { apply(f); if (mode !== 'list') setMode('list') }
 
+  const [selectedPropId, setSelectedPropId] = useState<string | null>(null)
+  const selectedProp = useMemo(() => results.find((p) => p.id === selectedPropId), [results, selectedPropId])
+
+  // Stable positions and handlers: the marker layer only rebuilds when the result set changes, not on every keystroke.
+  const [place] = usePlace()
+  const mapCenter = useMemo<[number, number]>(() => (place ? [place.lng, place.lat] : [73.7868, 18.559]), [place])
+  const pins = useMemo(() => results.slice(0, MAP_PINS).map((p, i) => ({ p, coord: propertyCoord(p, i), select: () => setSelectedPropId(p.id) })), [results])
+  const closePreview = useCallback(() => setSelectedPropId(null), [])
+  useEffect(() => {
+    if (!selectedPropId) return
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') closePreview() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [selectedPropId, closePreview])
+
   const map = (
-    <div className={cn('relative min-h-[320px] overflow-hidden rounded-card border border-line bg-sunken xl:min-h-full xl:rounded-none xl:border-0 xl:border-l', view === 'list' && 'max-xl:hidden')}>
-      <div className="absolute top-3 left-3 z-10 rounded-control border border-line bg-surface/90 px-2.5 py-1 text-label font-medium text-text shadow-e1 backdrop-blur-xs xl:top-4 xl:left-4">Interactive Pune Map · {results.length} verified listings</div>
-      {localities.slice(0, PINS.length).map((l, i) => (
-        <Link key={l} to={`${path('F09-01')}?area=${l}`} aria-label={`Open ${l} on the area map`} className={cn('absolute flex min-h-8 min-w-8 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-pill border-2 border-white bg-primary px-2 text-label font-semibold text-on-primary no-underline', PINS[i])}>
-          {results.filter((p) => p.locality === l).length}
-        </Link>
-      ))}
+    <div className={cn('relative min-h-0 flex-1 overflow-hidden rounded-card border border-line bg-sunken xl:rounded-none xl:border-0 xl:border-l', view === 'list' && 'max-xl:hidden')}>
+      <OsmMap center={mapCenter} zoom={place ? 14 : 13} showThemeToggle className="size-full">
+        {/* Property markers */}
+        {pins.map(({ p, coord, select }) => {
+          const isSelected = selectedPropId === p.id
+          return (
+            <OsmMarker key={p.id} position={coord} onClick={select} ariaLabel={`${p.label}, ${inr(p.price)}`}>
+              <div
+                className={cn(
+                  'flex cursor-pointer items-center gap-1.5 rounded-pill border-2 px-2.5 py-1 text-chip font-semibold shadow-e2 transition-transform duration-[var(--rd-dur-fast)] motion-reduce:transition-none',
+                  isSelected
+                    ? 'scale-110 border-primary bg-primary text-on-primary'
+                    : 'border-surface bg-surface text-text hover:scale-105 hover:border-primary'
+                )}
+              >
+                <span className={cn('size-1.5 rounded-full', isSelected ? 'bg-on-primary' : 'bg-primary')} aria-hidden />
+                <span className="tabular">{priceShort(p.price)}</span>
+              </div>
+            </OsmMarker>
+          )
+        })}
+
+        {/* Selected Property Popup Card */}
+        {selectedProp && (
+          <div role="dialog" aria-label="Property preview" className="absolute right-4 bottom-4 left-4 z-20 mx-auto max-w-sm rounded-card border border-line bg-surface p-4 shadow-e1">
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="text-chip text-muted">{selectedProp.locality}, {selectedProp.city}</div>
+                <div className="text-small font-semibold text-text">{selectedProp.unit} · {selectedProp.project}</div>
+                <div className="tabular mt-1 text-chip font-semibold text-primary-text">{inr(selectedProp.price)}</div>
+              </div>
+              <button
+                type="button"
+                onClick={closePreview}
+                className="-mt-1.5 -mr-1.5 inline-flex size-11 shrink-0 cursor-pointer items-center justify-center rounded-control text-muted hover:bg-primary-tint hover:text-text md:size-9"
+                aria-label="Close preview"
+              >
+                <X className="size-4" aria-hidden />
+              </button>
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-2 border-t border-line pt-3">
+              <StatusPills p={selectedProp} short />
+              <Button to={`${path('F09-03')}?id=${selectedProp.id}`} size="sm" className="shrink-0 max-md:h-11">View property</Button>
+            </div>
+          </div>
+        )}
+      </OsmMap>
     </div>
   )
 
@@ -86,14 +160,14 @@ export default function Results() {
   )
 
   return (
-    <Screen id="F08-02" back={path('F08-01')} title="Results">
-      <div className="flex flex-col gap-3 border-b-line bg-surface px-4 py-3.5 max-xl:bg-canvas xl:flex-row xl:flex-wrap xl:items-center xl:border-b xl:px-12">
+    <Screen id="F08-02" back={path('F08-01')} title="Results" className="min-h-0 overflow-hidden">
+      <div className="flex shrink-0 flex-col gap-3 border-b-line bg-surface px-4 py-3.5 max-xl:bg-canvas xl:flex-row xl:flex-wrap xl:items-center xl:border-b xl:px-12">
         <SearchBar value={draft} error={error} label="Search properties" size="md" onChange={(v) => { setDraft(v); setError('') }} onSubmit={submit} className="xl:w-[520px] [&_button]:max-xl:hidden xl:[&_input]:border xl:[&_input]:border-line-strong xl:[&_input]:h-control" />
         <div className="flex items-center justify-between gap-2 xl:contents">
           <Seg<'list' | 'map'> label="Results view" value={view} onChange={setView} className="xl:hidden" options={[{ id: 'list', label: 'List' }, { id: 'map', label: 'Map' }]} />
           {filterButton}
         </div>
-        <ul aria-label="Active filters" className="flex flex-wrap gap-2 max-xl:hidden">
+        <ul aria-label="Active filters" className="flex flex-wrap gap-2 max-md:hidden">
           {chips.map((c) => (
             <li key={c.key}>
               <button type="button" aria-label={`Remove filter ${c.label}`} onClick={() => apply(dropFilter(search.filters, c.key))} className="inline-flex min-h-8 cursor-pointer items-center gap-1.5 rounded-pill bg-skeleton py-0.5 pr-2 pl-3 text-label font-medium text-muted hover:bg-primary-tint">
@@ -102,19 +176,21 @@ export default function Results() {
             </li>
           ))}
         </ul>
-        <div role="status" className="flex items-center gap-2 text-chip text-muted xl:ml-auto">{results.length} result{results.length === 1 ? '' : 's'} · <SampleData /></div>
+        <p aria-live="polite" className="tabular text-chip text-muted xl:ml-auto">{results.length} result{results.length === 1 ? '' : 's'}</p>
       </div>
 
-      <div className="flex flex-1 flex-col gap-3 bg-canvas p-4 xl:grid xl:grid-cols-[460px_1fr] xl:gap-0 xl:p-0">
-        <div className={cn('flex flex-col gap-3 xl:p-4', view === 'map' && 'max-xl:hidden')}>
-          {shown.map((p) => <PropertyCard key={p.id} p={p} sub={sub(p)} note shortPills />)}
-          {!results.length && (
-            <div role="status" className="rounded-card border border-line bg-surface p-5 text-small">
-              Nothing matches {parsed.q ? `"${parsed.q}"` : 'these filters'}. <Link to={`${path('F08-03')}?state=none`} className="font-medium text-primary-text">See how to widen it</Link>
-            </div>
-          )}
-          <Pager page={cur} pages={pages} onPage={setPage} />
-        </div>
+      <div className="flex min-h-0 flex-1 flex-col gap-3 bg-canvas p-4 xl:grid xl:grid-cols-[460px_minmax(0,1fr)] xl:grid-rows-1 xl:gap-0 xl:p-0">
+        <ScrollArea className={cn('min-h-0 flex-1 xl:flex-none', view === 'map' && 'max-xl:hidden')} viewportClassName="[&>div]:!block">
+          <div className="flex flex-col gap-3 pr-1 xl:p-4 xl:pr-5">
+            {shown.map((p) => <PropertyCard key={p.id} p={p} sub={sub(p)} note shortPills />)}
+            {!results.length && (
+              <div role="status" className="rounded-card border border-line bg-surface p-5 text-small">
+                Nothing matches {parsed.q ? `"${parsed.q}"` : 'these filters'}. <Link to={`${path('F08-03')}?state=none`} className="font-medium text-primary-text">See how to widen it</Link>
+              </div>
+            )}
+            <Pager page={cur} pages={pages} onPage={setPage} />
+          </div>
+        </ScrollArea>
         {map}
       </div>
 

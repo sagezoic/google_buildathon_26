@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import { ChevronLeft, ChevronRight, RotateCcw, Search, Star, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, LayoutGrid, Map as MapIcon, RotateCcw, Search, Star, X } from 'lucide-react'
 import { path } from '../../app/nav'
 import { usePersistentState } from '../../app/persist'
 import { Screen } from '../../app/Shell'
 import { Button } from '../../components/ui/button'
 import { Pill } from '../../components/ui/pill'
 import { cn } from '../../lib/cn'
+import MarketMap from '../../components/ui/market-map'
 import {
   cardBadges,
   fetchCities,
@@ -170,7 +171,7 @@ function SocietyTile({
 
           <div className="pointer-events-none absolute inset-x-2.5 top-2.5 flex items-center justify-between gap-1.5">
             {primaryBadge ? (
-              <Pill tone={isReady ? 'success' : 'brand'}>
+              <Pill tone={isReady ? 'success' : 'brand'} className="rounded-control bg-surface px-2 py-1 shadow-e1">
                 {primaryBadge}
               </Pill>
             ) : <span />}
@@ -260,6 +261,7 @@ export default function Market() {
   const [watch, setWatch] = usePersistentState<string[]>('market.watchlist.v2', [])
   const [cities, setCities] = useState<CitySummary[]>([])
   const [page, setPage] = useState(1)
+  const [view, setView] = useState<'grid' | 'map'>('grid')
 
   const setParam = (key: string, val: string | number | boolean | null) => {
     setPage(1)
@@ -378,8 +380,35 @@ export default function Market() {
               </button>
             </div>
 
-            {/* Quick Watchlist Toggle */}
-            <div className="flex items-center gap-2">
+            {/* View Switcher & Quick Watchlist Toggle */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="flex rounded-control border border-line bg-sunken p-0.5 text-chip font-medium">
+                <button
+                  type="button"
+                  onClick={() => setView('grid')}
+                  className={cn(
+                    'flex items-center gap-1 rounded-[4px] px-2.5 py-1 transition-colors cursor-pointer',
+                    view === 'grid'
+                      ? 'bg-surface font-semibold text-text shadow-e1'
+                      : 'text-muted hover:text-text'
+                  )}
+                >
+                  <LayoutGrid className="size-3.5" /> Grid
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setView('map')}
+                  className={cn(
+                    'flex items-center gap-1 rounded-[4px] px-2.5 py-1 transition-colors cursor-pointer',
+                    view === 'map'
+                      ? 'bg-surface font-semibold text-text shadow-e1'
+                      : 'text-muted hover:text-text'
+                  )}
+                >
+                  <MapIcon className="size-3.5" /> 3D Map
+                </button>
+              </div>
+
               <button
                 type="button"
                 onClick={() => setParam('tab', tab === 'watchlist' ? null : 'watchlist')}
@@ -505,8 +534,12 @@ export default function Market() {
           </div>
         </div>
 
-        {/* Content & Results Grid */}
-        {error ? (
+        {/* Content & Results Grid or 3D Map */}
+        {view === 'map' ? (
+          <div className="relative min-h-[580px] overflow-hidden rounded-card border border-line bg-sunken shadow-e1">
+            <MarketMap societies={rows} mode={mode} />
+          </div>
+        ) : error ? (
           <div
             role="alert"
             className="flex flex-col items-start gap-2 rounded-card border border-line bg-surface p-6 text-small shadow-e1"

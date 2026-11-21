@@ -1,4 +1,4 @@
-import { AlertCircle, Check, Loader2 } from 'lucide-react'
+import { AlertCircle, Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router'
 import { Screen } from '../../app/Shell'
@@ -6,7 +6,6 @@ import { path } from '../../app/nav'
 import { usePersistentState } from '../../app/persist'
 import { AuthCard, AuthInput, Notice } from '../../components/ui/auth-parts'
 import { Button } from '../../components/ui/button'
-import { Pill } from '../../components/ui/pill'
 import { findAccount, nameError, saveAccount, startSession } from '../../lib/auth-store'
 import { logAudit } from '../../lib/audit'
 import { K } from '../../lib/identity-flow'
@@ -74,7 +73,6 @@ export default function GoogleHandoff() {
               <div className="flex items-center gap-3 rounded-[8px] border border-line bg-sunken p-3 max-xl:rounded-card max-xl:bg-surface">
                 {G}
                 <div className="min-w-0 flex-1 text-small"><b className="block">Signed in with Google</b><span className="block truncate text-muted">{PROFILE.email}</span></div>
-                <Pill tone="success" icon={<Check className="size-3.5" />}>Linked</Pill>
               </div>
               <div>
                 <h1 className="text-h2 xl:text-h1">Welcome to Realdha</h1>

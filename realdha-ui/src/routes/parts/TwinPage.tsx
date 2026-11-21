@@ -1,5 +1,5 @@
 import { Check, CircleAlert, Copy, Link2, MessageSquare, ShieldCheck } from 'lucide-react'
-import { useState, type ReactNode } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import { usePersistentState } from '../../app/persist'
 import { path } from '../../app/nav'
 import { Button } from '../../components/ui/button'
@@ -10,6 +10,11 @@ import { Modal } from '../../components/ui/modal'
 import { DOCS, type CheckRecord, type TwinDoc } from '../../data/fixtures/twin'
 import { cn } from '../../lib/cn'
 import { copyText, useTwinRecord } from '../../lib/twin-store'
+import { shortHash } from '../../lib/chain-api'
+import OsmCadastralView from '../../components/map/OsmCadastralView'
+import type { LngLat } from '../../components/map/osm-geometry'
+
+const SLOTS = ['extract', 'card', 'na', 'mutation', 'deed']
 
 const TABS = [
   { id: 'overview', label: 'Overview' },
@@ -28,104 +33,47 @@ function KV({ k, children, mono }: { k: string; children: ReactNode; mono?: bool
   )
 }
 
-/** Boundary and spatial land panel with cadastral and satellite visualization. */
+/** Live cadastral boundary panel centered on Gat 112/2 Kusgaon with satellite/street view. */
 function MapPanel({ boundaryLabel }: { boundaryLabel: string }) {
-  const [mapMode, setMapMode] = useState<'boundary' | 'satellite' | 'terrain'>('satellite')
+  // Kusgaon Gat 112/2 survey boundaries (~418 sq m / 0.0418 ha)
+  const coords = useMemo<LngLat[]>(
+    () => [
+      [73.40598, 18.75442],
+      [73.40645, 18.75448],
+      [73.40638, 18.75478],
+      [73.40591, 18.75472],
+    ],
+    []
+  )
 
   return (
-    <div className="relative min-h-[240px] overflow-hidden bg-sunken max-xl:rounded-card max-xl:border max-xl:border-line xl:h-full xl:min-h-[340px]">
-      {mapMode === 'satellite' ? (
-        <div className="relative size-full min-h-[300px]">
-          <img
-            src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=1200&q=80"
-            alt="Satellite View of Kusgaon Plot"
-            className="size-full object-cover"
-          />
-          <div className="absolute inset-0 bg-primary/10" />
-          {/* Survey boundary overlay */}
-          <svg className="absolute inset-0 size-full" viewBox="0 0 640 340" preserveAspectRatio="none">
-            <path
-              d="M240 110 L440 92 L468 224 L268 242 Z"
-              className="fill-success/20 stroke-success-ink"
-              strokeWidth="3.5"
-            />
-            <circle cx="240" cy="110" r="4" className="fill-surface stroke-success" strokeWidth="2" />
-            <circle cx="440" cy="92" r="4" className="fill-surface stroke-success" strokeWidth="2" />
-            <circle cx="468" cy="224" r="4" className="fill-surface stroke-success" strokeWidth="2" />
-            <circle cx="268" cy="242" r="4" className="fill-surface stroke-success" strokeWidth="2" />
-          </svg>
-        </div>
-      ) : mapMode === 'terrain' ? (
-        <div className="relative size-full min-h-[300px]">
-          <img
-            src="https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1200&q=80"
-            alt="Sahyadri Terrain Elevation"
-            className="size-full object-cover"
-          />
-          <div className="absolute inset-0 bg-black/20" />
-          <svg className="absolute inset-0 size-full" viewBox="0 0 640 340" preserveAspectRatio="none">
-            <path d="M240 140 C320 120 400 130 480 110" fill="none" className="stroke-white/60" strokeWidth="1.5" strokeDasharray="3 3" />
-            <path d="M220 180 C310 160 410 170 500 150" fill="none" className="stroke-white/60" strokeWidth="1.5" strokeDasharray="3 3" />
-          </svg>
-        </div>
-      ) : (
-        <svg className="absolute inset-0 size-full" viewBox="0 0 640 340" preserveAspectRatio="none" aria-hidden>
-          <g fill="none" className="stroke-line" strokeWidth="1.5">
-            <path d="M-10 300 C120 250 240 290 360 230 S560 170 660 150" />
-            <path d="M-10 260 C120 210 240 250 360 190 S560 130 660 110" />
-            <path d="M-10 220 C120 170 240 210 360 150 S560 90 660 70" />
-            <path d="M-10 340 C120 290 240 330 360 270 S560 210 660 190" />
-          </g>
-          <path d="M120 -10 C150 100 110 220 180 350" fill="none" className="stroke-surface" strokeWidth="9" />
-          <path d="M240 110 L440 92 L468 224 L268 242 Z" className="fill-primary/20 stroke-primary" strokeWidth="3" />
-        </svg>
-      )}
-
-      <div className="absolute top-[82px] left-[52%] rounded-control bg-text/90 px-2.5 py-1 text-label font-semibold text-canvas shadow-e2 backdrop-blur-xs max-xl:top-1/3 max-xl:left-1/2">
-        {boundaryLabel}
-      </div>
-
-      <div role="group" aria-label="Map view" className="absolute top-4 left-4 z-10 flex overflow-hidden rounded-control border border-line-strong bg-surface text-chip font-medium shadow-e1">
-        <button
-          type="button"
-          onClick={() => setMapMode('satellite')}
-          className={cn('cursor-pointer px-3 py-1.5 transition-colors', mapMode === 'satellite' ? 'bg-primary text-on-primary' : 'text-muted hover:text-text')}
-        >
-          Satellite
-        </button>
-        <button
-          type="button"
-          onClick={() => setMapMode('boundary')}
-          className={cn('cursor-pointer px-3 py-1.5 transition-colors', mapMode === 'boundary' ? 'bg-primary text-on-primary' : 'text-muted hover:text-text')}
-        >
-          Cadastral
-        </button>
-        <button
-          type="button"
-          onClick={() => setMapMode('terrain')}
-          className={cn('cursor-pointer px-3 py-1.5 transition-colors', mapMode === 'terrain' ? 'bg-primary text-on-primary' : 'text-muted hover:text-text')}
-        >
-          Terrain
-        </button>
-      </div>
-
-      <div className="absolute bottom-3 left-4 rounded-control bg-surface/90 px-2.5 py-1 text-label font-medium text-text shadow-e1 backdrop-blur-xs">
-        Village Kusgaon, Taluka Maval · 18.7546° N, 73.4062° E · Maharashtra Land Registry
-      </div>
+    <div className="relative min-h-[300px] overflow-hidden bg-sunken max-xl:rounded-card max-xl:border max-xl:border-line xl:h-full xl:min-h-[380px]">
+      <OsmCadastralView
+        coordinates={coords}
+        label={boundaryLabel}
+        unit="sqm"
+        defaultTheme="satellite"
+        className="size-full"
+      />
     </div>
   )
 }
 
 /** Owner Digital Twin body (GP-16). Also rendered behind the GP-17 modal and GP-18 drawer. */
 export function TwinPage() {
-  const { plot, anchored, signedOff, proof } = useTwinRecord()
+  const { plot, anchored, signedOff, proof, token } = useTwinRecord()
+  // Live fingerprints, in the fixture's document order (7/12, card, NA, mutation, deed).
+  const docs: TwinDoc[] = DOCS.map((d, i) => {
+    const live = token?.documents.find((x) => x.slot === SLOTS[i])
+    return live ? { ...d, hash: shortHash(live.sha256) } : d
+  })
   const [tab, setTab] = usePersistentState('twin.tab', 'overview')
   const [checks] = usePersistentState<CheckRecord[]>('twin.checks', [])
   const [viewing, setViewing] = useState<TwinDoc>()
   const [note, setNote] = useState('')
   const flash = (m: string) => { setNote(m); setTimeout(() => setNote(''), 2200) }
   const share = async () => flash((await copyText(`${location.origin}${path('F07-01')}?record=${plot.recordId}`)) ? 'Link copied' : 'Could not copy the link')
-  const copyHash = async () => flash((await copyText(proof.txHash)) ? 'Transaction hash copied' : 'Could not copy the hash')
+  const copyHash = async () => flash((await copyText(proof.fullTxHash ?? proof.txHash)) ? 'Transaction hash copied' : 'Could not copy the hash')
   return (
     <div className="flex flex-col gap-6 px-4 py-6 md:px-12 xl:py-7">
       <section aria-label="Record summary" className="grid gap-4 xl:grid-cols-[1fr_640px] xl:grid-rows-[1fr_auto] xl:gap-0 xl:overflow-hidden xl:rounded-card xl:border xl:border-line xl:bg-surface xl:shadow-e1">
@@ -176,17 +124,13 @@ export function TwinPage() {
       </Card>
 
       <Card id="documents" className="flex scroll-mt-4 flex-col gap-3">
-        <h2 className="text-h2">Documents</h2>
+        <div className="flex flex-wrap items-baseline justify-between gap-x-4"><h2 className="text-h2">Documents</h2><p className="text-small text-muted">Each file is fingerprinted on-chain</p></div>
         <ul>
-          {DOCS.map((d) => (
+          {docs.map((d) => (
             <li key={d.name} className="flex items-center gap-3 border-b border-line py-2.5 last:border-b-0 xl:gap-4">
               <span className="flex-1 text-small font-medium xl:text-body">{d.name}</span>
               <span className="text-label text-muted max-xl:hidden">{d.pages}</span>
               <span className="font-mono text-label text-chain-ink max-xl:hidden">{d.hash}</span>
-              <Pill tone="chain" icon={<Check className="size-3.5" />}>
-                <span className="xl:hidden">Fingerprint</span>
-                <span className="max-xl:hidden">Fingerprint ✓</span>
-              </Pill>
               <Button size="sm" variant="secondary" className="max-xl:hidden" aria-label={`View ${d.name}`} onClick={() => setViewing(d)}>View</Button>
             </li>
           ))}
@@ -244,7 +188,7 @@ export function TwinPage() {
           <KV k="Fingerprints">{proof.fingerprints}</KV>
           <KV k="Transaction hash"><span className="inline-flex items-center gap-1.5"><span className="font-mono text-small text-chain-ink">{proof.txHash}</span><button type="button" onClick={() => void copyHash()} aria-label="Copy transaction hash" className="inline-flex size-8 cursor-pointer items-center justify-center rounded-control text-muted hover:bg-primary-tint"><Copy className="size-3.5" aria-hidden /></button></span></KV>
           <KV k="Anchored"><span className="text-small">{proof.anchored}</span></KV>
-          <a href="https://sepolia.etherscan.io/" target="_blank" rel="noopener noreferrer" className="text-small font-medium text-chain-ink underline">View on explorer ↗</a>
+          <a href={proof.explorerUrl ?? 'https://sepolia.etherscan.io/'} target="_blank" rel="noopener noreferrer" className="text-small font-medium text-chain-ink underline">View on explorer ↗</a>
         </div>
       </section>
 

@@ -1,4 +1,4 @@
-import { Check, FileText, History, MessageSquare, ShieldCheck, Sun, Moon, Share2, Coins } from 'lucide-react'
+import { Check, Compass, FileText, History, MessageSquare, ShieldCheck, Sun, Moon, Share2, Coins } from 'lucide-react'
 import { Screen } from '../../../app/Shell'
 import { path } from '../../../app/nav'
 import { usePersistentState } from '../../../app/persist'
@@ -7,10 +7,12 @@ import { Card } from '../../../components/ui/card'
 import { Pill } from '../../../components/ui/pill'
 import { RecordId, SampleData } from '../../../components/ui/record-id'
 import { cn } from '../../../lib/cn'
+import OsmMap from '../../../components/map/OsmMap'
+import OsmMarker from '../../../components/map/OsmMarker'
 
 /** F04-01 · Apartment Digital Twin (A-1804 · Baner Heights). */
 export default function ApartmentTwinScreen() {
-  const [viewMode, setViewMode] = usePersistentState<'floor' | '3d'>('f04.viewMode', '3d')
+  const [viewMode, setViewMode] = usePersistentState<'floor' | '3d' | 'map'>('f04.viewMode', '3d')
   const [lightTime, setLightTime] = usePersistentState<'morning' | 'evening'>('f04.lightTime', 'morning')
 
   return (
@@ -95,6 +97,13 @@ export default function ApartmentTwinScreen() {
                 >
                   3D walkthrough
                 </button>
+                <button
+                  type="button"
+                  onClick={() => setViewMode('map')}
+                  className={cn('rounded-[4px] px-3 py-1.5 transition-colors', viewMode === 'map' ? 'bg-primary text-on-primary' : 'text-muted hover:text-text')}
+                >
+                  Location & Solar Facing
+                </button>
               </div>
 
               {/* Viewer canvas */}
@@ -118,6 +127,28 @@ export default function ApartmentTwinScreen() {
                       <text x="150" y="275" textAnchor="middle" className="fill-muted text-xs">10' x 8' · Utility Attached</text>
                     </svg>
                     <div className="mt-3 text-chip text-muted">Architectural Sanctioned Plan · Approved by PMC Pune</div>
+                  </div>
+                ) : viewMode === 'map' ? (
+                  <div className="relative size-full min-h-[380px] overflow-hidden">
+                    <OsmMap center={[73.7868, 18.5590]} zoom={16} showThemeToggle className="size-full min-h-[380px]">
+                      <OsmMarker position={[73.7868, 18.5590]}>
+                        <div className="flex flex-col items-center">
+                          <div className="flex items-center gap-1.5 rounded-control border-2 border-white bg-primary px-2.5 py-1 text-chip font-bold text-on-primary shadow-e2">
+                            <span>Tower A · Unit A-1804</span>
+                            <span className="rounded-full bg-white/30 px-1 py-0.2 text-[9px]">East 92°</span>
+                          </div>
+                          <div className="size-2 -translate-y-1 rotate-45 border-r border-b border-white bg-primary" />
+                        </div>
+                      </OsmMarker>
+                      <div className="absolute top-4 right-4 z-10 flex flex-col items-center gap-1 rounded-card border border-line bg-surface/90 p-2.5 shadow-e2 backdrop-blur-xs">
+                        <Compass className="size-5 text-primary" />
+                        <span className="text-[10px] font-bold text-text">True North</span>
+                        <span className="text-[9px] text-muted">Vaastu Compliant</span>
+                      </div>
+                      <div className="absolute bottom-3 left-3 z-10 rounded-control border border-line bg-surface/90 px-3 py-1.5 text-label font-medium text-text shadow-e1 backdrop-blur-xs">
+                        Baner Heights, Tower A, 18th Floor · East Facing toward Baner Hill Reserve
+                      </div>
+                    </OsmMap>
                   </div>
                 ) : (
                   <div className="relative size-full min-h-[360px] overflow-hidden">

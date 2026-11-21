@@ -5,7 +5,6 @@ import { Screen } from '../../app/Shell'
 import { path } from '../../app/nav'
 import { Button } from '../../components/ui/button'
 import { Card } from '../../components/ui/card'
-import { Pill } from '../../components/ui/pill'
 import { SwitchToggle } from '../../components/ui/switch-toggle'
 import { BOOKING_WINDOWS, CALL_LENGTHS, DEFAULT_AVAIL, type CallAvail } from '../../data/fixtures/f16-partner'
 import { logAudit } from '../../lib/audit'
@@ -40,7 +39,6 @@ export default function CallAvailability() {
   return (
     <Screen id="F16-05" back={path('F16-04')} title="Calls">
       <Page narrow>
-        <Pill tone="info" className="self-start xl:hidden">ADDED</Pill>
         <h1 className="text-h1">Call availability</h1>
         <p className="text-small text-muted"><Resp d="You set how buyers book calls for the properties you handle." m="Buyers see these times when they book." /></p>
         <Card className="flex flex-col gap-4 p-6 max-xl:border-0 max-xl:bg-transparent max-xl:p-0 max-xl:shadow-none">

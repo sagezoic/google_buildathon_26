@@ -5,6 +5,8 @@ import { Button } from '../../components/ui/button'
 import { Card } from '../../components/ui/card'
 import { Pill } from '../../components/ui/pill'
 import { RecordId, SampleData } from '../../components/ui/record-id'
+import OsmMap from '../../components/map/OsmMap'
+import OsmMarker from '../../components/map/OsmMarker'
 
 /** F10-07 · Project page (buyer view). */
 export default function ProjectPageScreen() {
@@ -80,6 +82,42 @@ export default function ProjectPageScreen() {
                   <span className="text-label text-muted">Clubhouse</span>
                   <div className="text-body font-semibold">6,000 sq ft</div>
                 </div>
+              </div>
+            </Card>
+
+            {/* Site Location & Tower Layout */}
+            <Card className="flex flex-col gap-4 p-5">
+              <div className="flex items-center justify-between">
+                <h2 className="text-h2 font-semibold text-text">Site Location & Towers</h2>
+                <span className="text-label text-muted">Baner Hill Reserve · 3.2 Acre Complex</span>
+              </div>
+              <div className="relative h-64 w-full overflow-hidden rounded-control border border-line bg-sunken">
+                <OsmMap center={[73.7868, 18.5590]} zoom={16} showThemeToggle className="size-full">
+                  <OsmMarker position={[73.7862, 18.5592]}>
+                    <div className="flex flex-col items-center">
+                      <span className="rounded-control bg-primary px-2 py-0.5 text-[10px] font-bold text-on-primary shadow-e2">
+                        Tower A
+                      </span>
+                      <div className="size-1.5 -translate-y-0.5 rotate-45 bg-primary" />
+                    </div>
+                  </OsmMarker>
+                  <OsmMarker position={[73.7868, 18.5595]}>
+                    <div className="flex flex-col items-center">
+                      <span className="rounded-control bg-primary px-2 py-0.5 text-[10px] font-bold text-on-primary shadow-e2">
+                        Tower B
+                      </span>
+                      <div className="size-1.5 -translate-y-0.5 rotate-45 bg-primary" />
+                    </div>
+                  </OsmMarker>
+                  <OsmMarker position={[73.7874, 18.5591]}>
+                    <div className="flex flex-col items-center">
+                      <span className="rounded-control bg-primary px-2 py-0.5 text-[10px] font-bold text-on-primary shadow-e2">
+                        Tower C
+                      </span>
+                      <div className="size-1.5 -translate-y-0.5 rotate-45 bg-primary" />
+                    </div>
+                  </OsmMarker>
+                </OsmMap>
               </div>
             </Card>
 

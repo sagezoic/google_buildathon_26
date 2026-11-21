@@ -2,14 +2,15 @@ import { afterAll, beforeAll, describe, expect, it, spyOn } from 'bun:test';
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { app } from '../src/app';
-import { getDb, closeDb } from '../src/db/client';
+import { getDb, closeDb, testDbConnection } from '../src/db/client';
 import { properties } from '../src/db/schema';
 import { DocumentAiService } from '../src/services/documentai';
 import { StorageService } from '../src/services/storage';
 import { TranslateService } from '../src/services/translate';
 import { eq } from 'drizzle-orm';
 
-const hasDatabase = !!process.env.DATABASE_URL;
+const dbCheck = await testDbConnection();
+const hasDatabase = dbCheck.connected;
 const mrText = readFileSync(join(import.meta.dir, 'fixtures/712_extract_mr.txt'), 'utf8');
 const PDF = new TextEncoder().encode('%PDF-1.7\n%fake');
 
@@ -86,6 +87,18 @@ describe.skipIf(!hasDatabase)('Properties API with database', () => {
     const extract = got.documents.filter((d) => d.slot === 'extract');
     expect(extract).toHaveLength(1);
     expect(extract[0].filename).toBe('7-12-v2.pdf');
+  });
+
+  it('serves the original file inline with its real type', async () => {
+    const doc = (await (await upload(propertyId, 'extra', PDF, 'sale deed.pdf')).json()) as { id: string };
+    const res = await app.handle(new Request(`http://localhost/api/properties/${propertyId}/documents/${doc.id}/file`));
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toBe('application/pdf');
+    expect(res.headers.get('content-disposition')).toContain('inline');
+    expect(new Uint8Array(await res.arrayBuffer())).toEqual(PDF);
+
+    const missing = await app.handle(new Request(`http://localhost/api/properties/${propertyId}/documents/doc_missing/file`));
+    expect(missing.status).toBe(404);
   });
 
   it('processes a Marathi document: OCR, detect, translate, extract', async () => {

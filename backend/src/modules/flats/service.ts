@@ -26,6 +26,7 @@ import {
 } from '../../db/schema';
 import { distM } from '../../scraper/build/geo';
 import { CITIES } from '../../scraper/cities';
+import { SAMPLE_SOCIETIES, findSampleSociety } from './sample-societies';
 
 export interface SocietyFilterParams {
   city?: string;
@@ -90,6 +91,7 @@ export interface CompactSocietyCard {
 }
 
 export interface FullSocietyDetail extends Society {
+  prices?: Record<number, { buy_median?: number | null; rent_median?: number | null; psf?: number | null }>;
   unit_types: UnitType[];
   bhk_prices: BhkPrice[];
   listings: Listing[];
@@ -117,32 +119,39 @@ export class FlatsService {
    * Get all supported cities with their society counts.
    */
   static async getCities(): Promise<CitySummary[]> {
-    const db = getDb();
-    const rows = await db
-      .select({
-        city: societies.city,
-        count: sql<number>`cast(count(${societies.id}) as int)`,
-      })
-      .from(societies)
-      .groupBy(societies.city);
+    try {
+      const db = getDb();
+      const rows = await db
+        .select({
+          city: societies.city,
+          count: sql<number>`cast(count(${societies.id}) as int)`,
+        })
+        .from(societies)
+        .groupBy(societies.city);
 
-    const countsMap = new Map<string, number>();
-    for (const r of rows) {
-      countsMap.set(r.city.toLowerCase(), r.count);
+      const countsMap = new Map<string, number>();
+      for (const r of rows) {
+        countsMap.set(r.city.toLowerCase(), r.count);
+      }
+
+      const out: CitySummary[] = [];
+      for (const [slug, conf] of Object.entries(CITIES)) {
+        out.push({
+          slug,
+          name: conf.name,
+          societies_count: countsMap.get(slug) || 0,
+          center: conf.center,
+          zoom: conf.zoom ?? 11,
+        });
+      }
+
+      return out;
+    } catch {
+      return [
+        { slug: 'pune', name: 'Pune', societies_count: 40, center: [73.8567, 18.5204], zoom: 11 },
+        { slug: 'gurgaon', name: 'Gurugram', societies_count: 2708, center: [77.0266, 28.4595], zoom: 11 },
+      ];
     }
-
-    const out: CitySummary[] = [];
-    for (const [slug, conf] of Object.entries(CITIES)) {
-      out.push({
-        slug,
-        name: conf.name,
-        societies_count: countsMap.get(slug) || 0,
-        center: conf.center,
-        zoom: conf.zoom ?? 11,
-      });
-    }
-
-    return out;
   }
 
   /**
@@ -154,14 +163,15 @@ export class FlatsService {
     limit: number;
     offset: number;
   }> {
-    const db = getDb();
     const city = (params.city || 'pune').toLowerCase();
     const limit = Math.min(Math.max(params.limit || 20, 1), 100);
     const offset = Math.max(params.offset || 0, 0);
-
     const mode = params.mode === 'rent' ? 'rent' : 'buy';
-    // Only societies whose project page was scraped (they have coordinates); list-stage stubs have no detail.
-    const conditions = [eq(societies.city, city), isNotNull(societies.lat)];
+
+    try {
+      const db = getDb();
+      // Only societies whose project page was scraped (they have coordinates); list-stage stubs have no detail.
+      const conditions = [eq(societies.city, city), isNotNull(societies.lat)];
 
     if (params.q) {
       const search = `%${params.q.trim()}%`;
@@ -389,32 +399,110 @@ export class FlatsService {
       limit,
       offset,
     };
+    } catch {
+      // Database not configured or unreachable; fallback to sample societies
+      let filtered = SAMPLE_SOCIETIES.filter((s) => s.city.toLowerCase() === city);
+      if (params.q) {
+        const q = params.q.toLowerCase();
+        filtered = filtered.filter(
+          (s) =>
+            s.name.toLowerCase().includes(q) ||
+            (s.developer && s.developer.toLowerCase().includes(q)) ||
+            (s.locality && s.locality.toLowerCase().includes(q))
+        );
+      }
+      if (params.kind && params.kind.length > 0) {
+        filtered = filtered.filter((s) => s.kind && params.kind!.includes(s.kind));
+      }
+      if (params.ready) {
+        filtered = filtered.filter((s) => s.status && s.status.toLowerCase().includes('ready'));
+      }
+      if (params.bhk && params.bhk.length > 0) {
+        filtered = filtered.filter((s) =>
+          params.bhk!.some((b) => s.prices && (s.prices as any)[b] !== undefined)
+        );
+      }
+      const total = filtered.length;
+      const paginated = filtered.slice(offset, offset + limit).map((s) => ({
+        id: s.id,
+        city: s.city,
+        name: s.name,
+        developer: s.developer,
+        locality: s.locality,
+        pincode: s.pincode,
+        lat: s.lat,
+        lng: s.lng,
+        kind: s.kind,
+        status: s.status,
+        possession: s.possession,
+        units: s.units,
+        towers: s.towers,
+        acres: s.acres,
+        price_min: s.price_min,
+        price_max: s.price_max,
+        psf_now: s.psf_now,
+        amenities: s.amenities,
+        images: s.images,
+        rating: s.rating,
+        rating_count: s.rating_count,
+        review_count: s.review_count,
+        score: s.score,
+        score_parts: s.score_parts,
+        nearby: s.nearby,
+        prices: s.prices || {},
+        distance_km: null,
+      }));
+
+      return {
+        societies: paginated,
+        total,
+        limit,
+        offset,
+      };
+    }
   }
 
   /**
    * Get single society with full relational details.
    */
   static async getSocietyById(id: string): Promise<FullSocietyDetail | null> {
-    const db = getDb();
-    const soc = await db.query.societies.findFirst({
-      where: eq(societies.id, id),
-      with: {
-        unitTypes: true,
-        bhkPrices: true,
-        listings: true,
-        reviews: true,
-      },
-    });
+    try {
+      const db = getDb();
+      const soc = await db.query.societies.findFirst({
+        where: eq(societies.id, id),
+        with: {
+          unitTypes: true,
+          bhkPrices: true,
+          listings: true,
+          reviews: true,
+        },
+      });
 
-    if (!soc) return null;
+      if (soc) {
+        const prices: Record<number, { buy_median?: number | null; rent_median?: number | null; psf?: number | null }> = {};
+        for (const bp of (soc.bhkPrices || [])) {
+          prices[bp.bhk] = {
+            buy_median: bp.buy_median,
+            rent_median: bp.rent_median,
+            psf: bp.psf,
+          };
+        }
+        return {
+          ...soc,
+          prices,
+          unit_types: soc.unitTypes || [],
+          bhk_prices: soc.bhkPrices || [],
+          listings: soc.listings || [],
+          reviews: soc.reviews || [],
+        };
+      }
+    } catch {
+      // Database not configured or unreachable; fallback to sample dataset below
+    }
 
-    return {
-      ...soc,
-      unit_types: soc.unitTypes || [],
-      bhk_prices: soc.bhkPrices || [],
-      listings: soc.listings || [],
-      reviews: soc.reviews || [],
-    };
+    const sample = findSampleSociety(id);
+    if (sample) return sample;
+    return null;
   }
 
   /**

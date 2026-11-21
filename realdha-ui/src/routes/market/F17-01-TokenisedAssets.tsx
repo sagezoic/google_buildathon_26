@@ -4,7 +4,6 @@ import { Screen } from '../../app/Shell'
 import { path } from '../../app/nav'
 import { Button } from '../../components/ui/button'
 import { Card } from '../../components/ui/card'
-import { Pill } from '../../components/ui/pill'
 import { RecordId } from '../../components/ui/record-id'
 import { MINT_RECORD, inr, readStructure, type MintStatus, type MintTx } from '../../lib/chain'
 import { logAudit } from '../../lib/audit'
@@ -77,7 +76,7 @@ export default function TokenisedAssets() {
                 <RecordId id={r.id} className="self-start text-label" />
                 <div className="text-small font-semibold">{r.name}</div>
                 <div className="text-label text-muted">{r.supply} · Unit price {r.price}</div>
-                <div className="flex items-center gap-2"><TokPill s={r.s} />{r.s !== 'failed' && <Pill tone="chain">Sepolia testnet</Pill>}</div>
+                <div className="flex items-center gap-2"><TokPill s={r.s} /></div>
                 {r.s === 'failed' ? (r.onRetry ? <Button size="sm" variant="secondary" onClick={r.onRetry} className="min-h-11 self-start">Retry</Button> : <Button size="sm" variant="secondary" to={r.retry} className="min-h-11 self-start">Retry</Button>)
                   : <Button size="sm" variant="secondary" to={r.open} className="min-h-11 self-start">Open</Button>}
               </Card>

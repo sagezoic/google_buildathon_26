@@ -1,4 +1,4 @@
-import { Check, CircleAlert, CircleCheck, Trash2, TriangleAlert, Upload as UploadIcon, UploadCloud } from 'lucide-react'
+import { Check, CircleAlert, CircleCheck, Eye, Trash2, TriangleAlert, Upload as UploadIcon, UploadCloud } from 'lucide-react'
 import { useRef, useState, type ChangeEvent, type DragEvent } from 'react'
 import { useNavigate } from 'react-router'
 import { Screen } from '../../../app/Shell'
@@ -6,12 +6,13 @@ import { path } from '../../../app/nav'
 import { useDemoState } from '../../../app/useDemoState'
 import { Button } from '../../../components/ui/button'
 import { Card } from '../../../components/ui/card'
+import { DocPreview } from '../../../components/ui/doc-preview'
 import { Pill } from '../../../components/ui/pill'
 import { Stepper } from '../../../components/ui/stepper'
 import { NATIVE, STEPS, uploadDocs, type StoredDoc } from '../../../data/fixtures/property-intake'
 import { checkFile, fileSize, propertyPlace, TYPE_LABEL, usePropertyDocuments, usePropertyDraft } from '../../../lib/property-store'
 import { cn } from '../../../lib/cn'
-import { deleteDocument, uploadDocument } from '../../../lib/property-api'
+import { deleteDocument, documentFileUrl, uploadDocument } from '../../../lib/property-api'
 
 const ACCEPT = '.pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png'
 
@@ -28,6 +29,8 @@ export default function Upload() {
   const [docs, setDocs] = usePropertyDocuments()
   const [over, setOver] = useState(false)
   const [errors, setErrors] = useState<string[]>([])
+  /** The uploaded document open in the preview. Only documents that reached the server have a file to show. */
+  const [viewing, setViewing] = useState<{ doc: StoredDoc; title: string } | null>(null)
 
   const pick = (id: string) => { target.current = id; input.current?.click() }
   /** Slots with an upload in flight, so their buttons can show progress. */
@@ -69,6 +72,12 @@ export default function Upload() {
     setDocs((d) => d.filter((x) => x !== gone))
   }
 
+  const viewBtn = (d: StoredDoc, title: string, mobile?: boolean) => d.id && draft.id ? (
+    <Button size="sm" variant="ghost" className={mobile ? 'min-h-11' : 'h-9 px-3'} onClick={() => setViewing({ doc: d, title })}>
+      <Eye className="size-4" aria-hidden />View<span className="sr-only"> {title}</span>
+    </Button>
+  ) : null
+
   const bySlot = (id: string) => docs.find((d) => d.slot === id)
   const extras = docs.filter((d) => d.slot === 'extra')
   const total = uploadDocs.length
@@ -91,6 +100,9 @@ export default function Upload() {
   return (
     <Screen id="GP-08" noTabs>
       <input ref={input} type="file" accept={ACCEPT} multiple className="sr-only" tabIndex={-1} aria-hidden onChange={onChange} />
+      {viewing?.doc.id && draft.id && (
+        <DocPreview open onOpenChange={(o) => { if (!o) setViewing(null) }} title={viewing.title} fileName={viewing.doc.file} src={documentFileUrl(draft.id, viewing.doc.id)} />
+      )}
 
       {/* 1440 */}
       <div className="flex flex-1 flex-col gap-5 px-12 py-7 max-xl:hidden">
@@ -125,6 +137,7 @@ export default function Upload() {
                       </span>
                     )}
                     {ok ? <Uploaded /> : <Missing />}
+                    {p && viewBtn(p, d.name)}
                     <Button size="sm" variant={ok ? 'secondary' : 'primary'} className="h-9 px-3.5" disabled={uploading.includes(d.id)} onClick={() => pick(d.id)}>
                       {uploading.includes(d.id) ? 'Uploading…' : ok ? 'Replace' : 'Upload'}<span className="sr-only"> {d.name}</span>
                     </Button>
@@ -139,6 +152,7 @@ export default function Upload() {
                     <div className="text-label text-muted">{f.size}</div>
                   </div>
                   <Uploaded />
+                  {viewBtn(f, f.file)}
                   <Button size="sm" variant="ghost" className="h-9 px-3" onClick={() => removeExtra(i)}><Trash2 className="size-4" aria-hidden />Remove<span className="sr-only"> {f.file}</span></Button>
                 </li>
               ))}
@@ -185,7 +199,10 @@ export default function Upload() {
                 {ok ? <Uploaded /> : <Missing />}
               </div>
               <div className="text-label leading-[17px] text-muted">{p ? mobileMeta(p) : d.mobileMeta}</div>
-              <Button size="sm" variant="secondary" className="min-h-11 self-start" disabled={uploading.includes(d.id)} onClick={() => pick(d.id)}>{uploading.includes(d.id) ? 'Uploading…' : ok ? 'Replace' : 'Upload'}<span className="sr-only"> {d.name}</span></Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button size="sm" variant="secondary" className="min-h-11" disabled={uploading.includes(d.id)} onClick={() => pick(d.id)}>{uploading.includes(d.id) ? 'Uploading…' : ok ? 'Replace' : 'Upload'}<span className="sr-only"> {d.name}</span></Button>
+                {p && viewBtn(p, d.name, true)}
+              </div>
             </Card>
           )
         })}
@@ -195,7 +212,7 @@ export default function Upload() {
               <div className="min-w-0 truncate text-small font-semibold">{f.file}</div>
               <Uploaded />
             </div>
-            <div className="flex items-center justify-between text-label text-muted"><span>{f.size}</span><Button size="sm" variant="ghost" className="min-h-11" onClick={() => removeExtra(i)}>Remove<span className="sr-only"> {f.file}</span></Button></div>
+            <div className="flex items-center justify-between text-label text-muted"><span>{f.size}</span><span className="flex items-center">{viewBtn(f, f.file, true)}<Button size="sm" variant="ghost" className="min-h-11" onClick={() => removeExtra(i)}>Remove<span className="sr-only"> {f.file}</span></Button></span></div>
           </Card>
         ))}
         <button

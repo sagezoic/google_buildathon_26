@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react'
 import { usePersistentState } from '../app/persist'
+import { DEMO_PLOT_ID, fetchToken, networkLabel, shortHash, type ChainToken } from './chain-api'
 import { PLOT, PROOF } from '../data/fixtures/twin'
 
 type Draft = Record<string, unknown>
@@ -11,6 +13,9 @@ export function useTwinRecord() {
   const [status] = usePersistentState<string | null>('anchor.status', null)
   const [tx] = usePersistentState<string | null>('anchor.txHash', null)
   const [at] = usePersistentState<string | null>('anchor.at', null)
+
+  const [live, setLive] = useState<ChainToken | null>(null)
+  useEffect(() => { void fetchToken(DEMO_PLOT_ID).then(setLive) }, [])
 
   const d = draft ?? {}
   const gat = s(d.gat)
@@ -42,13 +47,14 @@ export function useTwinRecord() {
     gat: gat ?? '112/2',
   }
   /** No anchor status saved yet = the sample record, which is signed off and anchored. */
-  const anchored = status === null || ANCHORED.test(status)
-  return {
-    plot,
-    anchored,
-    signedOff: anchored,
-    proof: { ...PROOF, txHash: tx ?? PROOF.txHash, anchored: at ?? PROOF.anchored },
-  }
+  // The seeded demo record shows its real token once the backend has minted it; a plot drafted in this browser keeps its own flow.
+  const token = !hasDraft && live?.status === 'confirmed' ? live : null
+  const anchored = token ? true : status === null || ANCHORED.test(status)
+  const when = (iso: string) => new Date(iso).toLocaleString('en-IN', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  const proof = token
+    ? { network: networkLabel(token.network), fingerprints: `${token.docCount} anchored`, txHash: token.txHash ? shortHash(token.txHash) : PROOF.txHash, fullTxHash: token.txHash ?? undefined, anchored: when(token.history.at(-1)?.at ?? token.approvedAt), explorerUrl: token.explorerUrl ?? undefined }
+    : { ...PROOF, txHash: tx ?? PROOF.txHash, fullTxHash: undefined as string | undefined, anchored: at ?? PROOF.anchored, explorerUrl: undefined as string | undefined }
+  return { plot, anchored, signedOff: anchored, proof, token }
 }
 
 /** Copy text, returning whether it worked. */

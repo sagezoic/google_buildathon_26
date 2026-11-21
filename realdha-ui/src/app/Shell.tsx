@@ -3,7 +3,9 @@ import { NavLink } from 'react-router'
 import { cn } from '../lib/cn'
 import { FLOWS, type Role } from './screens'
 import { INITIALS, NAV, activePath, screenById } from './nav'
+import { useActiveRole, resolveRole } from './active-role'
 import { SiteHeader, LangSwitch, ThemeToggle } from '../components/SiteHeader'
+import { useT } from './i18n'
 
 export { LangSwitch, ThemeToggle }
 
@@ -55,13 +57,14 @@ export function MobileBar({
 }
 
 export function TabBar({ role, active }: { role: Role; active?: string }) {
+  const t = useT()
   const items = NAV[role]
   if (!items.length) return null
   return (
     <nav aria-label="Primary" className="sticky bottom-0 flex h-16 flex-none border-t border-line bg-surface md:hidden">
       {items.map((i) => (
         <NavLink key={i.to} to={i.to} aria-current={active === i.to ? 'page' : undefined} className={({ isActive }) => cn('flex min-h-11 flex-1 flex-col items-center justify-center gap-0.5 text-[11px] leading-[14px] no-underline', (active ? active === i.to : isActive) ? 'font-semibold text-brand' : 'text-muted')}>
-          {i.tab ?? i.label}
+          {t(i.tab ?? i.label)}
         </NavLink>
       ))}
     </nav>
@@ -85,7 +88,8 @@ interface ScreenProps {
 /** One responsive screen per frame ID: wraps content in the DEMO bar, nav and page chrome. */
 export function Screen({ id, layout = 'app', role, children, className, noTabs, back, title }: ScreenProps) {
   const def = screenById(id)
-  const r = role ?? def?.role ?? 'owner'
+  const [active] = useActiveRole()
+  const r = resolveRole(role ?? def?.role ?? 'owner', active)
   return (
     // h-dvh + overflow-y-auto: legacy-aliases.css locks html/body/#root to overflow:hidden, so each screen scrolls itself.
     <div className="flex h-dvh flex-col overflow-y-auto bg-canvas text-text">

@@ -1,4 +1,4 @@
-import { AlertCircle, Smartphone } from 'lucide-react'
+import { AlertCircle, Info, Smartphone } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { Screen } from '../../app/Shell'
@@ -68,7 +68,14 @@ export default function SignIn() {
             <Link to={path('F01-04')} className="mt-1 inline-flex min-h-11 items-center text-small font-medium xl:hidden">Forgot password?</Link>
           </div>
           <Button type="submit" size="lg" block loading={busy}>Sign in</Button>
-          <p className="text-label text-muted">Sample account for this prototype: <span className="font-mono font-medium text-text">{SAMPLE_LOGIN.email}</span> with password <span className="font-mono font-medium text-text">{SAMPLE_LOGIN.password}</span></p>
+          <Notice tone="info" icon={<Info className="size-[18px]" />}>
+            <p className="font-medium">Test account for this prototype</p>
+            <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5">
+              <dt>Email</dt><dd className="font-mono font-medium break-all">{SAMPLE_LOGIN.email}</dd>
+              <dt>Password</dt><dd className="font-mono font-medium">{SAMPLE_LOGIN.password}</dd>
+            </dl>
+            <Button type="button" size="sm" variant="secondary" className="mt-2" onClick={() => { setEmail(SAMPLE_LOGIN.email); setPw(SAMPLE_LOGIN.password); setErrs({}) }}>Fill in test account</Button>
+          </Notice>
         </form>
         <p className="text-center text-small text-muted max-xl:order-4 xl:order-4">
           <span className="xl:hidden">New here? </span><span className="max-xl:hidden">New to Realdha? </span>

@@ -142,7 +142,6 @@ export default function Resolve() {
               <VerdictBanner
                 tone="proceed"
                 title={<><span className="md:hidden">Proceed</span><span className="max-md:hidden">Proceed – ready for lawyer review</span></>}
-                aside={<Pill tone="neutral" className="border border-line bg-surface max-md:hidden">Was: Clarify</Pill>}
               >
                 <span className="md:hidden">Ready for lawyer review. Area now matches at 418 sq m.</span>
                 <span className="max-md:hidden">The re-check passed. All 8 checks are clear.</span>

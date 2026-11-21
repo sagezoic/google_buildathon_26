@@ -1,6 +1,6 @@
 import { AlertTriangle, RotateCcw } from 'lucide-react'
 import { type ComponentType, lazy, Suspense } from 'react'
-import { createBrowserRouter, Navigate, RouterProvider, useRouteError } from 'react-router'
+import { createBrowserRouter, RouterProvider, useRouteError } from 'react-router'
 import { Button } from '../components/ui/button'
 import { Card } from '../components/ui/card'
 import FlowIndex from './FlowIndex'
@@ -92,6 +92,8 @@ function resilientLazy<T extends ComponentType<any>>(
   })
 }
 
+const Start = lazy(() => import('../routes/Start'))
+
 const routes = SCREENS.map((s) => {
   const loader = REGISTRY[s.slug]
   const El = loader ? resilientLazy(loader) : () => <NotBuilt id={s.id} title={s.title} />
@@ -110,7 +112,7 @@ const router = createBrowserRouter([
   {
     errorElement: <RouteErrorBoundary />,
     children: [
-      { path: '/', element: <Navigate to={path('X-01')} replace /> },
+      { path: '/', element: <Suspense fallback={null}><Start /></Suspense> },
       { path: '/dev/flows', element: <FlowIndex /> },
       ...routes,
       { path: '*', element: <NotBuilt id="X-04" title="Page not found" /> },

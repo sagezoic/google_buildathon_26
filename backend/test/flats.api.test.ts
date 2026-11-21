@@ -27,6 +27,38 @@ describe('Flats API Routes', () => {
     expect(res.status).toBe(400);
   });
 
+  it('GET /api/flats/societies/mb_5020563 returns 200 with Marvel Brisa details', async () => {
+    const res = await app.handle(new Request('http://localhost/api/flats/societies/mb_5020563'));
+    expect(res.status).toBe(200);
+
+    const body = (await res.json()) as any;
+    expect(body.society).toBeDefined();
+    expect(body.society.id).toBe('mb_5020563');
+    expect(body.society.name).toBe('Marvel Brisa');
+    expect(body.society.locality).toBe('Balewadi');
+    expect(body.society.images.length).toBeGreaterThan(0);
+    expect(body.society.bhk_prices.length).toBeGreaterThan(0);
+  });
+
+  it('GET /api/flats/societies returns 200 with list of societies', async () => {
+    const res = await app.handle(new Request('http://localhost/api/flats/societies?city=pune'));
+    expect(res.status).toBe(200);
+
+    const body = (await res.json()) as any;
+    expect(body.societies).toBeDefined();
+    expect(body.societies.length).toBeGreaterThan(0);
+    expect(body.total).toBeGreaterThan(0);
+  });
+
+  it('GET /api/flats/cities returns 200 with supported cities', async () => {
+    const res = await app.handle(new Request('http://localhost/api/flats/cities'));
+    expect(res.status).toBe(200);
+
+    const body = (await res.json()) as any;
+    expect(body.cities).toBeDefined();
+    expect(body.cities.some((c: any) => c.slug === 'pune')).toBe(true);
+  });
+
   it('GET /swagger exposes Flats endpoints documentation', async () => {
     const res = await app.handle(new Request('http://localhost/swagger/json'));
     if (res.status === 200) {

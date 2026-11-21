@@ -79,3 +79,29 @@ create_docai_processor = true # set to false if creating outside Terraform or la
 docai_processor_id     = ""   # specify existing processor ID if already created
 docai_location         = "us"
 gcs_bucket_name        = ""   # e.g. realdha-storage-<project-id>; leave empty to skip bucket IAM
+
+# Pub/Sub (document-ingest, chain-anchor, analytics-events + dead-letter). With gcs_bucket_name set,
+# every upload to that bucket is published to the document-ingest topic.
+enable_pubsub = true
+
+# BigQuery analytics dataset; analytics-events is streamed into <dataset>.pubsub_events
+enable_bigquery              = true
+bigquery_dataset_id          = "realdha_analytics"
+bigquery_location            = "US" # US multi-region or a us-* region
+bigquery_deletion_protection = false
+
+# Public assets bucket behind Cloud CDN (global load balancer; bills a forwarding rule while it exists)
+enable_cdn       = true
+cdn_bucket_name  = ""    # empty = realdha-cdn-<project-id>
+cdn_domain       = ""    # e.g. cdn.example.com for HTTPS; point its A record at the cdn_ip_address output
+cdn_cors_origins = ["*"]
+
+# Blockchain property tokens (see docs/blockchain.md). The registrar key is created in Cloud KMS automatically.
+enable_chain           = true
+chain_network          = "sepolia"
+chain_contract_address = ""   # fill in after `bun run chain:deploy`
+chain_explorer_url     = "https://sepolia.etherscan.io"
+chain_public_api_url   = ""   # backend Cloud Run URL, used in token metadata links
+chain_rpc_url          = ""   # secret; better passed as TF_VAR_chain_rpc_url
+chain_admin_token      = ""   # secret; TF_VAR_chain_admin_token
+chain_owner_salt       = ""   # secret; TF_VAR_chain_owner_salt
