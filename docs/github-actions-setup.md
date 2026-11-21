@@ -47,6 +47,7 @@ Configure the following under **GitHub Repository > Settings > Secrets and varia
 | `GCP_SERVICE_ACCOUNT` | **Recommended** | Email of the deployment Service Account | `github-actions-sa@my-project.iam.gserviceaccount.com` |
 | `GCP_SA_KEY` | *Alternative* | Base64 or plain JSON key for Service Account (if not using WIF) | `{"type": "service_account", ...}` |
 | `GCS_TF_STATE_BUCKET` | *Optional* | GCS Bucket name for shared Terraform state storage | `my-tf-state-bucket` |
+| `DB_PASSWORD` | **Recommended** | Cloud SQL password for the `realdha` user, passed as `TF_VAR_db_password`. Pins the password so a lost Terraform state can't rotate it and break the backend with `password authentication failed`. If unset, Terraform generates a random one. Use letters and digits only (it is embedded unescaped in `DATABASE_URL`). | `openssl rand -hex 16` |
 
 ### Variables (`Repository variables`, Optional)
 
