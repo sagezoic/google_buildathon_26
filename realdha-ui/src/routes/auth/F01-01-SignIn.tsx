@@ -9,6 +9,8 @@ import { AuthCard, AuthInput, Notice } from '../../components/ui/auth-parts'
 import { Button } from '../../components/ui/button'
 import { AUTH_KEYS, SAMPLE_LOGIN, emailError, findAccount, hashPw, startSession, type Account } from '../../lib/auth-store'
 import { logAudit } from '../../lib/audit'
+import { OnboardSteps } from '../../components/onboard-steps'
+import { nextOnboardPath, readIntent } from '../../lib/onboard-intent'
 
 const GoogleG = () => <span aria-hidden className="flex size-5 items-center justify-center rounded-full border-[1.5px] border-muted text-label font-semibold">G</span>
 
@@ -41,7 +43,8 @@ export default function SignIn() {
       }
       startSession(acc)
       logAudit(acc.name, 'Signed in')
-      nav(path('X-01'))
+      const intent = readIntent()
+      nav(intent ? nextOnboardPath(intent) : path('X-01'))
     }, 500)
   }
 
@@ -55,6 +58,7 @@ export default function SignIn() {
   return (
     <Screen id="F01-01" layout="auth">
       <AuthCard>
+        <OnboardSteps step="signin" />
         <h1 className="text-h1 font-semibold max-xl:order-0">Sign in</h1>
         {methods}
         <div className="flex items-center gap-3 text-label text-muted max-xl:order-2 xl:order-2" role="separator">

@@ -60,6 +60,7 @@ export const SCREENS: ScreenDef[] = [
   { id: 'F02-01', slug: 'F02-01-BusinessKYC', flow: 'F02', title: 'Business KYC', role: 'owner', path: '/kyc/business' }, 
   { id: 'F02-02', slug: 'F02-02-KYCModal', flow: 'F02', title: 'KYC Modal', role: 'owner', path: '/kyc/verification-modal' }, 
   { id: 'F02-03', slug: 'F02-03-KYCProfile', flow: 'F02', title: 'KYC Profile', role: 'owner', path: '/profile/kyc' }, 
+  { id: 'F02-04', slug: 'F02-04-DigiLockerDocs', flow: 'F02', title: 'DigiLocker Documents', role: 'owner', path: '/kyc/digilocker' }, 
   { id: 'F03-01', slug: 'F03-01-AddApartment', flow: 'F03', title: 'Add Apartment', role: 'owner', path: '/properties/new/apartment' }, 
   { id: 'F03-02', slug: 'F03-02-UploadErrors', flow: 'F03', title: 'Upload Errors', role: 'owner', path: '/properties/new/upload-errors' }, 
   { id: 'F03-03', slug: 'F03-03-MyProperties', flow: 'F03', title: 'My Properties', role: 'owner', path: '/properties' }, 
