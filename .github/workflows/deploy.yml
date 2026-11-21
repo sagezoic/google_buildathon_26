@@ -85,6 +85,9 @@ jobs:
       WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       WIF_SA: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       SA_KEY: ${{ secrets.GCP_SA_KEY }}
+      # Pin the Cloud SQL password so a lost/recreated Terraform state can't rotate it
+      # (empty falls back to the auto-generated random password).
+      TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
 
     steps:
       - name: Checkout repository

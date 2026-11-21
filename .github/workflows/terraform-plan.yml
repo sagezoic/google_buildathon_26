@@ -94,6 +94,7 @@ jobs:
       WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
       WIF_SA: ${{ secrets.GCP_SERVICE_ACCOUNT }}
       SA_KEY: ${{ secrets.GCP_SA_KEY }}
+      TF_VAR_db_password: ${{ secrets.DB_PASSWORD }}
 
     steps:
       - name: Checkout repository
