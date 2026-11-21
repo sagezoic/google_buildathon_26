@@ -375,7 +375,8 @@ resource "google_cloud_run_v2_service" "backend" {
     google_pubsub_topic_iam_member.backend_publisher,
     google_pubsub_subscription_iam_member.backend_subscriber,
     google_bigquery_dataset_iam_member.backend_editor,
-    google_storage_bucket_iam_member.backend_cdn
+    google_storage_bucket_iam_member.backend_cdn,
+    google_project_iam_member.backend_vertex_user
   ]
 }
 

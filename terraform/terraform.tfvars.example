@@ -80,6 +80,12 @@ docai_processor_id     = ""   # specify existing processor ID if already created
 docai_location         = "us"
 gcs_bucket_name        = ""   # e.g. realdha-storage-<project-id>; leave empty to skip bucket IAM
 
+# Gemini on Vertex AI: document checks and property chat (backend gets roles/aiplatform.user)
+enable_gemini       = true
+vertex_location     = "us-central1" # a us-* region, or "global" for the widest model availability
+gemini_verify_model = "gemini-3.8-flash"
+gemini_chat_model   = "gemini-3.8-flash"
+
 # Pub/Sub (document-ingest, chain-anchor, analytics-events + dead-letter). With gcs_bucket_name set,
 # every upload to that bucket is published to the document-ingest topic.
 enable_pubsub = true

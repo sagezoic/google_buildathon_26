@@ -22,6 +22,13 @@
       "when": 1795224519752,
       "tag": "0002_violet_overlord",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1795228789564,
+      "tag": "0003_aromatic_frog_thor",
+      "breakpoints": true
     }
   ]
 }

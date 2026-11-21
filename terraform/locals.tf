@@ -24,6 +24,9 @@ locals {
       "pubsub.googleapis.com",
       "storage.googleapis.com"
     ] : [],
+    var.enable_apis && var.enable_gemini ? [
+      "aiplatform.googleapis.com"
+    ] : [],
     var.enable_apis && var.enable_bigquery ? [
       "bigquery.googleapis.com"
     ] : [],
@@ -33,8 +36,8 @@ locals {
     ] : []
   )
 
-  # Env vars for the backend from the Pub/Sub, BigQuery and CDN modules (keys are known at plan time)
-  backend_data_env = merge(local.pubsub_env, local.bigquery_env, local.cdn_env)
+  # Env vars for the backend from the Pub/Sub, BigQuery, CDN and Gemini modules (keys are known at plan time)
+  backend_data_env = merge(local.pubsub_env, local.bigquery_env, local.cdn_env, local.gemini_env)
 
   artifact_repo_host = "${var.region}-docker.pkg.dev"
 

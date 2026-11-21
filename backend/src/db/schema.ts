@@ -7,6 +7,7 @@ import {
   jsonb,
   serial,
   index,
+  boolean,
 } from 'drizzle-orm/pg-core';
 import { relations } from 'drizzle-orm';
 
@@ -208,6 +209,48 @@ export const propertyDocuments = pgTable(
   },
   (table) => [index('property_documents_property_id_idx').on(table.property_id)]
 );
+
+/** One Gemini document check of a property. `report` holds the verdict and findings (see modules/ai/types.ts). */
+export const propertyChecks = pgTable(
+  'property_checks',
+  {
+    id: text('id').primaryKey(), // chk_<uuid>
+    property_id: text('property_id')
+      .notNull()
+      .references(() => properties.id, { onDelete: 'cascade' }),
+    kind: text('kind').notNull(), // resale | under-construction | plot | commercial
+    status: text('status').notNull().default('running'), // running | done | failed
+    verdict: text('verdict'), // stop | proceed
+    report: jsonb('report').$type<Record<string, unknown>>(),
+    doc_ids: jsonb('doc_ids').$type<string[]>().notNull(),
+    model: text('model').notNull(),
+    error: text('error'),
+    created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+    updated_at: timestamp('updated_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index('property_checks_property_id_idx').on(table.property_id)]
+);
+
+/** Chat about one property's documents. Model replies carry the documents they cite. */
+export const propertyChatMessages = pgTable(
+  'property_chat_messages',
+  {
+    id: text('id').primaryKey(), // msg_<uuid>
+    property_id: text('property_id')
+      .notNull()
+      .references(() => properties.id, { onDelete: 'cascade' }),
+    role: text('role').notNull(), // user | model
+    text: text('text').notNull(),
+    found: boolean('found'), // model only: false when the documents do not answer the question
+    citations: jsonb('citations').$type<Record<string, unknown>[]>(),
+    model: text('model'),
+    created_at: timestamp('created_at', { withTimezone: true }).defaultNow().notNull(),
+  },
+  (table) => [index('property_chat_messages_property_id_idx').on(table.property_id, table.created_at)]
+);
+
+export type PropertyCheck = typeof propertyChecks.$inferSelect;
+export type PropertyChatMessage = typeof propertyChatMessages.$inferSelect;
 
 export interface TokenManifestDoc {
   slot: string;
